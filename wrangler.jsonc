@@ -1,0 +1,33 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "soultest",
+  "compatibility_date": "2026-03-13",
+  "compatibility_flags": ["nodejs_compat"],
+  "pages_build_output_dir": "./dist",
+  "vars": {
+    "APP_ENV": "local",
+    "API_STUB_MODE": "mock",
+    "ACCESS_TOKEN_TTL_DAYS": "30"
+  },
+  "d1_databases": [
+    {
+      "binding": "SOULTEST_DB",
+      "database_name": "soultest",
+      "migrations_dir": "db/migrations"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "SOULTEST_CACHE",
+      "id": "local-soultest-cache",
+      "preview_id": "local-soultest-cache"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "SOULTEST_ASSETS",
+      "bucket_name": "soultest-assets",
+      "preview_bucket_name": "soultest-assets-dev"
+    }
+  ]
+}
