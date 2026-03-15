@@ -11,6 +11,7 @@ import { Link, Navigate, useNavigate, useParams } from "react-router"
 import { motion, AnimatePresence } from "framer-motion"
 
 import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 import {
   fetchQuizIntro,
   fetchQuizRuntime,
@@ -49,6 +50,78 @@ const scaleColors = [
   "bg-sky-400",
   "bg-sky-500",
 ]
+
+function RuntimeBootScreen({
+  title,
+  questionCount,
+  durationMinutes,
+}: {
+  title?: string
+  questionCount?: number
+  durationMinutes?: number
+}) {
+  const steps = ["口令已识别", "正在同步题目", "正在恢复进度"]
+
+  return (
+    <div className="min-h-screen overflow-hidden bg-slate-950 text-white">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_16%_0%,_rgba(168,85,247,0.22),_transparent_28%),radial-gradient(circle_at_82%_10%,_rgba(56,189,248,0.18),_transparent_26%)]" />
+      <div className="relative mx-auto flex min-h-screen max-w-5xl items-center px-6 py-16 md:px-8">
+        <div className="w-full overflow-hidden rounded-[36px] border border-white/10 bg-white/6 p-8 shadow-[0_36px_140px_rgba(15,23,42,0.38)] backdrop-blur-xl md:p-10">
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/8 px-4 py-2 text-[11px] uppercase tracking-[0.28em] text-white/68">
+            <ShieldCheck className="size-4 text-fuchsia-300" />
+            已识别有效口令
+          </div>
+
+          <div className="mt-8 grid gap-10 lg:grid-cols-[minmax(0,1fr)_220px] lg:items-end">
+            <div>
+              <h1 className="max-w-3xl text-4xl font-semibold tracking-[-0.04em] md:text-6xl">
+                正在进入 {title ?? "测试"}
+              </h1>
+              <p className="mt-5 max-w-2xl text-base leading-8 text-white/68 md:text-lg">
+                稍等几秒，系统会同步题目数据，并自动接上你在当前设备上的答题进度。
+              </p>
+
+              <div className="mt-8 flex flex-wrap gap-3 text-sm text-white/70">
+                <span className="rounded-full border border-white/10 bg-white/6 px-3.5 py-2">
+                  {questionCount ? `${questionCount} 题` : "题目准备中"}
+                </span>
+                <span className="rounded-full border border-white/10 bg-white/6 px-3.5 py-2">
+                  {durationMinutes ? `约 ${durationMinutes} 分钟` : "时长准备中"}
+                </span>
+              </div>
+
+              <div className="mt-10 flex flex-wrap items-center gap-3 text-sm text-white/54">
+                {steps.map((step, index) => (
+                  <span className="inline-flex items-center gap-3" key={step}>
+                    <span className="size-2 rounded-full bg-fuchsia-300" />
+                    {step}
+                    {index < steps.length - 1 ? <span className="h-px w-8 bg-white/10" /> : null}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div className="relative flex items-center justify-center">
+              <motion.div
+                animate={{ scale: [1, 1.12, 1], opacity: [0.28, 0.55, 0.28] }}
+                className="absolute size-40 rounded-full border border-fuchsia-400/20 bg-fuchsia-500/10"
+                transition={{ duration: 2.4, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
+              />
+              <motion.div
+                animate={{ rotate: 360 }}
+                className="absolute size-24 rounded-full border border-dashed border-white/20"
+                transition={{ duration: 8, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
+              />
+              <div className="relative flex size-24 items-center justify-center rounded-full border border-white/12 bg-white/10 shadow-[0_24px_60px_rgba(168,85,247,0.18)] backdrop-blur-md">
+                <LoaderCircle className="size-8 animate-spin text-fuchsia-300" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export function QuizTestPage() {
   const { slug } = useParams()
@@ -232,7 +305,6 @@ export function QuizTestPage() {
       [String(currentQuestion.id)]: optionId,
     }))
 
-    // Auto next after 300ms if not the last question
     if (activeIndex < totalQuestions - 1) {
       setTimeout(() => {
         setActiveIndex((prev) => prev + 1)
@@ -293,79 +365,90 @@ export function QuizTestPage() {
     return <CustomQuizPage accessSession={accessSession} runtime={runtime} />
   }
 
+  if (!runtime && accessSession && loadingRuntime) {
+    return (
+      <RuntimeBootScreen
+        durationMinutes={quizIntro?.durationMinutes}
+        questionCount={quizIntro?.questionCount}
+        title={quizIntro?.title}
+      />
+    )
+  }
+
   if (!runtime) {
     return (
-      <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(217,70,239,0.12),_transparent_28%),linear-gradient(180deg,#fffdfd_0%,#ffffff_48%,#fafafc_100%)]">
-        <div className="mx-auto max-w-5xl px-6 py-10 md:py-16">
-          <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
-            <section>
-              <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
-                <Sparkles className="size-4 text-fuchsia-500" />
-                {quizIntro?.category ?? "测试入口"}
+      <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(168,85,247,0.16),_transparent_26%),linear-gradient(180deg,#09090b_0%,#111827_52%,#020617_100%)] text-white">
+        <div className="mx-auto max-w-4xl px-6 py-12 md:px-8 md:py-16">
+          <Link
+            className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/8 px-4 py-2 text-sm text-white/74 backdrop-blur-md transition hover:bg-white/12"
+            to={`/${slug}`}
+          >
+            <ArrowLeft className="size-4" />
+            返回详情页
+          </Link>
+
+          <section className="mt-8 overflow-hidden rounded-[36px] border border-white/10 bg-white/6 p-6 shadow-[0_32px_120px_rgba(15,23,42,0.24)] backdrop-blur-xl md:p-8">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/8 px-4 py-2 text-[11px] uppercase tracking-[0.28em] text-white/68">
+              <Sparkles className="size-4 text-fuchsia-300" />
+              {quizIntro?.category ?? "测试入口"}
+            </div>
+
+            <h1 className="mt-6 max-w-3xl text-4xl font-semibold tracking-[-0.04em] text-white md:text-6xl">
+              {quizIntro?.title ?? "正在准备测试"}
+            </h1>
+            <p className="mt-5 max-w-2xl text-base leading-8 text-white/68 md:text-lg">
+              {quizIntro?.summary ?? "请输入购买后获得的口令，验证后即可进入测试。"}
+            </p>
+
+            <div className="mt-6 flex flex-wrap gap-3 text-sm text-white/68">
+              <span className="rounded-full border border-white/10 bg-white/6 px-3.5 py-2">
+                {quizIntro?.questionCount ? `${quizIntro.questionCount} 题` : "题目准备中"}
+              </span>
+              <span className="rounded-full border border-white/10 bg-white/6 px-3.5 py-2">
+                {quizIntro?.durationMinutes ? `约 ${quizIntro.durationMinutes} 分钟` : "时长准备中"}
+              </span>
+              <span className="rounded-full border border-white/10 bg-white/6 px-3.5 py-2">支持中断后继续</span>
+            </div>
+
+            <form className="mt-8 max-w-2xl" onSubmit={(event) => void handleVerify(event)}>
+              <label className="sr-only" htmlFor="quiz-access-code">
+                测试口令
+              </label>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <input
+                  autoCapitalize="characters"
+                  autoComplete="off"
+                  className="h-14 flex-1 rounded-[18px] border border-white/12 bg-white/10 px-5 text-base text-white outline-none backdrop-blur-md transition placeholder:text-white/32 focus:border-fuchsia-400/70 focus:ring-4 focus:ring-fuchsia-500/15"
+                  id="quiz-access-code"
+                  onChange={(event) => setCode(event.target.value.toUpperCase())}
+                  placeholder="输入购买后获得的口令"
+                  value={code}
+                />
+                <Button
+                  className="h-14 rounded-[18px] bg-violet-500 px-6 text-base font-medium text-white shadow-[0_18px_50px_rgba(139,92,246,0.35)] transition hover:bg-violet-400"
+                  disabled={verifying || loadingRuntime || loadingIntro}
+                  type="submit"
+                >
+                  {verifying || loadingRuntime ? <LoaderCircle className="size-4 animate-spin" /> : null}
+                  {verifying || loadingRuntime ? "正在进入" : "开始测试"}
+                </Button>
               </div>
-              <h1 className="mt-6 font-display text-4xl font-semibold tracking-tight text-slate-950 md:text-6xl">
-                {quizIntro?.title ?? "正在准备测试"}
-              </h1>
-              <p className="mt-5 max-w-2xl text-base leading-8 text-slate-600 md:text-lg">
-                {quizIntro?.summary ?? "输入购买后获得的口令即可进入测试。"}
-              </p>
-              <div className="mt-6 flex flex-wrap gap-2">
-                {(quizIntro?.tags ?? []).map((tag) => (
-                  <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs text-slate-600" key={tag}>
-                    {tag}
-                  </span>
-                ))}
+              <p className="mt-3 text-sm text-white/48">口令在有效期内可重复使用，同一设备会自动保留答题进度。</p>
+            </form>
+
+            {errorMessage ? (
+              <div className="mt-4 rounded-[20px] border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
+                {errorMessage}
               </div>
-            </section>
+            ) : null}
 
-            <section className="rounded-[36px] border border-black/5 bg-white/92 p-6 shadow-[0_24px_80px_rgba(15,23,42,0.06)] md:p-8">
-              <p className="text-xs uppercase tracking-[0.28em] text-slate-400">口令验证</p>
-              <h2 className="mt-3 text-2xl font-semibold tracking-tight text-slate-950">输入口令开始测试</h2>
-              <p className="mt-4 text-sm leading-7 text-slate-600">
-                口令在有效期内可重复进入，不会因为中途退出而直接失效。
-              </p>
-
-              <form className="mt-6" onSubmit={(event) => void handleVerify(event)}>
-                <label className="text-sm font-medium text-slate-900" htmlFor="quiz-access-code">
-                  测试口令
-                </label>
-                <div className="mt-3 flex flex-col gap-3 sm:flex-row">
-                  <input
-                    autoComplete="off"
-                    className="h-13 flex-1 rounded-full border border-slate-200 bg-white px-5 text-base text-slate-950 outline-none transition focus:border-fuchsia-300 focus:ring-4 focus:ring-fuchsia-100"
-                    id="quiz-access-code"
-                    onChange={(event) => setCode(event.target.value)}
-                    placeholder="输入购买后获得的口令"
-                    value={code}
-                  />
-                  <Button className="h-13 rounded-full px-6" disabled={verifying || loadingRuntime || loadingIntro} type="submit">
-                    {verifying || loadingRuntime ? <LoaderCircle className="size-4 animate-spin" /> : null}
-                    {verifying || loadingRuntime ? "正在进入" : "开始测试"}
-                  </Button>
-                </div>
-              </form>
-
-              {errorMessage ? (
-                <div className="mt-4 rounded-[22px] border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-                  {errorMessage}
-                </div>
-              ) : null}
-
-              <div className="mt-6 rounded-[24px] border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-7 text-slate-600">
-                <div className="flex items-start gap-3">
-                  <ShieldCheck className="mt-0.5 size-4 shrink-0 text-fuchsia-500" />
-                  <p>如果你已经输入过口令，系统会在同一设备上保留进度，下次回来可以继续。</p>
-                </div>
+            <div className="mt-8 rounded-[24px] border border-white/10 bg-black/18 px-4 py-4 text-sm leading-7 text-white/60">
+              <div className="flex items-start gap-3">
+                <ShieldCheck className="mt-0.5 size-4 shrink-0 text-fuchsia-300" />
+                <p>如果你之前已经开始作答，再次进入时会自动恢复到上次离开的题目位置。</p>
               </div>
-
-              <div className="mt-6 flex items-center justify-between text-sm text-slate-500">
-                <Link className="transition hover:text-slate-900" to={`/${slug}`}>
-                  返回详情页
-                </Link>
-                <span>{quizIntro?.questionCount ?? 0} 题 · 约 {quizIntro?.durationMinutes ?? 0} 分钟</span>
-              </div>
-            </section>
-          </div>
+            </div>
+          </section>
         </div>
       </div>
     )
@@ -373,19 +456,18 @@ export function QuizTestPage() {
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(217,70,239,0.08),_transparent_20%),linear-gradient(180deg,#ffffff_0%,#fafafc_100%)]">
-      {/* Sticky Progress Bar */}
-      <div className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-black/5">
+      <div className="sticky top-0 z-50 w-full border-b border-black/5 bg-white/80 backdrop-blur-md">
         <div className="h-1.5 w-full bg-slate-100">
-          <motion.div 
+          <motion.div
+            animate={{ width: `${progressPercent}%` }}
             className="h-full bg-gradient-to-r from-fuchsia-500 via-violet-500 to-sky-500"
             initial={{ width: 0 }}
-            animate={{ width: `${progressPercent}%` }}
             transition={{ duration: 0.5 }}
           />
         </div>
-        <div className="mx-auto max-w-4xl px-6 py-3 flex items-center justify-between">
+        <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-3">
           <div className="flex items-center gap-3">
-            <Link className="p-2 hover:bg-slate-100 rounded-full transition" to={`/${slug}`}>
+            <Link className="rounded-full p-2 transition hover:bg-slate-100" to={`/${slug}`}>
               <ArrowLeft className="size-4 text-slate-500" />
             </Link>
             <span className="text-xs font-bold uppercase tracking-widest text-slate-400">
@@ -393,11 +475,12 @@ export function QuizTestPage() {
             </span>
           </div>
           <button
-            className="flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-rose-500 transition"
+            className="flex items-center gap-1.5 text-xs font-bold text-slate-400 transition hover:text-rose-500"
             onClick={handleResetCurrentProgress}
+            type="button"
           >
             <RotateCcw className="size-3" />
-            RESET
+            重置进度
           </button>
         </div>
       </div>
@@ -405,43 +488,43 @@ export function QuizTestPage() {
       <div className="mx-auto max-w-4xl px-6 py-8 md:py-12">
         <AnimatePresence mode="wait">
           <motion.div
-            key={activeIndex}
-            initial={{ x: 20, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: -20, opacity: 0 }}
+            initial={{ x: 20, opacity: 0 }}
+            key={activeIndex}
             transition={{ duration: 0.3 }}
           >
-            {draftRestored && activeIndex === 0 && (
-              <div className="mb-8 rounded-3xl border border-emerald-100 bg-emerald-50 px-5 py-4 text-sm text-emerald-700 flex items-center gap-3">
+            {draftRestored && activeIndex === 0 ? (
+              <div className="mb-8 flex items-center gap-3 rounded-3xl border border-emerald-100 bg-emerald-50 px-5 py-4 text-sm text-emerald-700">
                 <Zap className="size-4 fill-emerald-500 text-emerald-500" />
                 已恢复上次作答进度
               </div>
-            )}
+            ) : null}
 
             {currentQuestion ? (
-              <section className="rounded-[42px] border border-black/5 bg-slate-950 px-8 py-12 text-white shadow-[0_40px_120px_rgba(15,23,42,0.15)] relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-10 opacity-5">
+              <section className="relative overflow-hidden rounded-[42px] border border-black/5 bg-slate-950 px-8 py-12 text-white shadow-[0_40px_120px_rgba(15,23,42,0.15)]">
+                <div className="absolute right-0 top-0 p-10 opacity-5">
                   <span className="text-9xl font-black">{activeIndex + 1}</span>
                 </div>
-                
+
                 <div className="relative">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/10 text-[10px] font-bold tracking-widest uppercase text-white/60 mb-6">
-                    Question {activeIndex + 1}
+                  <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-white/60">
+                    第 {activeIndex + 1} 题
                   </div>
-                  <h2 className="text-3xl md:text-5xl font-bold tracking-tight leading-tight">
+                  <h2 className="text-3xl font-bold leading-tight tracking-tight md:text-5xl">
                     {currentQuestion.title}
                   </h2>
-                  <p className="mt-6 text-white/60 text-lg md:text-xl font-medium max-w-2xl">
+                  <p className="mt-6 max-w-2xl text-lg font-medium text-white/60 md:text-xl">
                     {currentQuestion.description ?? "按第一反应作答即可，不必刻意平衡答案。"}
                   </p>
 
                   <div className="mt-16 grid gap-6 md:grid-cols-2">
                     <div className="rounded-3xl border border-white/5 bg-white/5 p-6 transition-all hover:bg-white/10">
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-white/30 mb-2">左侧倾向</p>
+                      <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-white/30">左侧倾向</p>
                       <p className="text-xl font-bold text-fuchsia-300">{currentQuestion.leftLabel}</p>
                     </div>
                     <div className="rounded-3xl border border-white/5 bg-white/5 p-6 transition-all hover:bg-white/10 md:text-right">
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-white/30 mb-2">右侧倾向</p>
+                      <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-white/30">右侧倾向</p>
                       <p className="text-xl font-bold text-sky-300">{currentQuestion.rightLabel}</p>
                     </div>
                   </div>
@@ -455,24 +538,37 @@ export function QuizTestPage() {
                         <button
                           className={cn(
                             "relative group transition-all duration-300",
-                            scaleSizes[index] ?? "size-14"
+                            scaleSizes[index] ?? "size-14",
                           )}
                           key={option.id}
                           onClick={() => handleSelectAnswer(option.id)}
                           type="button"
                         >
                           <motion.div
+                            animate={
+                              selected
+                                ? {
+                                    scale: [1, 1.1, 1],
+                                    boxShadow: [
+                                      "0 0 0px rgba(255,255,255,0)",
+                                      "0 0 30px rgba(255,255,255,0.3)",
+                                      "0 0 0px rgba(255,255,255,0)",
+                                    ],
+                                  }
+                                : {}
+                            }
                             className={cn(
                               "absolute inset-0 rounded-full border-2 transition-all duration-300",
-                              selected ? `border-white scale-110 ${colorClass}` : "border-white/20 group-hover:border-white/40"
+                              selected ? `border-white scale-110 ${colorClass}` : "border-white/20 group-hover:border-white/40",
                             )}
-                            animate={selected ? { scale: [1, 1.1, 1], boxShadow: ["0 0 0px rgba(255,255,255,0)", "0 0 30px rgba(255,255,255,0.3)", "0 0 0px rgba(255,255,255,0)"] } : {}}
-                            transition={{ duration: 2, repeat: Infinity }}
+                            transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
                           />
-                          <span className={cn(
-                            "relative z-10 text-xl font-black transition-colors duration-300",
-                            selected ? "text-white" : "text-white/40 group-hover:text-white/80"
-                          )}>
+                          <span
+                            className={cn(
+                              "relative z-10 text-xl font-black transition-colors duration-300",
+                              selected ? "text-white" : "text-white/40 group-hover:text-white/80",
+                            )}
+                          >
                             {index + 1}
                           </span>
                         </button>
@@ -505,23 +601,23 @@ export function QuizTestPage() {
             type="button"
             variant="ghost"
           >
-            <ArrowLeft className="size-4 mr-2" />
-            PREV
+            <ArrowLeft className="mr-2 size-4" />
+            上一题
           </Button>
 
           {activeIndex === totalQuestions - 1 ? (
-            <Button 
-              className="h-14 rounded-full px-10 text-sm font-bold tracking-widest uppercase bg-white text-slate-950 hover:bg-white/90 transition-all hover:scale-105 shadow-[0_20px_50px_rgba(255,255,255,0.15)]" 
-              disabled={!allAnswered || submitting} 
-              onClick={() => void handleSubmit()} 
+            <Button
+              className="h-14 rounded-full bg-white px-10 text-sm font-bold tracking-widest uppercase text-slate-950 shadow-[0_20px_50px_rgba(255,255,255,0.15)] transition-all hover:scale-105 hover:bg-white/90"
+              disabled={!allAnswered || submitting}
+              onClick={() => void handleSubmit()}
               type="button"
             >
-              {submitting ? <LoaderCircle className="size-4 animate-spin mr-2" /> : <Sparkles className="size-4 mr-2" />}
-              {submitting ? "Processing" : "Reveal Results"}
+              {submitting ? <LoaderCircle className="mr-2 size-4 animate-spin" /> : <Sparkles className="mr-2 size-4" />}
+              {submitting ? "正在生成结果" : "查看结果"}
             </Button>
           ) : (
             <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-              {answeredCount}/{totalQuestions} Answered
+              已完成 {answeredCount}/{totalQuestions}
             </div>
           )}
         </section>

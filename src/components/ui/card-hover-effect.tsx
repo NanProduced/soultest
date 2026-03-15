@@ -13,6 +13,7 @@ export const HoverEffect = ({
     link: string;
     icon?: React.ReactNode;
     extra?: React.ReactNode;
+    themeClass?: string;
   }[];
   className?: string;
 }) => {
@@ -27,7 +28,7 @@ export const HoverEffect = ({
     >
       {items.map((item, idx) => (
         <div
-          key={item?.link}
+          key={item?.title + idx}
           className="relative group  block p-2 h-full w-full"
           onMouseEnter={() => setHoveredIndex(idx)}
           onMouseLeave={() => setHoveredIndex(null)}
@@ -54,8 +55,8 @@ export const HoverEffect = ({
               />
             )}
           </AnimatePresence>
-          <Card>
-            <div className="flex flex-col h-full">
+          <Card className={item.themeClass}>
+            <div className="flex flex-col h-full relative z-50">
                 <div className="flex items-center justify-between">
                     {item.icon}
                     {item.extra}

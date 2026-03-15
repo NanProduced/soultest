@@ -1,11 +1,11 @@
-"use client";
-import React, { useState, useEffect } from "react";
+﻿"use client";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, BrainCircuit, Fingerprint, Database } from "lucide-react";
 
 const loadingStates = [
   {
-    text: "正在解析你的灵魂指纹...",
+    text: "正在整理你的作答结果...",
     icon: <Fingerprint className="size-6 text-fuchsia-500" />,
   },
   {
@@ -13,7 +13,7 @@ const loadingStates = [
     icon: <BrainCircuit className="size-6 text-violet-500" />,
   },
   {
-    text: "生成专属成长建议...",
+    text: "生成完整结果页内容...",
     icon: <Sparkles className="size-6 text-sky-500" />,
   },
   {
@@ -85,3 +85,4 @@ export const ResultLoadingRitual = ({ onComplete }: { onComplete?: () => void })
     </div>
   );
 };
+

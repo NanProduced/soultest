@@ -2,6 +2,8 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
+@import "@fontsource/noto-serif-sc/chinese-simplified-400.css";
+@import "@fontsource/noto-serif-sc/chinese-simplified-700.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -39,6 +41,7 @@
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.708 0 0);
     --font-display: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+    --font-serif: "Noto Serif SC", "LXGW WenKai", "Source Han Serif SC", "Charter", "Bitstream Charter", "Sitka Text", Cambria, serif;
 }
 
 .dark {
@@ -157,10 +160,22 @@
   ::selection {
     background: rgba(217, 70, 239, 0.16);
   }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
 
 @layer utilities {
   .font-display {
     font-family: var(--font-display);
+  }
+  .font-serif {
+    font-family: var(--font-serif);
   }
 }

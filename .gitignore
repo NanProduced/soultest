@@ -30,3 +30,4 @@ dist-ssr
 # local AI document, do not commit
 .serena/
 .gemini/
+.claude/

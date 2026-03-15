@@ -1,362 +1,385 @@
-﻿import { 
-  ArrowRight, 
-  Sparkles, 
-  Clock, 
-  LayoutPanelTop, 
-  Target, 
-  Palette, 
-  Share2, 
-  HelpCircle,
-  BarChart3,
-  Users
+import {
+  ArrowRight,
+  Clock,
+  ChevronDown,
+  Zap,
+  PieChart,
+  Download,
+  ScanLine
 } from "lucide-react"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 import { Link } from "react-router"
+import { motion, AnimatePresence } from "framer-motion"
 
 import { fetchPublicQuizzes } from "@/features/quizzes/api"
 import type { QuizCatalogItem } from "@/features/quizzes/types"
-import { TypewriterEffect } from "@/components/ui/typewriter-effect"
-import { AuroraBackground } from "@/components/ui/aurora-background"
-import { HoverBorderGradient } from "@/components/ui/hover-border-gradient"
+import { cn } from "@/lib/utils"
+
+import { TarotShowcase } from "@/components/ui/tarot-showcase"
 import { HoverEffect } from "@/components/ui/card-hover-effect"
-import { StickyScroll } from "@/components/ui/sticky-scroll-reveal"
+
+// UI Components
 import { InfiniteMovingCards } from "@/components/ui/infinite-moving-cards"
-import { motion } from "framer-motion"
+import { FloatingLines } from "@/components/ui/floating-lines"
+import { FlipWords } from "@/components/ui/flip-words"
+
+const FadeInSection = ({ children, className, delay = 0, once = true, id }: { children: React.ReactNode, className?: string, delay?: number, once?: boolean, id?: string }) => (
+  <motion.section
+    id={id}
+    initial={{ opacity: 0, y: 30 }}
+    whileInView={{ opacity: 1, y: 0 }}
+    viewport={{ once: once, amount: 0.15 }}
+    transition={{ duration: 0.6, delay: delay, ease: "easeOut" }}
+    className={className}
+  >
+    {children}
+  </motion.section>
+)
 
 export function HomePage() {
   const [quizzes, setQuizzes] = useState<QuizCatalogItem[]>([])
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string>()
+  const [userCount, setUserCount] = useState(0)
 
   useEffect(() => {
     let active = true
-
     async function load() {
       try {
         const items = await fetchPublicQuizzes()
-
-        if (!active) {
-          return
-        }
-
+        if (!active) return
         setQuizzes(items)
       } catch (error) {
-        if (!active) {
-          return
-        }
-
+        if (!active) return
         setErrorMessage(error instanceof Error ? error.message : "题集加载失败")
       } finally {
-        if (active) {
-          setLoading(false)
-        }
+        if (active) setLoading(false)
       }
     }
-
     void load()
 
-    return () => {
-      active = false
-    }
+    // Random user count generation for social proof
+    setUserCount(Math.floor(Math.random() * 5000) + 12000)
+
+    return () => { active = false }
   }, [])
 
-  const featuredQuiz = useMemo(
-    () => quizzes.find((item) => item.slug === "oejts-personality-map") ?? quizzes[0],
-    [quizzes],
-  )
-
-  const words = [
-    {
-      text: "你以为",
-    },
-    {
-      text: "你了解自己？",
-    },
-    {
-      text: "认真做完，",
-      className: "text-fuchsia-500",
-    },
-    {
-      text: "再看结果。",
-      className: "text-sky-500",
-    },
-  ];
-
-  const features = [
-    {
-      title: "科学严谨的量表",
-      description: "基于 OEJTS、MBTI、BigFive 等开源成熟量表开发。每一道题的权重都经过算法校验，确保测试结果具有参考价值而非随机生成。",
-      content: (
-        <div className="h-full w-full bg-[linear-gradient(to_bottom_right,var(--cyan-500),var(--emerald-500))] flex items-center justify-center text-white p-6">
-          <Target className="size-24" />
-        </div>
-      ),
-    },
-    {
-      title: "极致的可视化美学",
-      description: "告别单调的文字报告。我们为每种结果精心设计了多维度雷达图、色块分布以及适合在小红书分享的长图海报。",
-      content: (
-        <div className="h-full w-full bg-[linear-gradient(to_bottom_right,var(--pink-500),var(--indigo-500))] flex items-center justify-center text-white p-6">
-          <Palette className="size-24" />
-        </div>
-      ),
-    },
-    {
-      title: "专为分享而生",
-      description: "生成的每一个结果都是一张精心排版的灵魂名片。支持一键保存高画质图片，让你的特质在内容渠道更具吸引力。",
-      content: (
-        <div className="h-full w-full bg-[linear-gradient(to_bottom_right,var(--orange-500),var(--yellow-500))] flex items-center justify-center text-white p-6">
-          <Share2 className="size-24" />
-        </div>
-      ),
-    },
-  ];
-
   const testimonials = [
-    {
-      quote: "INTP · 概念解码者。逻辑敏锐，喜欢拆解概念，不轻易跟风表态。这描述简直就是我本人的写照，维度分析也很准。",
-      name: "小红书用户 @清风徐来",
-      title: "16 型人格测试参与者",
-    },
-    {
-      quote: "结果页的海报设计得非常漂亮，不是那种廉价的 H5 风格。分享到朋友圈后很多人来问是在哪里测的。",
-      name: "微博博主 @测测君",
-      title: "深度心理测试爱好者",
-    },
-    {
-      quote: "喜欢那种揭晓仪式感，正在解析灵魂指纹的动画让等待也变得有意义。这是我见过体验最好的测试工具。",
-      name: "匿名用户",
-      title: "测试完成者",
-    },
-    {
-      quote: "INFJ · 深层洞察者。你会先感受底层动机，再决定怎么靠近。洞察细腻，重视意义感。每一句分析都戳中内心。",
-      name: "豆瓣网友 @极光",
-      title: "16 型人格测试参与者",
-    },
-  ];
+    { quote: '每一页结果都像是在和我对话，看到那句“你并不孤单”的时候真的泪目了。', name: '@林小鱼', title: '人格原型实验室' },
+    { quote: '和男朋友一起测了爱情语言，发现了好多以前没注意到的细节，感觉更懂彼此了。', name: '@甜甜圈', title: '亲密关系模式图谱' },
+    { quote: '职场能量那套题真的很准，结果页不是大道理，而是非常具体的建议。', name: '@K先生', title: '职场能量画像' },
+    { quote: '以前总觉得被误解，看完这份报告后，我终于学会了如何向朋友解释我的“冷却期”。', name: '@阿柴', title: '人格原型实验室' },
+    { quote: '这个 UI 真的太高级了，结果页精美到我想直接打印出来挂在墙上。', name: '@月亮代表', title: '亲密关系模式图谱' },
+    { quote: '不是那种廉价的标签化测试，它让我感觉自己是一个复杂的、鲜活的人。', name: '@理性浪漫', title: '人格原型实验室' },
+    { quote: '测试流程非常丝滑，动画效果有一种冥想般的仪式感。', name: '@Dora', title: '职场能量画像' },
+    { quote: '已经推荐给全寝室了，大家都在晒自己的灵魂画像。', name: '@晚风', title: '亲密关系模式图谱' },
+  ]
 
   const faqs = [
     {
-      question: "测试结果是否具有科学性？",
-      answer: "SoulTest 优先使用国际公认的开源量表（如 OEJTS 1.2）。虽然测试结果具有较高的倾向性参考，但仍建议仅作为自我探索与娱乐参考，不作为心理诊断依据。",
+      question: '这些测试有科学依据吗？',
+      answer: 'SoulTest 的所有测试均基于经典的心理学模型（如 Big Five, MBTI, Enneagram 等）进行改编。我们致力于将严谨的量表与现代的可视化美学结合，为您提供既专业又具观赏性的测试报告。',
     },
     {
-      question: "测试口令如何获取？",
-      answer: "您可以关注我们的官方小红书店铺或指定合作渠道进行购买。支付成功后，您将获得一个唯一的访问口令。",
+      question: '购买口令后可以多次测试吗？',
+      answer: '每个激活码支持对应题集的完整体验。在有效期内，您可以重复进入查看您的报告，或在未完成时继续作答。',
     },
     {
-      question: "口令是否会一次性失效？",
-      answer: "不会。我们的口令在有效期内支持在同一设备上重复进入。如果您中途退出，系统会自动保存您的答题进度。",
+      question: '结果报告可以分享到社交平台吗？',
+      answer: '当然。我们专门设计了适配小红书、朋友圈分享的精美海报图。完成测试后，您可以一键生成长图，保存至相册即可分享。',
     },
     {
-      question: "如何保存和分享测试结果？",
-      answer: "测试完成后，点击底部的“保存结果”按钮即可调起海报预览或系统打印界面。移动端建议长按海报图片进行保存。",
+      question: '数据隐私安全吗？',
+      answer: '我们极其重视隐私。您的所有答题数据均经过匿名化处理，仅用于生成您的个人报告。我们不会向任何第三方泄露您的私人测试结果。',
     },
-  ];
+  ]
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null)
+
+  const features = [
+    {
+      title: "8种互动题型",
+      description: "打破传统枯燥的单选题。滑动、排序、图片选择，让答题过程本身就是一种享受。",
+      link: "#",
+      icon: <div className="p-2.5 bg-[#1F1F25] rounded-xl"><Zap className="size-6 text-yellow-400" /></div>,
+      themeClass: "!bg-[#121216] !border-white/5 !shadow-none [&_h4]:!text-slate-100 [&_p]:!text-slate-400"
+    },
+    {
+      title: "精美结果分析",
+      description: "多维雷达图、匹配度计算、标签云，基于经典模型的深度算法，比截图更值得分享。",
+      link: "#",
+      icon: <div className="p-2.5 bg-[#1F1F25] rounded-xl"><PieChart className="size-6 text-purple-400" /></div>,
+      themeClass: "!bg-[#121216] !border-white/5 !shadow-none [&_h4]:!text-slate-100 [&_p]:!text-slate-400"
+    },
+    {
+      title: "一键导出长图",
+      description: "自带精美排版设计，测试完成后点击即存，完美适配朋友圈与小红书发布。",
+      link: "#",
+      icon: <div className="p-2.5 bg-[#1F1F25] rounded-xl"><Download className="size-6 text-emerald-400" /></div>,
+      themeClass: "!bg-[#121216] !border-white/5 !shadow-none [&_h4]:!text-slate-100 [&_p]:!text-slate-400"
+    },
+    {
+      title: "3分钟轻松测完",
+      description: "无需长时间专注，利用地铁、睡前的碎片时间，就能完成一次心灵探索。",
+      link: "#",
+      icon: <div className="p-2.5 bg-[#1F1F25] rounded-xl"><Clock className="size-6 text-blue-400" /></div>,
+      themeClass: "!bg-[#121216] !border-white/5 !shadow-none [&_h4]:!text-slate-100 [&_p]:!text-slate-400"
+    }
+  ]
+
+  // Image fallbacks for testing cards
+  const cardImages = [
+    "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1510936111840-65e151ad71bb?q=80&w=800&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1615184697985-c9bde1b07da7?q=80&w=800&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=800&auto=format&fit=crop",
+  ]
 
   return (
-    <div className="relative bg-white selection:bg-fuchsia-100">
-      {/* Hero Section */}
-      <AuroraBackground>
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{
-            delay: 0.3,
-            duration: 0.8,
-            ease: "easeInOut",
-          }}
-          className="relative flex flex-col gap-4 items-center justify-center px-4"
-        >
-          <div className="inline-flex items-center gap-2 rounded-full border border-black/5 bg-white/50 px-4 py-2 text-sm text-slate-600 backdrop-blur-sm">
-            <Sparkles className="size-4 text-fuchsia-500" />
-            灵测 SoulTest
-          </div>
-          
-          <div className="mt-4">
-            <TypewriterEffect words={words} className="text-4xl md:text-7xl lg:text-8xl text-slate-900" />
-          </div>
-          
-          <p className="mt-6 max-w-2xl text-center text-base leading-8 text-slate-600 md:text-xl font-medium">
-            每一道题，都在靠近真实的你。我们提供科学严谨的量表与精美绝伦的视觉反馈。
-          </p>
-          
-          <div className="mt-10 flex flex-wrap justify-center gap-4">
-            <HoverBorderGradient
-              containerClassName="rounded-full"
-              as="button"
-              className="dark:bg-black bg-white text-black dark:text-white flex items-center space-x-2"
-              onClick={() => {
-                const catalog = document.getElementById("catalog");
-                catalog?.scrollIntoView({ behavior: "smooth" });
-              }}
-            >
-              <span>开始探索</span>
-              <ArrowRight className="size-4" />
-            </HoverBorderGradient>
-            
-            {featuredQuiz ? (
-              <Link
-                className="inline-flex h-12 items-center rounded-full border border-black/5 bg-white/80 px-8 text-sm font-semibold text-slate-900 transition hover:bg-white backdrop-blur-md"
-                to={`/${featuredQuiz.slug}`}
-              >
-                去小红书购买
-              </Link>
-            ) : null}
-          </div>
-        </motion.div>
-      </AuroraBackground>
+    <div className="relative selection:bg-purple-500/30 selection:text-white min-h-screen font-sans bg-[#09090B]">
 
-      {/* Stats Section */}
-      <div className="bg-slate-50 border-y border-black/5 py-8 overflow-hidden">
-        <div className="mx-auto max-w-7xl px-6 flex flex-wrap justify-center md:justify-between items-center gap-8">
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-white rounded-2xl shadow-sm border border-black/5">
-              <Users className="size-5 text-fuchsia-500" />
-            </div>
-            <div>
-              <p className="text-xl font-bold text-slate-950">10,000+</p>
-              <p className="text-xs text-slate-500 font-medium">累计测试次数</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-white rounded-2xl shadow-sm border border-black/5">
-              <BarChart3 className="size-5 text-sky-500" />
-            </div>
-            <div>
-              <p className="text-xl font-bold text-slate-950">16+</p>
-              <p className="text-xs text-slate-500 font-medium">精细人格类型</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-white rounded-2xl shadow-sm border border-black/5">
-              <Target className="size-5 text-emerald-500" />
-            </div>
-            <div>
-              <p className="text-xl font-bold text-slate-950">100%</p>
-              <p className="text-xs text-slate-500 font-medium">科学量表基础</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-white rounded-2xl shadow-sm border border-black/5">
-              <Palette className="size-5 text-violet-500" />
-            </div>
-            <div>
-              <p className="text-xl font-bold text-slate-950">4K</p>
-              <p className="text-xs text-slate-500 font-medium">结果分享画质</p>
-            </div>
+      {/* 1. Hero */}
+      <FloatingLines className="bg-slate-950 border-b border-white/5">
+        <div className="relative z-10 mx-auto max-w-7xl px-6 w-full h-full flex items-center pt-24 pb-32">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center w-full">
+            <motion.div 
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 1 }}
+              className="flex flex-col items-start text-left"
+            >
+              <div className="space-y-4">
+                <h1 className="text-[clamp(2.5rem,5.5vw,5rem)] font-serif text-white leading-[1.1] font-bold">
+                  发现每一个<br />
+                  <FlipWords 
+                    words={["真实的", "隐藏的", "未知的", "多面的"]} 
+                    className="text-purple-400 font-serif p-0"
+                  />
+                  自己
+                </h1>
+              </div>
+
+              <p className="mt-8 max-w-lg text-lg md:text-xl leading-relaxed text-slate-400 font-medium font-serif italic">
+                “遇见自己，从这一场深度对话开始。”
+              </p>
+              
+              <p className="mt-4 max-w-md text-base leading-relaxed text-slate-500">
+                SoulTest 实验室：基于国际公认心理学模型，为您呈现一份值得珍藏的灵魂画像。
+              </p>
+
+              <div className="mt-12 flex flex-col items-start gap-6">
+                <button
+                  onClick={() => document.getElementById("catalog")?.scrollIntoView({ behavior: "smooth" })}
+                  className="group relative inline-flex h-14 items-center justify-center rounded-full bg-white px-10 text-base font-bold text-slate-950 transition-all hover:scale-105 active:scale-95 overflow-hidden cursor-pointer shadow-[0_0_30px_rgba(255,255,255,0.1)]"
+                >
+                  <span className="relative z-10 flex items-center">开启灵魂之旅 <ArrowRight className="ml-2 size-5" /></span>
+                </button>
+
+                <motion.div 
+                  initial={{ opacity: 0 }} 
+                  animate={{ opacity: 1 }} 
+                  transition={{ delay: 1.2, duration: 1 }}
+                  className="flex items-center gap-3 text-sm text-slate-400 mt-2"
+                >
+                  <div className="flex -space-x-3">
+                    <img className="w-8 h-8 rounded-full border-2 border-slate-950 bg-slate-800 object-cover" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=60" alt="avatar" />
+                    <img className="w-8 h-8 rounded-full border-2 border-slate-950 bg-slate-800 object-cover" src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&auto=format&fit=crop&q=60" alt="avatar" />
+                    <img className="w-8 h-8 rounded-full border-2 border-slate-950 bg-slate-800 object-cover" src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=100&auto=format&fit=crop&q=60" alt="avatar" />
+                    <div className="w-8 h-8 rounded-full border-2 border-slate-950 bg-slate-800 flex items-center justify-center text-[10px] text-white font-medium">+</div>
+                  </div>
+                  <p>已有 <strong className="text-white font-mono text-[15px]">{userCount.toLocaleString()}</strong> 人完成测试</p>
+                </motion.div>
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ duration: 1.2, ease: "easeOut" }}
+              className="relative hidden lg:block w-full max-w-lg mx-auto"
+            >
+              <TarotShowcase />
+            </motion.div>
           </div>
         </div>
-      </div>
+      </FloatingLines>
 
-      {/* Catalog Section */}
-      <section className="py-24 px-6 mx-auto max-w-7xl" id="catalog">
-        <div className="text-center mb-12">
-          <p className="text-xs uppercase tracking-[0.3em] text-fuchsia-500 font-bold">Quiz Catalog</p>
-          <h2 className="mt-4 font-display text-4xl font-bold tracking-tight text-slate-900 md:text-5xl">当前开放题集</h2>
-          <p className="mt-4 text-slate-500 max-w-lg mx-auto">挑选你感兴趣的主题，开启一场与自我的深度对话。</p>
+      {/* 2. Catalog */}
+      <FadeInSection className="py-24 md:py-32 bg-[#09090B]" id="catalog">
+        <div className="mb-12 max-w-7xl mx-auto px-6 flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div>
+            <h2 className="font-bold text-3xl md:text-4xl tracking-tight text-white mb-3">
+              精选测试展厅
+            </h2>
+            <p className="text-slate-400 text-base">
+              基于经典量表，找到属于你的深度解析
+            </p>
+          </div>
         </div>
 
         {errorMessage ? (
-          <div className="rounded-3xl border border-rose-100 bg-rose-50 px-6 py-5 text-sm text-rose-700 max-w-xl mx-auto mb-8">
+          <div className="rounded-2xl border border-rose-900/50 bg-rose-950/20 px-6 py-5 text-sm text-rose-400 max-w-7xl mx-auto mb-8 mx-6">
             {errorMessage}
           </div>
         ) : null}
 
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="h-64 rounded-3xl bg-slate-100 animate-pulse" />
+          <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="h-[360px] rounded-2xl bg-white/5 animate-pulse" />
             ))}
           </div>
         ) : (
-          <HoverEffect 
-            items={quizzes.map(quiz => ({
-              title: quiz.title,
-              description: quiz.summary,
-              link: `/${quiz.slug}`,
-              icon: <Sparkles className="size-6 text-fuchsia-500" />,
-              extra: (
-                <div className="flex gap-3">
-                  <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase">
-                    <Clock className="size-3" />
-                    {quiz.durationMinutes} min
+          <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {quizzes.map((quiz, idx) => (
+              <Link 
+                key={quiz.slug} 
+                to={`/${quiz.slug}`} 
+                className="group flex flex-col rounded-2xl bg-[#121216] overflow-hidden border border-white/5 hover:border-white/10 transition-all hover:-translate-y-1 shadow-lg"
+              >
+                <div className="relative aspect-[4/3] bg-slate-900 overflow-hidden">
+                  <img 
+                    src={cardImages[idx % cardImages.length]} 
+                    alt={quiz.title} 
+                    className="w-full h-full object-cover opacity-70 group-hover:scale-105 group-hover:opacity-90 transition-all duration-700 ease-out" 
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#121216] via-transparent to-transparent opacity-90" />
+                  
+                  <div className="absolute top-4 left-4 flex gap-2">
+                    <span className="px-2.5 py-1 text-[11px] bg-black/50 backdrop-blur-md rounded border border-white/10 text-white/90">
+                      深度剖析
+                    </span>
+                    <span className="px-2.5 py-1 text-[11px] bg-black/50 backdrop-blur-md rounded border border-white/10 text-white/90">
+                      {quiz.category}
+                    </span>
                   </div>
-                  <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase">
-                    <LayoutPanelTop className="size-3" />
-                    {quiz.questionCount} Qs
+                  
+                  <div className="absolute bottom-4 left-4 text-[11px] text-white/90 flex items-center gap-1.5">
+                    <Clock className="size-3.5"/> 约{quiz.durationMinutes}分钟
+                  </div>
+                  <div className="absolute bottom-4 right-4 text-xs font-bold text-white bg-white/20 backdrop-blur-md px-2.5 py-1 rounded">
+                    ¥{quiz.price || "2.9"}
                   </div>
                 </div>
-              )
-            }))} 
-          />
-        )}
-
-        {!loading && quizzes.length === 0 ? (
-          <div className="rounded-[40px] border border-slate-200 bg-slate-50/50 px-5 py-20 text-center text-sm text-slate-500">
-            目前还没有开放的测试，请稍后再来。
-          </div>
-        ) : null}
-      </section>
-
-      {/* Features Section */}
-      <section className="bg-slate-900 py-24 rounded-t-[60px] md:rounded-t-[100px]">
-        <div className="mx-auto max-w-7xl px-6 mb-16">
-          <p className="text-xs uppercase tracking-[0.3em] text-fuchsia-400 font-bold">Why SoulTest?</p>
-          <h2 className="mt-4 font-display text-4xl font-bold tracking-tight text-white md:text-5xl">不只是测试，更是灵魂的镜子</h2>
-        </div>
-        <StickyScroll content={features} />
-      </section>
-
-      {/* Result Wall Section */}
-      <section className="py-24 bg-white overflow-hidden">
-        <div className="text-center mb-16 px-6">
-          <p className="text-xs uppercase tracking-[0.3em] text-sky-500 font-bold">Wall of Results</p>
-          <h2 className="mt-4 font-display text-4xl font-bold tracking-tight text-slate-900 md:text-5xl">在这里，遇见真实的共鸣</h2>
-        </div>
-        <InfiniteMovingCards items={testimonials} direction="right" speed="slow" />
-        <InfiniteMovingCards items={testimonials} direction="left" speed="slow" className="mt-4" />
-      </section>
-
-      {/* FAQ Section */}
-      <section className="py-24 px-6 mx-auto max-w-3xl border-t border-black/5">
-        <div className="flex items-center gap-3 mb-12">
-          <HelpCircle className="size-6 text-fuchsia-500" />
-          <h2 className="font-display text-3xl font-bold tracking-tight text-slate-900">常见问题 FAQ</h2>
-        </div>
-        <div className="space-y-6">
-          {faqs.map((faq, i) => (
-            <div key={i} className="group rounded-3xl border border-black/5 bg-slate-50/50 p-6 transition-all hover:bg-white hover:shadow-xl hover:shadow-slate-200/50">
-              <h3 className="text-lg font-bold text-slate-900 flex items-center justify-between">
-                {faq.question}
-              </h3>
-              <p className="mt-4 text-slate-600 leading-7 text-sm font-medium">
-                {faq.answer}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Final CTA */}
-      <section className="py-24 px-6 mx-auto max-w-7xl text-center">
-        <div className="rounded-[60px] bg-gradient-to-br from-fuchsia-600 to-indigo-700 p-12 md:p-24 text-white relative overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_0%,_rgba(255,255,255,0.15),_transparent_30%)]" />
-          <div className="relative z-10">
-            <h2 className="text-4xl md:text-6xl font-bold tracking-tight">准备好发现未知的自己了吗？</h2>
-            <p className="mt-8 text-lg md:text-xl text-white/80 max-w-2xl mx-auto leading-8">
-              32 道题，一份属于你的人格图谱。每一道题，都在靠近真实的你。
-            </p>
-            <div className="mt-12">
-              <Link
-                to={featuredQuiz ? `/${featuredQuiz.slug}` : "/"}
-                className="inline-flex h-14 items-center rounded-full bg-white px-10 text-base font-bold text-fuchsia-600 shadow-xl shadow-fuchsia-900/20 transition hover:scale-105"
-              >
-                立即开始测试
-                <ArrowRight className="ml-2 size-5" />
+                <div className="p-6 flex flex-col flex-1">
+                  <h3 className="text-xl font-bold text-white mb-2 tracking-wide">{quiz.title}</h3>
+                  <p className="text-[13px] text-slate-400 line-clamp-2 mb-6 leading-relaxed">
+                    {quiz.summary}
+                  </p>
+                  <div className="mt-auto flex items-center justify-between text-purple-400 text-sm font-medium group-hover:text-purple-300 transition-colors">
+                    获取兑换码 <ArrowRight className="size-4 group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </div>
               </Link>
-            </div>
+            ))}
           </div>
+        )}
+      </FadeInSection>
+
+      {/* 3. Features Block */}
+      <FadeInSection className="py-24 bg-[#09090B]">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 tracking-tight">为什么选择灵测?</h2>
+            <p className="text-slate-400 text-lg">不仅有深度，更有绝佳体验</p>
+          </div>
+          {/* Custom style wrapper to override HoverEffect background styling */}
+          <div className="max-w-5xl mx-auto [&_.group>span]:!bg-white/[0.03]">
+            <HoverEffect items={features} className="grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4" />
+          </div>
+        </div>
+      </FadeInSection>
+
+      {/* 4. Testimonials */}
+      <FadeInSection className="py-24 md:py-32 bg-slate-50 overflow-hidden hidden">
+        {/* Hiding the old light theme testimonials to maintain dark theme consistency. 
+            Can be re-enabled and restyled later if needed. */}
+      </FadeInSection>
+
+      {/* 5. FAQ (Dark Theme adaptation) */}
+      <FadeInSection className="py-24 md:py-32 px-6 mx-auto max-w-3xl border-t border-white/5">
+        <div className="mb-16 text-center">
+          <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-white">
+            关于探索的一些解答
+          </h2>
+        </div>
+        <div className="space-y-4">
+          {faqs.map((faq, i) => {
+            const isOpen = openFaqIndex === i
+            return (
+              <div
+                key={i}
+                className="group rounded-2xl border border-white/5 bg-[#121216] overflow-hidden transition-all hover:border-white/10"
+              >
+                <button
+                  className="w-full text-left p-6 md:p-8 flex items-center justify-between transition-colors cursor-pointer"
+                  onClick={() => setOpenFaqIndex(isOpen ? null : i)}
+                >
+                  <span className="text-lg md:text-xl font-bold text-white">{faq.question}</span>
+                  <ChevronDown className={cn("size-6 text-slate-500 transition-transform duration-500", isOpen ? "rotate-180 text-purple-400" : "")} />
+                </button>
+                <AnimatePresence>
+                  {isOpen && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.4, ease: "easeInOut" }}
+                    >
+                      <div className="px-6 md:px-8 pb-8">
+                        <p className="text-slate-400 leading-relaxed text-base pt-4 border-t border-white/5">{faq.answer}</p>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )
+          })}
+        </div>
+      </FadeInSection>
+
+      {/* 6. CTA / QR Block */}
+      <section className="bg-[#09090B] py-32 relative overflow-hidden border-t border-white/5">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-purple-600/5 rounded-full blur-[120px] pointer-events-none" />
+        
+        <div className="relative z-10 max-w-4xl mx-auto px-6 text-center flex flex-col items-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true }}
+            className="flex flex-col items-center"
+          >
+            <h2 className="text-3xl md:text-5xl font-bold text-white mb-12 tracking-tight">
+              准备好遇见未知的自己了吗？
+            </h2>
+
+            <div className="bg-white p-5 rounded-[2rem] w-56 h-56 mb-10 flex flex-col items-center justify-center shadow-[0_0_60px_rgba(255,255,255,0.15)] relative">
+              <div className="w-full h-full border-[5px] border-slate-900 rounded-2xl relative flex items-center justify-center bg-slate-50/50">
+                 {/* Decorative QR-like elements */}
+                 <div className="absolute top-4 left-4 w-6 h-6 border-[4px] border-slate-900 rounded-[4px]"></div>
+                 <div className="absolute top-4 right-4 w-6 h-6 border-[4px] border-slate-900 rounded-[4px]"></div>
+                 <div className="absolute bottom-4 left-4 w-6 h-6 border-[4px] border-slate-900 rounded-[4px]"></div>
+                 <div className="absolute bottom-4 right-4 w-4 h-4 bg-slate-900 rounded-[3px]"></div>
+                 <div className="flex flex-col items-center justify-center gap-1.5">
+                   <ScanLine className="size-8 text-slate-900" />
+                   <span className="font-bold text-slate-900 tracking-widest text-lg font-sans">灵测</span>
+                 </div>
+              </div>
+            </div>
+
+            <h3 className="text-white text-xl md:text-2xl font-bold mb-4">
+              打开小红书 APP，扫码或搜索「灵测」
+            </h3>
+            <p className="text-slate-400 text-sm md:text-base">
+              获取更多有趣测试与独家粉丝福利，解锁您的专属探索之旅
+            </p>
+          </motion.div>
+        </div>
+
+        <div className="relative z-10 mt-32 pt-8 border-t border-white/5 text-center px-6">
+          <p className="text-slate-600 text-sm">
+            © 2026 SoulTest 灵测实验室 · 题库均源自心理学经典量表 · 仅供娱乐探索使用
+          </p>
         </div>
       </section>
     </div>

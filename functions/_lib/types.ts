@@ -49,6 +49,18 @@ export interface QuizResultDefinition {
   dimensionKey?: string
   subtitle?: string
   nickname?: string
+  typeCode?: string
+  alias?: string
+  keywords?: string[]
+  firstImpression?: string
+  overview?: string
+  strengthSummary?: string
+  blindSpotSummary?: string
+  relationshipStyle?: string
+  workStyle?: string
+  stressMode?: string
+  growthAdvice?: string
+  posterTags?: string[]
   highlights?: string[]
   strengths?: string[]
   blindSpots?: string[]
