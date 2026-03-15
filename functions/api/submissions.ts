@@ -1,5 +1,5 @@
-﻿import { errorResponse, getAccessToken, json, readJson } from "../_lib/http"
-import { getAccessSession, recordSubmission } from "../_lib/repository"
+import { errorResponse, getAccessToken, json, readJson } from "../_lib/http"
+import { getAccessSession, recordSubmission, SubmissionValidationError } from "../_lib/repository"
 import type { CloudflareEnv, SubmissionInput } from "../_lib/types"
 
 export const onRequestPost: PagesFunction<CloudflareEnv> = async ({ env, request }) => {
@@ -25,16 +25,26 @@ export const onRequestPost: PagesFunction<CloudflareEnv> = async ({ env, request
     return errorResponse(403, "quiz_not_allowed", "当前访问凭证不包含该题集权限")
   }
 
-  const submission = await recordSubmission(payload, session, env)
+  try {
+    const submission = await recordSubmission(payload, session, env)
 
-  return json({
-    submissionId: submission.submissionId,
-    resultKey: submission.resultKey,
-    resultTitle: submission.resultTitle,
-    resultSummary: submission.resultSummary,
-    scoreBreakdown: submission.scoreBreakdown,
-    storedInD1: submission.storedInD1,
-    redirectTo: `/${payload.slug}/result/${submission.submissionId}`,
-    source: env.API_STUB_MODE,
-  })
+    return json({
+      submissionId: submission.submissionId,
+      resultKey: submission.resultKey,
+      resultTitle: submission.resultTitle,
+      resultSummary: submission.resultSummary,
+      scoreBreakdown: submission.scoreBreakdown,
+      storedInD1: submission.storedInD1,
+      redirectTo: `/${payload.slug}/result/${submission.submissionId}`,
+      source: env.API_STUB_MODE,
+    })
+  } catch (error) {
+    if (error instanceof SubmissionValidationError) {
+      return errorResponse(400, "invalid_submission_answers", error.message, error.details)
+    }
+
+    throw error
+  }
 }
+
+

@@ -5,7 +5,9 @@ import {
   Zap,
   PieChart,
   Download,
-  ScanLine
+  ScanLine,
+  Smartphone,
+  ShieldCheck
 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { Link } from "react-router"
@@ -16,13 +18,13 @@ import type { QuizCatalogItem } from "@/features/quizzes/types"
 import { cn } from "@/lib/utils"
 
 import { TarotShowcase } from "@/components/ui/tarot-showcase"
-import { HoverEffect } from "@/components/ui/card-hover-effect"
+import MagicBento from "@/components/MagicBento"
 
 // UI Components
-import { InfiniteMovingCards } from "@/components/ui/infinite-moving-cards"
 import { FloatingLines } from "@/components/ui/floating-lines"
 import { FlipWords } from "@/components/ui/flip-words"
 
+import { Sparkles } from "lucide-react"
 const FadeInSection = ({ children, className, delay = 0, once = true, id }: { children: React.ReactNode, className?: string, delay?: number, once?: boolean, id?: string }) => (
   <motion.section
     id={id}
@@ -64,17 +66,6 @@ export function HomePage() {
     return () => { active = false }
   }, [])
 
-  const testimonials = [
-    { quote: '每一页结果都像是在和我对话，看到那句“你并不孤单”的时候真的泪目了。', name: '@林小鱼', title: '人格原型实验室' },
-    { quote: '和男朋友一起测了爱情语言，发现了好多以前没注意到的细节，感觉更懂彼此了。', name: '@甜甜圈', title: '亲密关系模式图谱' },
-    { quote: '职场能量那套题真的很准，结果页不是大道理，而是非常具体的建议。', name: '@K先生', title: '职场能量画像' },
-    { quote: '以前总觉得被误解，看完这份报告后，我终于学会了如何向朋友解释我的“冷却期”。', name: '@阿柴', title: '人格原型实验室' },
-    { quote: '这个 UI 真的太高级了，结果页精美到我想直接打印出来挂在墙上。', name: '@月亮代表', title: '亲密关系模式图谱' },
-    { quote: '不是那种廉价的标签化测试，它让我感觉自己是一个复杂的、鲜活的人。', name: '@理性浪漫', title: '人格原型实验室' },
-    { quote: '测试流程非常丝滑，动画效果有一种冥想般的仪式感。', name: '@Dora', title: '职场能量画像' },
-    { quote: '已经推荐给全寝室了，大家都在晒自己的灵魂画像。', name: '@晚风', title: '亲密关系模式图谱' },
-  ]
-
   const faqs = [
     {
       question: '这些测试有科学依据吗？',
@@ -99,30 +90,44 @@ export function HomePage() {
     {
       title: "8种互动题型",
       description: "打破传统枯燥的单选题。滑动、排序、图片选择，让答题过程本身就是一种享受。",
-      link: "#",
-      icon: <div className="p-2.5 bg-[#1F1F25] rounded-xl"><Zap className="size-6 text-yellow-400" /></div>,
-      themeClass: "!bg-[#121216] !border-white/5 !shadow-none [&_h4]:!text-slate-100 [&_p]:!text-slate-400"
+      label: "体验",
+      color: "#060010",
+      icon: <Zap className="size-6 text-yellow-400" />
     },
     {
       title: "精美结果分析",
       description: "多维雷达图、匹配度计算、标签云，基于经典模型的深度算法，比截图更值得分享。",
-      link: "#",
-      icon: <div className="p-2.5 bg-[#1F1F25] rounded-xl"><PieChart className="size-6 text-purple-400" /></div>,
-      themeClass: "!bg-[#121216] !border-white/5 !shadow-none [&_h4]:!text-slate-100 [&_p]:!text-slate-400"
+      label: "深度",
+      color: "#060010",
+      icon: <PieChart className="size-6 text-purple-400" />
     },
     {
       title: "一键导出长图",
       description: "自带精美排版设计，测试完成后点击即存，完美适配朋友圈与小红书发布。",
-      link: "#",
-      icon: <div className="p-2.5 bg-[#1F1F25] rounded-xl"><Download className="size-6 text-emerald-400" /></div>,
-      themeClass: "!bg-[#121216] !border-white/5 !shadow-none [&_h4]:!text-slate-100 [&_p]:!text-slate-400"
+      label: "分享",
+      color: "#060010",
+      icon: <Download className="size-6 text-emerald-400" />
     },
     {
       title: "3分钟轻松测完",
       description: "无需长时间专注，利用地铁、睡前的碎片时间，就能完成一次心灵探索。",
-      link: "#",
-      icon: <div className="p-2.5 bg-[#1F1F25] rounded-xl"><Clock className="size-6 text-blue-400" /></div>,
-      themeClass: "!bg-[#121216] !border-white/5 !shadow-none [&_h4]:!text-slate-100 [&_p]:!text-slate-400"
+      label: "轻量",
+      color: "#060010",
+      icon: <Clock className="size-6 text-blue-400" />
+    },
+    {
+      title: "全平台适配",
+      description: "完美适配手机、平板、电脑等设备，给您流畅无界的答题体验。",
+      label: "无界",
+      color: "#060010",
+      icon: <Smartphone className="size-6 text-cyan-400" />
+    },
+    {
+      title: "隐私安全保护",
+      description: "所有数据匿名化处理，测试结果仅对您可见，守护心灵的私密空间。",
+      label: "安全",
+      color: "#060010",
+      icon: <ShieldCheck className="size-6 text-rose-400" />
     }
   ]
 
@@ -203,7 +208,110 @@ export function HomePage() {
         </div>
       </FloatingLines>
 
-      {/* 2. Catalog */}
+      {/* 2. Free Tests Showcase */}
+      <FadeInSection className="py-16 md:py-24 bg-[#060010] relative overflow-hidden" id="free-tests">
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-fuchsia-600/10 rounded-full blur-[100px] pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-amber-500/5 rounded-full blur-[100px] pointer-events-none" />
+        
+        <div className="relative z-10 mb-12 max-w-7xl mx-auto px-6 flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-fuchsia-500/30 bg-fuchsia-500/10 px-3 py-1 text-xs font-medium text-fuchsia-300 mb-4">
+              <Sparkles className="size-3.5" />
+              特别体验版
+            </div>
+            <h2 className="font-bold text-3xl md:text-4xl tracking-tight text-white mb-3 font-serif">
+              免费测试专区
+            </h2>
+            <p className="text-slate-400 text-base">
+              无需购买，立即体验轻量级测试，开启灵魂探索的第一步。
+            </p>
+          </div>
+        </div>
+
+        <div className="relative z-10 max-w-7xl mx-auto px-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Free Test Card 1 */}
+            <Link
+              to="/free/aura"
+              className="group flex flex-col relative overflow-hidden rounded-[24px] border border-white/10 bg-white/5 transition-all hover:border-fuchsia-500/50 hover:bg-white/10 hover:-translate-y-1 shadow-lg hover:shadow-[0_12px_40px_rgba(168,85,247,0.15)]"
+            >
+              <div className="relative aspect-[16/9] w-full bg-black/40 overflow-hidden flex items-center justify-center">
+                <div className="absolute inset-0 bg-[conic-gradient(from_0deg,theme(colors.fuchsia.500),theme(colors.amber.400),theme(colors.sky.400),theme(colors.fuchsia.500))] blur-2xl opacity-20 group-hover:opacity-40 transition-opacity duration-500 animate-[spin_10s_linear_infinite]" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0A0515] to-transparent opacity-80" />
+                <Sparkles className="size-12 text-fuchsia-400 relative z-10 group-hover:scale-110 transition-transform duration-500" />
+                <div className="absolute top-4 left-4 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-md border border-white/10 text-[11px] text-fuchsia-300 font-medium">
+                  限时免费
+                </div>
+              </div>
+              <div className="p-6 flex flex-col flex-1 bg-[#0A0515]/50">
+                <h3 className="text-xl font-bold text-white mb-2 tracking-tight font-serif group-hover:text-fuchsia-100 transition-colors">你的 Aura 是什么颜色？</h3>
+                <p className="text-[13px] text-slate-400 line-clamp-2 mb-6 leading-relaxed">
+                  每个人都有专属的灵魂光谱，结合双维度四象限模型，18道情境题揭晓你散发着怎样的气场。
+                </p>
+                <div className="mt-auto flex items-center justify-between">
+                   <div className="flex items-center gap-3">
+                     <span className="text-xs text-white/50 flex items-center gap-1"><Clock className="size-3.5" /> 3分钟</span>
+                     <span className="text-xs text-white/50 flex items-center gap-1">18题</span>
+                   </div>
+                   <span className="text-fuchsia-400 text-sm font-medium flex items-center group-hover:text-fuchsia-300">
+                     去测测 <ArrowRight className="ml-1 size-4 group-hover:translate-x-1 transition-transform" />
+                   </span>
+                </div>
+              </div>
+            </Link>
+
+            {/* Free Test Card 2: Banwei */}
+            <Link
+              to="/free/banwei"
+              className="group flex flex-col relative overflow-hidden rounded-[24px] border border-white/10 bg-white/5 transition-all hover:border-emerald-500/50 hover:bg-white/10 hover:-translate-y-1 shadow-lg hover:shadow-[0_12px_40px_rgba(16,185,129,0.15)]"
+            >
+              <div className="relative aspect-[16/9] w-full bg-slate-900 overflow-hidden flex items-center justify-center">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(16,185,129,0.2),transparent_70%)] group-hover:scale-110 transition-transform duration-700" />
+                <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(14,165,233,0.1)_0%,transparent_100%)]" />
+                
+                {/* Laboratory pattern overlay */}
+                <div className="absolute inset-0 bg-[radial-gradient(#ffffff22_1px,transparent_1px)] [background-size:16px_16px] opacity-20" />
+                
+                <div className="relative z-10 flex flex-col items-center">
+                   <div className="size-14 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 mb-2 group-hover:-translate-y-1 transition-transform duration-300">
+                     <span className="text-3xl">☕</span>
+                   </div>
+                </div>
+
+                <div className="absolute top-4 left-4 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-md border border-white/10 text-[11px] text-emerald-300 font-medium">
+                  火爆全网
+                </div>
+              </div>
+              <div className="p-6 flex flex-col flex-1 bg-[#0A0515]/50">
+                <h3 className="text-xl font-bold text-white mb-2 tracking-tight group-hover:text-emerald-100 transition-colors">班味浓度检测</h3>
+                <p className="text-[13px] text-slate-400 line-clamp-2 mb-6 leading-relaxed">
+                  实验室权威认证，精准测定你被工作「腌入味」的程度。基于五维成分分析，揭晓你的社畜形态。
+                </p>
+                <div className="mt-auto flex items-center justify-between">
+                   <div className="flex items-center gap-3">
+                     <span className="text-xs text-white/50 flex items-center gap-1"><Clock className="size-3.5" /> 2分钟</span>
+                     <span className="text-xs text-white/50 flex items-center gap-1">15题</span>
+                   </div>
+                   <span className="text-emerald-400 text-sm font-medium flex items-center group-hover:text-emerald-300">
+                     去测测 <ArrowRight className="ml-1 size-4 group-hover:translate-x-1 transition-transform" />
+                   </span>
+                </div>
+              </div>
+            </Link>
+
+            {/* Placeholder for future free tests */}
+            <div className="hidden md:flex flex-col items-center justify-center rounded-[24px] border border-dashed border-white/10 bg-white/[0.02] p-6 text-center h-full min-h-[320px]">
+               <div className="size-12 rounded-full bg-white/5 flex items-center justify-center mb-4">
+                 <Sparkles className="size-5 text-white/20" />
+               </div>
+               <p className="text-white/40 font-medium mb-1">更多免费测试</p>
+               <p className="text-xs text-white/30">正在实验室孵化中，敬请期待</p>
+            </div>
+          </div>
+        </div>
+      </FadeInSection>
+
+      {/* 3. Catalog */}
       <FadeInSection className="py-24 md:py-32 bg-[#09090B]" id="catalog">
         <div className="mb-12 max-w-7xl mx-auto px-6 flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
@@ -257,7 +365,7 @@ export function HomePage() {
                     <Clock className="size-3.5"/> 约{quiz.durationMinutes}分钟
                   </div>
                   <div className="absolute bottom-4 right-4 text-xs font-bold text-white bg-white/20 backdrop-blur-md px-2.5 py-1 rounded">
-                    ¥{quiz.price || "2.9"}
+                    {quiz.priceLabel}
                   </div>
                 </div>
                 <div className="p-6 flex flex-col flex-1">
@@ -282,17 +390,15 @@ export function HomePage() {
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 tracking-tight">为什么选择灵测?</h2>
             <p className="text-slate-400 text-lg">不仅有深度，更有绝佳体验</p>
           </div>
-          {/* Custom style wrapper to override HoverEffect background styling */}
-          <div className="max-w-5xl mx-auto [&_.group>span]:!bg-white/[0.03]">
-            <HoverEffect items={features} className="grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4" />
+          <div className="w-full flex justify-center">
+            <MagicBento items={features} enableStars={true} enableSpotlight={true} />
           </div>
         </div>
       </FadeInSection>
 
       {/* 4. Testimonials */}
       <FadeInSection className="py-24 md:py-32 bg-slate-50 overflow-hidden hidden">
-        {/* Hiding the old light theme testimonials to maintain dark theme consistency. 
-            Can be re-enabled and restyled later if needed. */}
+        <div className="hidden" />
       </FadeInSection>
 
       {/* 5. FAQ (Dark Theme adaptation) */}
@@ -385,3 +491,9 @@ export function HomePage() {
     </div>
   )
 }
+
+
+
+
+
+

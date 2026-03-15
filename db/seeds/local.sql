@@ -1,4 +1,13 @@
-﻿PRAGMA foreign_keys = ON;
+PRAGMA foreign_keys = ON;
+
+DELETE FROM submissions;
+DELETE FROM codes;
+DELETE FROM code_batches;
+DELETE FROM product_quizzes;
+DELETE FROM products;
+DELETE FROM quiz_versions;
+DELETE FROM quizzes;
+DELETE FROM admins;
 
 INSERT OR REPLACE INTO quizzes (
   id,
@@ -10,40 +19,17 @@ INSERT OR REPLACE INTO quizzes (
   price,
   landing_visible,
   current_published_version_id
-) VALUES
-  (
-    'quiz_personality_archetype',
-    'personality-archetype',
-    '人格原型实验室',
-    '以更适合内容传播的表达方式重构人格测试，结果页强调角色感、情绪共鸣和分享文案。',
-    '人格 / 性格',
-    'published',
-    19.9,
-    1,
-    'quiz_version_personality_v1'
-  ),
-  (
-    'quiz_love_pattern_map',
-    'love-pattern-map',
-    '亲密关系模式图谱',
-    '基于关系表达偏好框架改编的 8 题 MVP 版本，先验证结果表达、分享意愿和付费感知。',
-    '情感 / 关系',
-    'published',
-    29.9,
-    1,
-    'quiz_version_love_v1'
-  ),
-  (
-    'quiz_workplace_energy_profile',
-    'workplace-energy-profile',
-    '职场能量画像',
-    '用轻咨询方式输出职场风格、协作偏好与高能区，兼顾趣味性和实用价值。',
-    '职场 / 天赋',
-    'published',
-    0,
-    1,
-    'quiz_version_workplace_v1'
-  );
+) VALUES (
+  'quiz_oejts_personality_map',
+  'oejts-personality-map',
+  'OEJTS 16 型人格图谱',
+  'OEJTS 16 型人格图谱是一套基于四条人格偏好维度的自我探索测试，帮你看见自己的注意力方向、判断方式与行动节奏。',
+  '人格 / 性格',
+  'published',
+  29.9,
+  1,
+  'quiz_version_oejts_v1'
+);
 
 INSERT OR REPLACE INTO quiz_versions (
   id,
@@ -53,36 +39,19 @@ INSERT OR REPLACE INTO quiz_versions (
   status,
   config_json,
   release_note
-) VALUES
-  (
-    'quiz_version_personality_v1',
-    'quiz_personality_archetype',
-    1,
-    '1.0.0',
-    'published',
-    '{"meta":{"slug":"personality-archetype","title":"人格原型实验室","summary":"不是冷冰冰的量表，而是能被用户看懂、愿意晒出来的人格故事。","estimatedMinutes":6,"tags":["高传播","可分享","结果包装强"],"category":"人格 / 性格"},"runtime":{"rendererKey":"generic","resultTemplateKey":"story-card","scoringKey":"dimension"},"presentation":{"themeKey":"violet-lab","storyMode":true,"screenCount":4,"shareCardKey":"persona-poster"},"questions":[{"id":"q1","type":"single_choice","title":"聚会里你更像哪种角色？","options":[{"id":"q1_a","label":"主动暖场的人","value":{"spark":2}},{"id":"q1_b","label":"观察氛围的人","value":{"insight":2}},{"id":"q1_c","label":"负责照顾细节的人","value":{"care":2}}]},{"id":"q2","type":"single_choice","title":"遇到压力时你会先做什么？","options":[{"id":"q2_a","label":"立刻行动拆解问题","value":{"spark":2}},{"id":"q2_b","label":"先消化情绪再行动","value":{"care":2}},{"id":"q2_c","label":"先弄清底层原因","value":{"insight":2}}]}],"results":[{"key":"spark_leader","title":"火花主导者","summary":"你会点亮氛围，也擅长把自己推到故事中央。"},{"key":"insight_observer","title":"洞察观察者","summary":"你更擅长捕捉细节与情绪变化，结果页适合做深度叙事。"},{"key":"care_anchor","title":"情绪锚点者","summary":"你在关系里更像稳定器，适合温柔但坚定的表达。"}],"extensions":{"share":{"captionTone":"dramatic"}}}',
-    '初始化本地联调用的 v1 发布版'
-  ),
-  (
-    'quiz_version_love_v1',
-    'quiz_love_pattern_map',
-    1,
-    '1.0.0',
-    'published',
-    '{"meta":{"slug":"love-pattern-map","title":"亲密关系模式图谱","summary":"基于关系表达偏好框架改编的 8 题 MVP，用来验证结果表达和用户分享欲。","estimatedMinutes":4,"tags":["情绪价值","关系表达","MVP 首发"],"category":"情感 / 关系"},"runtime":{"rendererKey":"generic","resultTemplateKey":"relationship-story","scoringKey":"dimension"},"presentation":{"themeKey":"rose-map","storyMode":true,"screenCount":4,"shareCardKey":"love-pattern-card"},"questions":[{"id":"q1","type":"single_choice","title":"忙了一整周后，什么最让你感到被在乎？","options":[{"id":"q1_a","label":"听到一句很真诚的肯定","value":{"affirmation":1}},{"id":"q1_b","label":"对方专门留出一段只属于你的时间","value":{"time":1}},{"id":"q1_c","label":"有人顺手把麻烦事替你处理掉","value":{"service":1}},{"id":"q1_d","label":"收到一份记得你喜好的小东西","value":{"gifts":1}},{"id":"q1_e","label":"被抱住安静待一会儿","value":{"touch":1}}]},{"id":"q2","type":"single_choice","title":"发生争执后，哪种和好方式最能打动你？","options":[{"id":"q2_a","label":"认真道歉，并明确说你很重要","value":{"affirmation":1}},{"id":"q2_b","label":"关掉手机，坐下来好好聊一晚","value":{"time":1}},{"id":"q2_c","label":"直接把问题修好，不再重演","value":{"service":1}},{"id":"q2_d","label":"带来一份用心准备的小补偿","value":{"gifts":1}},{"id":"q2_e","label":"主动靠近，牵手或拥抱","value":{"touch":1}}]},{"id":"q3","type":"single_choice","title":"理想的纪念日更像下面哪一种？","options":[{"id":"q3_a","label":"写一段只属于你的话给你","value":{"affirmation":1}},{"id":"q3_b","label":"安排一整段完整二人时间","value":{"time":1}},{"id":"q3_c","label":"把吃住行流程都照顾妥当","value":{"service":1}},{"id":"q3_d","label":"准备一个有故事的小礼物","value":{"gifts":1}},{"id":"q3_e","label":"有很多贴贴和亲密互动","value":{"touch":1}}]},{"id":"q4","type":"single_choice","title":"对方很忙但还想表达心意，你最在意哪件事？","options":[{"id":"q4_a","label":"抽空发来坚定又温柔的话","value":{"affirmation":1}},{"id":"q4_b","label":"哪怕很短，也给你完整专注的十分钟","value":{"time":1}},{"id":"q4_c","label":"顺手帮你解决一个现实问题","value":{"service":1}},{"id":"q4_d","label":"记住你的偏好，带回一个小心意","value":{"gifts":1}},{"id":"q4_e","label":"回到你身边先给你一个拥抱","value":{"touch":1}}]},{"id":"q5","type":"single_choice","title":"在关系里，你最容易对哪种落差失望？","options":[{"id":"q5_a","label":"说话越来越冷淡、敷衍","value":{"affirmation":1}},{"id":"q5_b","label":"总说重要，却始终没空陪你","value":{"time":1}},{"id":"q5_c","label":"答应的事一再落空","value":{"service":1}},{"id":"q5_d","label":"总记不住你的喜好和细节","value":{"gifts":1}},{"id":"q5_e","label":"身体上越来越疏离","value":{"touch":1}}]},{"id":"q6","type":"single_choice","title":"当你很低落时，你最想被怎样安慰？","options":[{"id":"q6_a","label":"被明确肯定和安抚","value":{"affirmation":1}},{"id":"q6_b","label":"有人安静地陪着你","value":{"time":1}},{"id":"q6_c","label":"有人帮你把眼前的事理顺","value":{"service":1}},{"id":"q6_d","label":"收到一个带心意的小惊喜","value":{"gifts":1}},{"id":"q6_e","label":"被搂一下、拍拍背","value":{"touch":1}}]},{"id":"q7","type":"single_choice","title":"你判断对方是否认真时，更看重什么？","options":[{"id":"q7_a","label":"是否愿意清楚表达爱和认可","value":{"affirmation":1}},{"id":"q7_b","label":"是否愿意持续投入时间陪你","value":{"time":1}},{"id":"q7_c","label":"是否会把承诺真正落到行动","value":{"service":1}},{"id":"q7_d","label":"是否会记住细节并准备心意","value":{"gifts":1}},{"id":"q7_e","label":"是否会自然地主动靠近你","value":{"touch":1}}]},{"id":"q8","type":"single_choice","title":"如果只能保留一种“被爱证明”，你会选哪种？","options":[{"id":"q8_a","label":"经常听到被珍视和夸奖","value":{"affirmation":1}},{"id":"q8_b","label":"经常拥有高质量相处时间","value":{"time":1}},{"id":"q8_c","label":"经常被实际照顾和分担","value":{"service":1}},{"id":"q8_d","label":"经常收到有记忆点的小礼物","value":{"gifts":1}},{"id":"q8_e","label":"经常拥有拥抱和身体靠近","value":{"touch":1}}]}],"results":[{"key":"affirmation_resonator","dimensionKey":"affirmation","title":"言语确认型","summary":"你会通过被肯定、被认真表达来确认关系温度，模糊和敷衍最容易让你失落。","highlights":["你需要被明确说出来的在乎","一句认真回应，胜过很多含糊表示"]},{"key":"time_companion","dimensionKey":"time","title":"陪伴沉浸型","summary":"你最在意的是完整的注意力和专注陪伴，对你来说“在场”本身就是爱。","highlights":["高质量陪伴比频繁消息更有力量","你很能分辨对方是否真正把时间留给你"]},{"key":"service_supporter","dimensionKey":"service","title":"行动照顾型","summary":"你相信做比说更有说服力，真正让你安心的是被照顾、被分担、被落地兑现。","highlights":["你看重承诺是否真的被执行","细致照顾会让你快速建立安全感"]},{"key":"gift_memory","dimensionKey":"gifts","title":"心意具象型","summary":"你会从“被记住”里感受到爱，礼物对你不是价格，而是心意被具体看见。","highlights":["你很在意对方有没有记住细节","小而准的心意比昂贵更打动你"]},{"key":"touch_healer","dimensionKey":"touch","title":"靠近治愈型","summary":"身体靠近会让你迅速感到安心，一个拥抱、牵手或贴近比很多解释更有效。","highlights":["你通过靠近确认关系的真实感","亲密接触会直接影响你的安全感"]}],"extensions":{"scoring":{"dimensions":[{"key":"affirmation","label":"言语确认"},{"key":"time","label":"陪伴时间"},{"key":"service","label":"行动照顾"},{"key":"gifts","label":"心意礼物"},{"key":"touch","label":"身体靠近"}]},"share":{"captionTone":"intimate"}}}',
-    '初始化本地联调用的 v1 发布版'
-  ),
-  (
-    'quiz_version_workplace_v1',
-    'quiz_workplace_energy_profile',
-    1,
-    '1.0.0',
-    'published',
-    '{"meta":{"slug":"workplace-energy-profile","title":"职场能量画像","summary":"适合做高客单补充品类，也适合作为免费体验引流题。","estimatedMinutes":5,"tags":["低门槛","轻职业咨询","引流友好"],"category":"职场 / 天赋"},"runtime":{"rendererKey":"generic","resultTemplateKey":"career-energy","scoringKey":"dimension"},"presentation":{"themeKey":"amber-work","storyMode":false,"screenCount":3,"shareCardKey":"work-energy-card"},"questions":[{"id":"q1","type":"single_choice","title":"你最有能量的工作状态是？","options":[{"id":"q1_a","label":"快速推进项目","value":{"drive":2}},{"id":"q1_b","label":"帮助团队协同","value":{"support":2}},{"id":"q1_c","label":"分析问题建模型","value":{"insight":2}}]},{"id":"q2","type":"single_choice","title":"什么最容易消耗你？","options":[{"id":"q2_a","label":"流程太慢","value":{"drive":2}},{"id":"q2_b","label":"关系紧张","value":{"support":2}},{"id":"q2_c","label":"目标模糊","value":{"insight":2}}]}],"results":[{"key":"driver_mode","title":"推进引擎型","summary":"你适合承担目标推进与项目落地。"},{"key":"support_mode","title":"协同润滑型","summary":"你擅长稳住团队氛围与协作效率。"},{"key":"insight_mode","title":"策略洞察型","summary":"你在分析、拆解和建模时最有存在感。"}],"extensions":{"share":{"captionTone":"confident"}}}',
-    '初始化本地联调用的 v1 发布版'
-  );
+) VALUES (
+  'quiz_version_oejts_v1',
+  'quiz_oejts_personality_map',
+  1,
+  '1.0.0',
+  'published',
+  '{"meta":{"slug":"oejts-personality-map","title":"OEJTS 16 型人格图谱","summary":"OEJTS 16 型人格图谱是一套基于四条人格偏好维度的自我探索测试，帮你看见自己的注意力方向、判断方式与行动节奏。","estimatedMinutes":8,"tags":["OEJTS","32 题完整版","16 型人格","适合保存结果卡片"],"category":"人格 / 性格"},"runtime":{"rendererKey":"generic","resultTemplateKey":"oejts-profile","scoringKey":"oejts"},"presentation":{"themeKey":"ink-glow","storyMode":true,"screenCount":5,"shareCardKey":"oejts-type-poster"},"questions":[{"id":"q01","title":"让你更快“回血”的通常是？","leftLabel":"热闹一点、和人待在一起","rightLabel":"安静一点、自己待一会儿","axisKey":"ie","reverseScore":true,"type":"single_choice","options":[{"id":"q01_1","label":"明显更接近左边","value":{"score":1}},{"id":"q01_2","label":"略偏左边","value":{"score":2}},{"id":"q01_3","label":"两边差不多","value":{"score":3}},{"id":"q01_4","label":"略偏右边","value":{"score":4}},{"id":"q01_5","label":"明显更接近右边","value":{"score":5}}]},{"id":"q02","title":"当脑中刚冒出一个想法时，你更像哪一边？","leftLabel":"先说出来，边聊边想清楚","rightLabel":"先在心里理顺，再开口表达","axisKey":"ie","reverseScore":true,"type":"single_choice","options":[{"id":"q02_1","label":"明显更接近左边","value":{"score":1}},{"id":"q02_2","label":"略偏左边","value":{"score":2}},{"id":"q02_3","label":"两边差不多","value":{"score":3}},{"id":"q02_4","label":"略偏右边","value":{"score":4}},{"id":"q02_5","label":"明显更接近右边","value":{"score":5}}]},{"id":"q03","title":"刚进入陌生场合时，你通常会？","leftLabel":"比较自然地主动和人搭话","rightLabel":"先观察气氛，再慢慢进入状态","axisKey":"ie","reverseScore":true,"type":"single_choice","options":[{"id":"q03_1","label":"明显更接近左边","value":{"score":1}},{"id":"q03_2","label":"略偏左边","value":{"score":2}},{"id":"q03_3","label":"两边差不多","value":{"score":3}},{"id":"q03_4","label":"略偏右边","value":{"score":4}},{"id":"q03_5","label":"明显更接近右边","value":{"score":5}}]},{"id":"q04","title":"哪种状态更容易让你进入节奏？","leftLabel":"和别人一起推进一件事","rightLabel":"一个人安静地把事情做下去","axisKey":"ie","reverseScore":true,"type":"single_choice","options":[{"id":"q04_1","label":"明显更接近左边","value":{"score":1}},{"id":"q04_2","label":"略偏左边","value":{"score":2}},{"id":"q04_3","label":"两边差不多","value":{"score":3}},{"id":"q04_4","label":"略偏右边","value":{"score":4}},{"id":"q04_5","label":"明显更接近右边","value":{"score":5}}]},{"id":"q05","title":"如果周末完全由你安排，你更可能会？","leftLabel":"约人见面、出去走走","rightLabel":"留点时间给自己慢慢过","axisKey":"ie","reverseScore":true,"type":"single_choice","options":[{"id":"q05_1","label":"明显更接近左边","value":{"score":1}},{"id":"q05_2","label":"略偏左边","value":{"score":2}},{"id":"q05_3","label":"两边差不多","value":{"score":3}},{"id":"q05_4","label":"略偏右边","value":{"score":4}},{"id":"q05_5","label":"明显更接近右边","value":{"score":5}}]},{"id":"q06","title":"在多人讨论里，你更接近哪一边？","leftLabel":"更愿意先把观点抛出来","rightLabel":"更习惯先听一圈再表达","axisKey":"ie","reverseScore":true,"type":"single_choice","options":[{"id":"q06_1","label":"明显更接近左边","value":{"score":1}},{"id":"q06_2","label":"略偏左边","value":{"score":2}},{"id":"q06_3","label":"两边差不多","value":{"score":3}},{"id":"q06_4","label":"略偏右边","value":{"score":4}},{"id":"q06_5","label":"明显更接近右边","value":{"score":5}}]},{"id":"q07","title":"对你来说更顺手的表达方式通常是？","leftLabel":"当场说出来更自然","rightLabel":"写下来或私下说更顺手","axisKey":"ie","reverseScore":true,"type":"single_choice","options":[{"id":"q07_1","label":"明显更接近左边","value":{"score":1}},{"id":"q07_2","label":"略偏左边","value":{"score":2}},{"id":"q07_3","label":"两边差不多","value":{"score":3}},{"id":"q07_4","label":"略偏右边","value":{"score":4}},{"id":"q07_5","label":"明显更接近右边","value":{"score":5}}]},{"id":"q08","title":"连续社交一整天之后，你通常会觉得？","leftLabel":"反而更有精神","rightLabel":"更想安静下来缓一缓","axisKey":"ie","reverseScore":true,"type":"single_choice","options":[{"id":"q08_1","label":"明显更接近左边","value":{"score":1}},{"id":"q08_2","label":"略偏左边","value":{"score":2}},{"id":"q08_3","label":"两边差不多","value":{"score":3}},{"id":"q08_4","label":"略偏右边","value":{"score":4}},{"id":"q08_5","label":"明显更接近右边","value":{"score":5}}]},{"id":"q09","title":"面对一件新事物时，你更容易被什么打动？","leftLabel":"它是否已经被证明可行","rightLabel":"它是不是带着新可能","axisKey":"sn","reverseScore":false,"type":"single_choice","options":[{"id":"q09_1","label":"明显更接近左边","value":{"score":1}},{"id":"q09_2","label":"略偏左边","value":{"score":2}},{"id":"q09_3","label":"两边差不多","value":{"score":3}},{"id":"q09_4","label":"略偏右边","value":{"score":4}},{"id":"q09_5","label":"明显更接近右边","value":{"score":5}}]},{"id":"q10","title":"向别人讲一件事时，你通常会先讲？","leftLabel":"事情具体发生了什么","rightLabel":"这件事意味着什么、会走向哪里","axisKey":"sn","reverseScore":false,"type":"single_choice","options":[{"id":"q10_1","label":"明显更接近左边","value":{"score":1}},{"id":"q10_2","label":"略偏左边","value":{"score":2}},{"id":"q10_3","label":"两边差不多","value":{"score":3}},{"id":"q10_4","label":"略偏右边","value":{"score":4}},{"id":"q10_5","label":"明显更接近右边","value":{"score":5}}]},{"id":"q11","title":"真正做决定时，你更看重哪一边？","leftLabel":"眼下条件是否现实可行","rightLabel":"长远看是否值得投入","axisKey":"sn","reverseScore":false,"type":"single_choice","options":[{"id":"q11_1","label":"明显更接近左边","value":{"score":1}},{"id":"q11_2","label":"略偏左边","value":{"score":2}},{"id":"q11_3","label":"两边差不多","value":{"score":3}},{"id":"q11_4","label":"略偏右边","value":{"score":4}},{"id":"q11_5","label":"明显更接近右边","value":{"score":5}}]},{"id":"q12","title":"平时你的注意力更常落在？","leftLabel":"眼前需要处理的实际问题","rightLabel":"接下来可能发生的变化","axisKey":"sn","reverseScore":false,"type":"single_choice","options":[{"id":"q12_1","label":"明显更接近左边","value":{"score":1}},{"id":"q12_2","label":"略偏左边","value":{"score":2}},{"id":"q12_3","label":"两边差不多","value":{"score":3}},{"id":"q12_4","label":"略偏右边","value":{"score":4}},{"id":"q12_5","label":"明显更接近右边","value":{"score":5}}]},{"id":"q13","title":"面对任务时，你更偏好哪一类？","leftLabel":"步骤清楚、边界明确","rightLabel":"可以探索、留有发挥空间","axisKey":"sn","reverseScore":false,"type":"single_choice","options":[{"id":"q13_1","label":"明显更接近左边","value":{"score":1}},{"id":"q13_2","label":"略偏左边","value":{"score":2}},{"id":"q13_3","label":"两边差不多","value":{"score":3}},{"id":"q13_4","label":"略偏右边","value":{"score":4}},{"id":"q13_5","label":"明显更接近右边","value":{"score":5}}]},{"id":"q14","title":"学一样新东西时，你通常更依赖？","leftLabel":"具体案例和已有经验","rightLabel":"整体框架和抽象概念","axisKey":"sn","reverseScore":false,"type":"single_choice","options":[{"id":"q14_1","label":"明显更接近左边","value":{"score":1}},{"id":"q14_2","label":"略偏左边","value":{"score":2}},{"id":"q14_3","label":"两边差不多","value":{"score":3}},{"id":"q14_4","label":"略偏右边","value":{"score":4}},{"id":"q14_5","label":"明显更接近右边","value":{"score":5}}]},{"id":"q15","title":"看待一件事时，你更容易先注意到？","leftLabel":"实际发生了哪些细节","rightLabel":"背后可能隐藏的规律","axisKey":"sn","reverseScore":false,"type":"single_choice","options":[{"id":"q15_1","label":"明显更接近左边","value":{"score":1}},{"id":"q15_2","label":"略偏左边","value":{"score":2}},{"id":"q15_3","label":"两边差不多","value":{"score":3}},{"id":"q15_4","label":"略偏右边","value":{"score":4}},{"id":"q15_5","label":"明显更接近右边","value":{"score":5}}]},{"id":"q16","title":"当现实和设想同时摆在面前时，你通常会？","leftLabel":"先把现实稳住再说","rightLabel":"先去想更远一点的可能","axisKey":"sn","reverseScore":false,"type":"single_choice","options":[{"id":"q16_1","label":"明显更接近左边","value":{"score":1}},{"id":"q16_2","label":"略偏左边","value":{"score":2}},{"id":"q16_3","label":"两边差不多","value":{"score":3}},{"id":"q16_4","label":"略偏右边","value":{"score":4}},{"id":"q16_5","label":"明显更接近右边","value":{"score":5}}]},{"id":"q17","title":"做判断时，你更容易先想到？","leftLabel":"这件事合不合理","rightLabel":"这样做会不会伤到人","axisKey":"ft","reverseScore":true,"type":"single_choice","options":[{"id":"q17_1","label":"明显更接近左边","value":{"score":1}},{"id":"q17_2","label":"略偏左边","value":{"score":2}},{"id":"q17_3","label":"两边差不多","value":{"score":3}},{"id":"q17_4","label":"略偏右边","value":{"score":4}},{"id":"q17_5","label":"明显更接近右边","value":{"score":5}}]},{"id":"q18","title":"别人来向你倾诉或求助时，你更像哪一边？","leftLabel":"先帮对方理清问题","rightLabel":"先让对方感觉被理解","axisKey":"ft","reverseScore":true,"type":"single_choice","options":[{"id":"q18_1","label":"明显更接近左边","value":{"score":1}},{"id":"q18_2","label":"略偏左边","value":{"score":2}},{"id":"q18_3","label":"两边差不多","value":{"score":3}},{"id":"q18_4","label":"略偏右边","value":{"score":4}},{"id":"q18_5","label":"明显更接近右边","value":{"score":5}}]},{"id":"q19","title":"发生分歧时，你更在意哪一边？","leftLabel":"规则、标准和逻辑","rightLabel":"关系、处境和感受","axisKey":"ft","reverseScore":true,"type":"single_choice","options":[{"id":"q19_1","label":"明显更接近左边","value":{"score":1}},{"id":"q19_2","label":"略偏左边","value":{"score":2}},{"id":"q19_3","label":"两边差不多","value":{"score":3}},{"id":"q19_4","label":"略偏右边","value":{"score":4}},{"id":"q19_5","label":"明显更接近右边","value":{"score":5}}]},{"id":"q20","title":"你更希望别人先认可你哪一面？","leftLabel":"有能力、有判断","rightLabel":"真诚、温暖、值得信赖","axisKey":"ft","reverseScore":true,"type":"single_choice","options":[{"id":"q20_1","label":"明显更接近左边","value":{"score":1}},{"id":"q20_2","label":"略偏左边","value":{"score":2}},{"id":"q20_3","label":"两边差不多","value":{"score":3}},{"id":"q20_4","label":"略偏右边","value":{"score":4}},{"id":"q20_5","label":"明显更接近右边","value":{"score":5}}]},{"id":"q21","title":"面对一个棘手问题时，你通常会？","leftLabel":"先想怎么把它解决","rightLabel":"先看谁最需要被安抚","axisKey":"ft","reverseScore":true,"type":"single_choice","options":[{"id":"q21_1","label":"明显更接近左边","value":{"score":1}},{"id":"q21_2","label":"略偏左边","value":{"score":2}},{"id":"q21_3","label":"两边差不多","value":{"score":3}},{"id":"q21_4","label":"略偏右边","value":{"score":4}},{"id":"q21_5","label":"明显更接近右边","value":{"score":5}}]},{"id":"q22","title":"表达不同意见时，你更接近哪一边？","leftLabel":"即使不中听也愿意直说","rightLabel":"会尽量照顾对方的接受感","axisKey":"ft","reverseScore":true,"type":"single_choice","options":[{"id":"q22_1","label":"明显更接近左边","value":{"score":1}},{"id":"q22_2","label":"略偏左边","value":{"score":2}},{"id":"q22_3","label":"两边差不多","value":{"score":3}},{"id":"q22_4","label":"略偏右边","value":{"score":4}},{"id":"q22_5","label":"明显更接近右边","value":{"score":5}}]},{"id":"q23","title":"做重要选择时，你更像哪一边？","leftLabel":"可以相对抽离情绪来判断","rightLabel":"很难完全不考虑情感因素","axisKey":"ft","reverseScore":true,"type":"single_choice","options":[{"id":"q23_1","label":"明显更接近左边","value":{"score":1}},{"id":"q23_2","label":"略偏左边","value":{"score":2}},{"id":"q23_3","label":"两边差不多","value":{"score":3}},{"id":"q23_4","label":"略偏右边","value":{"score":4}},{"id":"q23_5","label":"明显更接近右边","value":{"score":5}}]},{"id":"q24","title":"你会更欣赏哪一类人？","leftLabel":"头脑清楚、判断稳定","rightLabel":"有温度、懂得体谅别人","axisKey":"ft","reverseScore":true,"type":"single_choice","options":[{"id":"q24_1","label":"明显更接近左边","value":{"score":1}},{"id":"q24_2","label":"略偏左边","value":{"score":2}},{"id":"q24_3","label":"两边差不多","value":{"score":3}},{"id":"q24_4","label":"略偏右边","value":{"score":4}},{"id":"q24_5","label":"明显更接近右边","value":{"score":5}}]},{"id":"q25","title":"开始做一件事前，你更习惯？","leftLabel":"先把安排定下来","rightLabel":"先动起来，边做边调","axisKey":"jp","reverseScore":false,"type":"single_choice","options":[{"id":"q25_1","label":"明显更接近左边","value":{"score":1}},{"id":"q25_2","label":"略偏左边","value":{"score":2}},{"id":"q25_3","label":"两边差不多","value":{"score":3}},{"id":"q25_4","label":"略偏右边","value":{"score":4}},{"id":"q25_5","label":"明显更接近右边","value":{"score":5}}]},{"id":"q26","title":"面对还没确定的事时，你通常会觉得？","leftLabel":"早点定下来更安心","rightLabel":"留点空间反而更自在","axisKey":"jp","reverseScore":false,"type":"single_choice","options":[{"id":"q26_1","label":"明显更接近左边","value":{"score":1}},{"id":"q26_2","label":"略偏左边","value":{"score":2}},{"id":"q26_3","label":"两边差不多","value":{"score":3}},{"id":"q26_4","label":"略偏右边","value":{"score":4}},{"id":"q26_5","label":"明显更接近右边","value":{"score":5}}]},{"id":"q27","title":"日常生活里，你更依赖哪一种方式？","leftLabel":"清单、提醒、固定安排","rightLabel":"当下感觉和临场记忆","axisKey":"jp","reverseScore":false,"type":"single_choice","options":[{"id":"q27_1","label":"明显更接近左边","value":{"score":1}},{"id":"q27_2","label":"略偏左边","value":{"score":2}},{"id":"q27_3","label":"两边差不多","value":{"score":3}},{"id":"q27_4","label":"略偏右边","value":{"score":4}},{"id":"q27_5","label":"明显更接近右边","value":{"score":5}}]},{"id":"q28","title":"推进一件事时，你更接近哪一边？","leftLabel":"稳定地一点点推进","rightLabel":"临近节点时集中冲一把","axisKey":"jp","reverseScore":false,"type":"single_choice","options":[{"id":"q28_1","label":"明显更接近左边","value":{"score":1}},{"id":"q28_2","label":"略偏左边","value":{"score":2}},{"id":"q28_3","label":"两边差不多","value":{"score":3}},{"id":"q28_4","label":"略偏右边","value":{"score":4}},{"id":"q28_5","label":"明显更接近右边","value":{"score":5}}]},{"id":"q29","title":"对待空间和物品时，你更像哪一边？","leftLabel":"各归其位会更舒服","rightLabel":"顺手好用更重要","axisKey":"jp","reverseScore":false,"type":"single_choice","options":[{"id":"q29_1","label":"明显更接近左边","value":{"score":1}},{"id":"q29_2","label":"略偏左边","value":{"score":2}},{"id":"q29_3","label":"两边差不多","value":{"score":3}},{"id":"q29_4","label":"略偏右边","value":{"score":4}},{"id":"q29_5","label":"明显更接近右边","value":{"score":5}}]},{"id":"q30","title":"计划出门或出行时，你更习惯？","leftLabel":"先把行程大致确认好","rightLabel":"到时候看情况灵活调整","axisKey":"jp","reverseScore":false,"type":"single_choice","options":[{"id":"q30_1","label":"明显更接近左边","value":{"score":1}},{"id":"q30_2","label":"略偏左边","value":{"score":2}},{"id":"q30_3","label":"两边差不多","value":{"score":3}},{"id":"q30_4","label":"略偏右边","value":{"score":4}},{"id":"q30_5","label":"明显更接近右边","value":{"score":5}}]},{"id":"q31","title":"面对多个任务同时出现时，你更接近哪一边？","leftLabel":"更想先完成一件再说","rightLabel":"同时开着几个方向更有感觉","axisKey":"jp","reverseScore":false,"type":"single_choice","options":[{"id":"q31_1","label":"明显更接近左边","value":{"score":1}},{"id":"q31_2","label":"略偏左边","value":{"score":2}},{"id":"q31_3","label":"两边差不多","value":{"score":3}},{"id":"q31_4","label":"略偏右边","value":{"score":4}},{"id":"q31_5","label":"明显更接近右边","value":{"score":5}}]},{"id":"q32","title":"当计划突然变化时，你的第一反应更像？","leftLabel":"重新安排、尽快理顺","rightLabel":"顺势改道、边走边看","axisKey":"jp","reverseScore":false,"type":"single_choice","options":[{"id":"q32_1","label":"明显更接近左边","value":{"score":1}},{"id":"q32_2","label":"略偏左边","value":{"score":2}},{"id":"q32_3","label":"两边差不多","value":{"score":3}},{"id":"q32_4","label":"略偏右边","value":{"score":4}},{"id":"q32_5","label":"明显更接近右边","value":{"score":5}}]}],"results":[{"key":"INTJ","alias":"战略规划者","typeCode":"INTJ","nickname":"战略规划者","title":"INTJ · 战略规划者","keywords":["独立","前瞻","冷静","结构感"],"firstImpression":"清醒、克制、不容易被外界节奏带跑。","summary":"你通常先关注事情的整体结构、发展路径和长期影响，再决定是否投入精力。你不太喜欢没有方向感的消耗，更愿意把时间放在真正重要、真正值得的目标上。","overview":"INTJ 往往以独立、克制和有预判力的方式面对世界。你习惯先在心里搭好框架，再逐步验证现实是否符合预期。相比热闹与即时反馈，你更看重逻辑、效率和长期价值，因此容易给人一种冷静、清醒、带有距离感的印象。","strengthSummary":"擅长从杂乱信息中抓出主线；能把复杂问题拆解成更可执行的部分；面对长期目标时通常有较强的耐心和持续推进能力。","blindSpotSummary":"当你过于专注结构和结果时，可能会忽略他人的情绪节奏，也可能低估关系维护本身的重要性。对低效率、反复解释和随意决策的容忍度较低，容易因此显得过于直接或不够柔软。","relationshipStyle":"你更看重深度、稳定和价值观上的契合，而不是高频但空转的互动。你不一定会用非常外放的方式表达在意，但一旦确认关系，通常会用持续投入、认真规划和可靠行动来表达重视。","workStyle":"你适合需要独立判断、系统思考和长期规划的环境。无论是策略、产品、内容框架、系统搭建还是复杂项目推进，只要问题足够复杂、目标足够清晰，你通常都能发挥优势。","stressMode":"在高压下，你可能会进一步收紧自己的控制感，对外界的不确定性和低效率变得更敏感。有时你会通过抽离社交、加大自我要求来应对压力，但这也可能让你更难及时释放疲惫。","growthAdvice":"适当让别人看到你的思考过程，而不只是最终结论；在追求正确和有效之外，也给关系中的感受留出位置。","posterTags":["长期主义","结构脑","清醒克制"],"shareCopy":"先看清方向，再决定出手。","subtitle":"清醒、克制、不容易被外界节奏带跑。","highlights":["独立","前瞻","冷静","结构感"],"strengths":["擅长从杂乱信息中抓出主线","能把复杂问题拆解成更可执行的部分","面对长期目标时通常有较强的耐心和持续推进能力"],"blindSpots":["当你过于专注结构和结果时，可能会忽略他人的情绪节奏，也可能低估关系维护本身的重要性。对低效率、反复解释和随意决策的容忍度较低，容易因此显得过于直接或不够柔软"],"relationshipNotes":["你更看重深度、稳定和价值观上的契合，而不是高频但空转的互动。你不一定会用非常外放的方式表达在意，但一旦确认关系，通常会用持续投入、认真规划和可靠行动来表达重视。"],"workNotes":["你适合需要独立判断、系统思考和长期规划的环境。无论是策略、产品、内容框架、系统搭建还是复杂项目推进，只要问题足够复杂、目标足够清晰，你通常都能发挥优势。"],"stressNotes":["在高压下，你可能会进一步收紧自己的控制感，对外界的不确定性和低效率变得更敏感。有时你会通过抽离社交、加大自我要求来应对压力，但这也可能让你更难及时释放疲惫。"],"growthNotes":["适当让别人看到你的思考过程，而不只是最终结论；在追求正确和有效之外，也给关系中的感受留出位置。"]},{"key":"INTP","alias":"逻辑探索者","typeCode":"INTP","nickname":"逻辑探索者","title":"INTP · 逻辑探索者","keywords":["理性","好奇","思辨","抽象"],"firstImpression":"安静但脑内很忙，像是在同时处理好几层问题。","summary":"你通常会先把问题想通、想透，再决定是否行动。对你来说，真正重要的不只是答案本身，而是这个答案是否经得起推敲。","overview":"INTP 常常表现出独立、理性和高度思辨的一面。你习惯从概念、原理和逻辑关系出发看问题，不轻易接受表面现象，也不喜欢为了迎合环境而快速表态。相比立即达成共识，你更在意内部逻辑是否自洽。","strengthSummary":"擅长分析复杂概念；能在别人觉得混乱的地方找到结构和规律；面对新知识时愿意追问“为什么”，而不是只记住表面结论。","blindSpotSummary":"因为过于在意逻辑质量，你有时会在思考中停留太久，导致行动延后。对流程化、重复性强或需要情绪照顾的事务耐心有限，也可能让别人觉得你难以接近或反应偏冷。","relationshipStyle":"你通常更容易通过高质量交流、共同兴趣和思想碰撞建立亲近感。相比频繁互动，你更重视交流本身是否真实、有内容、有意义。","workStyle":"你适合研究、分析、策略支持、概念验证、模型搭建这类允许独立思考的工作。只要环境不强迫你过度社交，且能给你一定探索空间，你通常能发挥得更稳定。","stressMode":"当压力升高时，你可能会进一步退回自己的思考空间，通过反复分析来寻找确定感。短期内这有助于整理思路，但也可能让你更难及时行动或寻求帮助。","growthAdvice":"在追求“想明白”之外，也练习把思考更早地转成行动；不是所有问题都要等到完全确定才开始。","posterTags":["脑内建模","先想清楚","独立判断"],"shareCopy":"想透之后，世界才会变清楚。","subtitle":"安静但脑内很忙，像是在同时处理好几层问题。","highlights":["理性","好奇","思辨","抽象"],"strengths":["擅长分析复杂概念","能在别人觉得混乱的地方找到结构和规律","面对新知识时愿意追问“为什么”，而不是只记住表面结论"],"blindSpots":["因为过于在意逻辑质量，你有时会在思考中停留太久，导致行动延后。对流程化、重复性强或需要情绪照顾的事务耐心有限，也可能让别人觉得你难以接近或反应偏冷"],"relationshipNotes":["你通常更容易通过高质量交流、共同兴趣和思想碰撞建立亲近感。相比频繁互动，你更重视交流本身是否真实、有内容、有意义。"],"workNotes":["你适合研究、分析、策略支持、概念验证、模型搭建这类允许独立思考的工作。只要环境不强迫你过度社交，且能给你一定探索空间，你通常能发挥得更稳定。"],"stressNotes":["当压力升高时，你可能会进一步退回自己的思考空间，通过反复分析来寻找确定感。短期内这有助于整理思路，但也可能让你更难及时行动或寻求帮助。"],"growthNotes":["在追求“想明白”之外，也练习把思考更早地转成行动；不是所有问题都要等到完全确定才开始。"]},{"key":"ENTJ","alias":"目标统筹者","typeCode":"ENTJ","nickname":"目标统筹者","title":"ENTJ · 目标统筹者","keywords":["果断","统筹","执行","掌控力"],"firstImpression":"像一个会自然接过节奏的人，目标感很强。","summary":"你倾向于快速看清目标、路径和资源分配，并推动事情朝着明确结果前进。对你来说，空转和拖延通常比困难本身更难忍受。","overview":"ENTJ 往往给人干练、果断、有掌控力的印象。你习惯站在更高的位置看局面，迅速判断优先级，并组织行动。你不太满足于停留在讨论层面，而更关心一件事怎样真正被推进、被完成、被做成。","strengthSummary":"在判断方向、制定策略和推动执行上通常很有力量；面对复杂局面时能迅速抓住关键变量；容易带动他人一起前进。","blindSpotSummary":"当结果导向过强时，你可能会低估关系中的缓冲空间，也容易对拖延、犹豫和反复确认感到不耐烦。高标准虽然能提高效率，但也可能让他人感到压力。","relationshipStyle":"你欣赏坦诚、独立、有判断力的人。关系里你通常不喜欢过度猜测和含糊表达，更偏好直接沟通、明确需求、一起成长的互动方式。","workStyle":"你适合需要统筹、决策、带项目、带节奏的环境。尤其在高复杂度、高目标感、高执行要求的场景中，你往往能比较快进入状态。","stressMode":"在高压下，你可能更想强化掌控感，对错误、低效和不确定性更敏感。你容易把自己放到持续推进的位置，却忽略身体和情绪也需要恢复。","growthAdvice":"不是所有问题都只能靠更强的推进解决；适度放慢、补足沟通和情绪连接，往往会让结果更稳。","posterTags":["目标导向","推进力强","先做成再说"],"shareCopy":"先定方向，再把它做成。","subtitle":"像一个会自然接过节奏的人，目标感很强。","highlights":["果断","统筹","执行","掌控力"],"strengths":["在判断方向、制定策略和推动执行上通常很有力量","面对复杂局面时能迅速抓住关键变量","容易带动他人一起前进"],"blindSpots":["当结果导向过强时，你可能会低估关系中的缓冲空间，也容易对拖延、犹豫和反复确认感到不耐烦。高标准虽然能提高效率，但也可能让他人感到压力"],"relationshipNotes":["你欣赏坦诚、独立、有判断力的人。关系里你通常不喜欢过度猜测和含糊表达，更偏好直接沟通、明确需求、一起成长的互动方式。"],"workNotes":["你适合需要统筹、决策、带项目、带节奏的环境。尤其在高复杂度、高目标感、高执行要求的场景中，你往往能比较快进入状态。"],"stressNotes":["在高压下，你可能更想强化掌控感，对错误、低效和不确定性更敏感。你容易把自己放到持续推进的位置，却忽略身体和情绪也需要恢复。"],"growthNotes":["不是所有问题都只能靠更强的推进解决；适度放慢、补足沟通和情绪连接，往往会让结果更稳。"]},{"key":"ENTP","alias":"观点开拓者","typeCode":"ENTP","nickname":"观点开拓者","title":"ENTP · 观点开拓者","keywords":["灵活","发散","机敏","反常规"],"firstImpression":"脑子转得快，很容易从别人没想到的角度切进来。","summary":"你擅长从不同角度理解问题，也擅长在固定局面中发现新的解法。很多别人觉得“只能这样”的事，在你看来其实都还有别的可能。","overview":"ENTP 通常思维灵活、反应快、好奇心强，对新点子、新组合和新视角很敏感。你不太喜欢被过早定义，也不满足于按现成规则重复执行。相比守住既有路径，你更习惯打开更多路径。","strengthSummary":"有很强的发散能力和重组能力；能迅速发现连接、提出新问法、撬动新机会；面对变化时通常适应得很快。","blindSpotSummary":"当想法太多、入口太多时，你可能会在探索中分散注意力，导致推进和收束不足。你不喜欢无聊和重复，但现实里很多成果恰恰依赖持续打磨。","relationshipStyle":"你通常喜欢有内容、有互动感、能彼此激发的人际关系。你欣赏能接住你想法、愿意一起讨论和探索的人，不太适应长期沉闷、机械的相处状态。","workStyle":"你适合创意、策划、早期探索、产品破局、沟通表达等需要快速联想和观点输出的任务。面对从 0 到 1 的问题时，你往往能提供很强的能量。","stressMode":"在压力下，你可能会通过开启更多可能来回避真正的定夺，表面仍很活跃，内里却逐渐失去聚焦感。","growthAdvice":"保留你的探索天赋，同时练习把最重要的一个想法真正做完；真正的突破，不只来自想法，也来自落地。","posterTags":["鬼点子多","脑洞在线","不按常规出牌"],"shareCopy":"看见更多可能，也敢改写旧答案。","subtitle":"脑子转得快，很容易从别人没想到的角度切进来。","highlights":["灵活","发散","机敏","反常规"],"strengths":["有很强的发散能力和重组能力","能迅速发现连接、提出新问法、撬动新机会","面对变化时通常适应得很快"],"blindSpots":["当想法太多、入口太多时，你可能会在探索中分散注意力，导致推进和收束不足。你不喜欢无聊和重复，但现实里很多成果恰恰依赖持续打磨"],"relationshipNotes":["你通常喜欢有内容、有互动感、能彼此激发的人际关系。你欣赏能接住你想法、愿意一起讨论和探索的人，不太适应长期沉闷、机械的相处状态。"],"workNotes":["你适合创意、策划、早期探索、产品破局、沟通表达等需要快速联想和观点输出的任务。面对从 0 到 1 的问题时，你往往能提供很强的能量。"],"stressNotes":["在压力下，你可能会通过开启更多可能来回避真正的定夺，表面仍很活跃，内里却逐渐失去聚焦感。"],"growthNotes":["保留你的探索天赋，同时练习把最重要的一个想法真正做完；真正的突破，不只来自想法，也来自落地。"]},{"key":"INFJ","alias":"洞察协调者","typeCode":"INFJ","nickname":"洞察协调者","title":"INFJ · 洞察协调者","keywords":["敏锐","深度","共情","意义感"],"firstImpression":"安静但很有存在感，像是能看见很多没说出口的东西。","summary":"你往往能在表面信息之外，感知到人、关系和局面中的深层脉络。你不是最喧闹的人，但通常会在安静观察中形成非常完整的理解。","overview":"INFJ 常被认为兼具洞察力与关怀感。你既会关注事情的意义，也会关注人在其中的状态和感受。你不太喜欢浅层、碎片化的互动，更容易被有深度、有方向感、有真实连接的关系与目标吸引。","strengthSummary":"擅长理解复杂的人际动态；能把感受、动机和趋势整理成清晰判断；通常具备较强的长期洞察力。","blindSpotSummary":"因为对人和关系足够敏感，你也更容易被误解、冷淡或长期失衡的关系消耗。很多感受你会先放在心里，表面平静，内里却可能已经很累。","relationshipStyle":"你重视稳定、真诚和深度连接，通常不太适应过于表面化或反复试探的互动。你希望关系里不仅有情绪回应，也有价值观和理解层面的契合。","workStyle":"你适合需要洞察、理解、表达和长期陪伴的任务，比如内容策划、用户洞察、咨询支持、教育引导、品牌叙事等。","stressMode":"高压下，你可能会先沉默、先压住自己，努力维持外在平稳。但如果长期得不到理解和恢复，你会逐渐进入内耗状态。","growthAdvice":"不要总是等别人“自己看懂你”；适当直接表达需求、界限和疲惫，会比持续隐忍更有效。","posterTags":["深度共情","看透表象","安静但有力量"],"shareCopy":"看见别人没说出口的那一层。","subtitle":"安静但很有存在感，像是能看见很多没说出口的东西。","highlights":["敏锐","深度","共情","意义感"],"strengths":["擅长理解复杂的人际动态","能把感受、动机和趋势整理成清晰判断","通常具备较强的长期洞察力"],"blindSpots":["因为对人和关系足够敏感，你也更容易被误解、冷淡或长期失衡的关系消耗。很多感受你会先放在心里，表面平静，内里却可能已经很累"],"relationshipNotes":["你重视稳定、真诚和深度连接，通常不太适应过于表面化或反复试探的互动。你希望关系里不仅有情绪回应，也有价值观和理解层面的契合。"],"workNotes":["你适合需要洞察、理解、表达和长期陪伴的任务，比如内容策划、用户洞察、咨询支持、教育引导、品牌叙事等。"],"stressNotes":["高压下，你可能会先沉默、先压住自己，努力维持外在平稳。但如果长期得不到理解和恢复，你会逐渐进入内耗状态。"],"growthNotes":["不要总是等别人“自己看懂你”；适当直接表达需求、界限和疲惫，会比持续隐忍更有效。"]},{"key":"INFP","alias":"价值理想者","typeCode":"INFP","nickname":"价值理想者","title":"INFP · 价值理想者","keywords":["真诚","理想感","温柔","内在驱动"],"firstImpression":"看起来安静，但内心世界很丰富，也很有自己的坚持。","summary":"你做选择时，往往更在意这件事是否真正符合内心认同。对你来说，真实感和价值感常常比表面的效率更重要。","overview":"INFP 通常拥有较强的内在价值坐标，也拥有细腻而丰富的感受力。你可能并不总是高调表达自己，但内心对人、关系、意义和理想有很深的判断。你不太愿意活成别人期待的样子，更希望忠于真正相信的东西。","strengthSummary":"通常真诚、敏感、有想象力；对人与事的细微变化很有感受力；在内容、表达、创作、共情和理解层面常有独特优势。","blindSpotSummary":"当现实环境与内在价值冲突时，你可能更容易受伤、退缩或失去动力。你对外界标准未必有强服从感，但在需要稳定推进时也可能显得摇摆。","relationshipStyle":"你很看重被理解、被尊重和被真诚对待。关系里你通常不喜欢表演和敷衍，一旦认定对方，就容易投入很深的情感与信任。","workStyle":"你适合内容创作、品牌表达、心理洞察、用户理解、创意策划和需要价值感驱动的工作。只要做的事与你真正在意的方向一致，你通常会投入得很深。","stressMode":"在高压下，你可能更容易退回自己的内在世界，对外部要求产生回避感，也可能因为长期压抑而失去行动感。","growthAdvice":"保护好你的价值感，同时建立更稳定的行动节奏；理想不一定要和执行对立。","posterTags":["真诚内核","理想驱动","温柔有边界"],"shareCopy":"忠于自己相信的那一面。","subtitle":"看起来安静，但内心世界很丰富，也很有自己的坚持。","highlights":["真诚","理想感","温柔","内在驱动"],"strengths":["通常真诚、敏感、有想象力","对人与事的细微变化很有感受力","在内容、表达、创作、共情和理解层面常有独特优势"],"blindSpots":["当现实环境与内在价值冲突时，你可能更容易受伤、退缩或失去动力。你对外界标准未必有强服从感，但在需要稳定推进时也可能显得摇摆"],"relationshipNotes":["你很看重被理解、被尊重和被真诚对待。关系里你通常不喜欢表演和敷衍，一旦认定对方，就容易投入很深的情感与信任。"],"workNotes":["你适合内容创作、品牌表达、心理洞察、用户理解、创意策划和需要价值感驱动的工作。只要做的事与你真正在意的方向一致，你通常会投入得很深。"],"stressNotes":["在高压下，你可能更容易退回自己的内在世界，对外部要求产生回避感，也可能因为长期压抑而失去行动感。"],"growthNotes":["保护好你的价值感，同时建立更稳定的行动节奏；理想不一定要和执行对立。"]},{"key":"ENFJ","alias":"关系引导者","typeCode":"ENFJ","nickname":"关系引导者","title":"ENFJ · 关系引导者","keywords":["带动","共情","表达","影响力"],"firstImpression":"很会照顾场上的人，也很会把气氛往更好的方向带。","summary":"你不仅关心事情能不能做成，也关心人是否被理解、被连接、被带动。你往往能自然地觉察别人的状态，并让群体向更有共识的方向移动。","overview":"ENFJ 往往具有很强的共情能力、表达能力和带动能力。你擅长把抽象目标转译成别人愿意跟随的方向，也擅长在关系里提供回应与推动。相比冷冰冰地推进结果，你更希望结果和人都被照顾到。","strengthSummary":"常常能感知他人的情绪变化并做出及时回应；擅长组织关系、建立信任、创造合作氛围；在表达和带动方面通常比较突出。","blindSpotSummary":"因为太容易承担关系中的责任，你有时会不自觉背起过多的期待与情绪劳动。你擅长照顾别人，却未必同样擅长及时照顾自己。","relationshipStyle":"你需要回应、真诚和成长感。你通常会主动投入，也希望关系里有明确的温度、尊重和双向反馈。","workStyle":"你适合需要沟通、引导、组织和影响力的工作，比如教育、社区、内容传播、用户运营、团队协作、品牌表达等。","stressMode":"在压力下，你可能一边维持体面和照顾，一边把疲惫压在自己身上，直到真正超负荷时才意识到自己已经很累。","growthAdvice":"练习把“照顾所有人”改成“也照顾好自己”；不是所有关系都需要你来维持完整。","posterTags":["共情力强","很会带人","关系感知高"],"shareCopy":"不仅看见人，也愿意把人带向更好的方向。","subtitle":"很会照顾场上的人，也很会把气氛往更好的方向带。","highlights":["带动","共情","表达","影响力"],"strengths":["常常能感知他人的情绪变化并做出及时回应","擅长组织关系、建立信任、创造合作氛围","在表达和带动方面通常比较突出"],"blindSpots":["因为太容易承担关系中的责任，你有时会不自觉背起过多的期待与情绪劳动。你擅长照顾别人，却未必同样擅长及时照顾自己"],"relationshipNotes":["你需要回应、真诚和成长感。你通常会主动投入，也希望关系里有明确的温度、尊重和双向反馈。"],"workNotes":["你适合需要沟通、引导、组织和影响力的工作，比如教育、社区、内容传播、用户运营、团队协作、品牌表达等。"],"stressNotes":["在压力下，你可能一边维持体面和照顾，一边把疲惫压在自己身上，直到真正超负荷时才意识到自己已经很累。"],"growthNotes":["练习把“照顾所有人”改成“也照顾好自己”；不是所有关系都需要你来维持完整。"]},{"key":"ENFP","alias":"灵感连接者","typeCode":"ENFP","nickname":"灵感连接者","title":"ENFP · 灵感连接者","keywords":["热情","共鸣","创意","连接感"],"firstImpression":"有生命力，也很容易把这份热度带给别人。","summary":"你容易被有趣的人、想法和可能性点燃，也容易把这种热度传递给周围的人。你的生命力常常体现在对新鲜感、真实感和连接感的追求里。","overview":"ENFP 通常热情、敏锐、富有联想力，对外部世界和人与人之间的关系有很强的感知力。你不喜欢太早被固定，也不喜欢在没有情感投入和意义感的情况下持续消耗。","strengthSummary":"通常有很强的感染力、连接力和创意力；能快速发现人与人、事与事之间的关系；也能让交流变得有生命力、有温度、有内容。","blindSpotSummary":"当可能性太多时，你容易在不同方向之间来回切换，导致行动不够收束。情绪和环境反馈也更容易影响你的稳定输出。","relationshipStyle":"你欣赏有回应、有趣味、愿意交流真实感受的人。关系里你不太适应长期冷处理或高度僵化的互动方式。","workStyle":"你适合创意、品牌、内容、用户互动、活动策划、探索型产品等需要灵感与连接力的场景。","stressMode":"在高压下，你可能表面依旧轻快，但内里已经开始疲惫、分散或失去聚焦。外部看来你还在动，实际上内在能量可能已被透支。","growthAdvice":"保留你的热度，同时为自己建立更稳的节奏与收束机制；灵感只有落地后才会变成真正的作品。","posterTags":["灵感体质","共鸣感强","热情有感染力"],"shareCopy":"把热情、连接和可能性一起点亮。","subtitle":"有生命力，也很容易把这份热度带给别人。","highlights":["热情","共鸣","创意","连接感"],"strengths":["通常有很强的感染力、连接力和创意力","能快速发现人与人、事与事之间的关系","也能让交流变得有生命力、有温度、有内容"],"blindSpots":["当可能性太多时，你容易在不同方向之间来回切换，导致行动不够收束。情绪和环境反馈也更容易影响你的稳定输出"],"relationshipNotes":["你欣赏有回应、有趣味、愿意交流真实感受的人。关系里你不太适应长期冷处理或高度僵化的互动方式。"],"workNotes":["你适合创意、品牌、内容、用户互动、活动策划、探索型产品等需要灵感与连接力的场景。"],"stressNotes":["在高压下，你可能表面依旧轻快，但内里已经开始疲惫、分散或失去聚焦。外部看来你还在动，实际上内在能量可能已被透支。"],"growthNotes":["保留你的热度，同时为自己建立更稳的节奏与收束机制；灵感只有落地后才会变成真正的作品。"]},{"key":"ISTJ","alias":"稳健执行者","typeCode":"ISTJ","nickname":"稳健执行者","title":"ISTJ · 稳健执行者","keywords":["可靠","务实","秩序感","责任心"],"firstImpression":"安静但让人放心，像是会把事情稳稳接住的人。","summary":"你更相信经过验证的方法、清晰的标准和稳定推进的力量。相比冒进和空想，你更愿意一步一步把事情做好。","overview":"ISTJ 通常给人可靠、克制、务实的印象。你重视责任、秩序和可落地性，不太喜欢模糊、随意和没有边界的协作方式。你往往不会夸张表达，但会通过持续的执行和稳定的表现体现价值。","strengthSummary":"通常细致、守信、执行稳、能把流程和规则落实到位；面对需要长期维护和精确推进的任务时，往往比多数人更耐得住、也更靠得住。","blindSpotSummary":"你对频繁变化、无序协作和缺乏明确标准的环境容忍度较低。过于强调“应该怎样”时，也可能让你更难适应模糊、开放和需要试错的场景。","relationshipStyle":"你不一定擅长高调表达情绪，但通常会通过实际行动、稳定投入和责任感表达在意。你更看重真实可靠，而不是表面的热情。","workStyle":"你适合流程型、执行型、系统性强的工作，如运营、项目执行、财务、风控、法务支持、流程管理等。","stressMode":"在高压下，你可能更倾向抓紧规则与秩序，对偏差、反复变化和不守约的情况更敏感。","growthAdvice":"稳是你的优势，但也可以适当练习在变化中保留弹性；不是所有不确定都意味着失控。","posterTags":["靠谱稳定","落地能力强","秩序感在线"],"shareCopy":"把复杂的事，稳稳地落下来。","subtitle":"安静但让人放心，像是会把事情稳稳接住的人。","highlights":["可靠","务实","秩序感","责任心"],"strengths":["通常细致、守信、执行稳、能把流程和规则落实到位","面对需要长期维护和精确推进的任务时，往往比多数人更耐得住、也更靠得住"],"blindSpots":["你对频繁变化、无序协作和缺乏明确标准的环境容忍度较低。过于强调“应该怎样”时，也可能让你更难适应模糊、开放和需要试错的场景"],"relationshipNotes":["你不一定擅长高调表达情绪，但通常会通过实际行动、稳定投入和责任感表达在意。你更看重真实可靠，而不是表面的热情。"],"workNotes":["你适合流程型、执行型、系统性强的工作，如运营、项目执行、财务、风控、法务支持、流程管理等。"],"stressNotes":["在高压下，你可能更倾向抓紧规则与秩序，对偏差、反复变化和不守约的情况更敏感。"],"growthNotes":["稳是你的优势，但也可以适当练习在变化中保留弹性；不是所有不确定都意味着失控。"]},{"key":"ISFJ","alias":"温和守护者","typeCode":"ISFJ","nickname":"温和守护者","title":"ISFJ · 温和守护者","keywords":["细腻","照顾感","稳定","体贴"],"firstImpression":"不张扬，但很容易让人放下戒备。","summary":"你通常会自然地留意细节、感受和实际需要，也愿意用安静但持续的方式支持重要的人和关系。","overview":"ISFJ 往往细致、温和、可靠，对环境中的人和秩序都比较敏感。你不太需要成为最显眼的人，但常常会是那个让事情顺利运转、让别人感到安心的人。","strengthSummary":"通常记得住细节，也留心他人的状态；擅长提供稳定支持；愿意在小事上投入心力，这种持续性和细致度非常可贵。","blindSpotSummary":"因为习惯先顾全他人和整体秩序，你有时会把自己的需求放得太后，甚至在疲惫累积后仍不习惯及时表达。","relationshipStyle":"你重视安全感、回应和稳定陪伴。你不一定总是把情绪说得很满，但通常会用行动、记挂和长期投入来体现重视。","workStyle":"你适合服务支持、协作配合、流程维护、教育照顾、用户支持等需要耐心、责任心和稳定心力的场景。","stressMode":"在高压下，你可能会继续扛住表面责任，但内在承载会慢慢逼近上限，尤其当长期得不到回应或理解时。","growthAdvice":"照顾别人是一种能力，但照顾自己同样重要；适时表达边界，不会削弱你的温和，反而能让你的稳定更持久。","posterTags":["温柔可靠","细节控","默默撑住很多事"],"shareCopy":"温柔不是退让，而是稳定地守住重要的人和事。","subtitle":"不张扬，但很容易让人放下戒备。","highlights":["细腻","照顾感","稳定","体贴"],"strengths":["通常记得住细节，也留心他人的状态","擅长提供稳定支持","愿意在小事上投入心力，这种持续性和细致度非常可贵"],"blindSpots":["因为习惯先顾全他人和整体秩序，你有时会把自己的需求放得太后，甚至在疲惫累积后仍不习惯及时表达"],"relationshipNotes":["你重视安全感、回应和稳定陪伴。你不一定总是把情绪说得很满，但通常会用行动、记挂和长期投入来体现重视。"],"workNotes":["你适合服务支持、协作配合、流程维护、教育照顾、用户支持等需要耐心、责任心和稳定心力的场景。"],"stressNotes":["在高压下，你可能会继续扛住表面责任，但内在承载会慢慢逼近上限，尤其当长期得不到回应或理解时。"],"growthNotes":["照顾别人是一种能力，但照顾自己同样重要；适时表达边界，不会削弱你的温和，反而能让你的稳定更持久。"]},{"key":"ESTJ","alias":"秩序执行者","typeCode":"ESTJ","nickname":"秩序执行者","title":"ESTJ · 秩序执行者","keywords":["直接","清晰","效率","组织力"],"firstImpression":"很容易让局面变得可执行、可落地。","summary":"你倾向于快速建立规则、分工和节奏，让事情回到可执行、可推进的状态。相比模糊试探，你更相信明确和落实。","overview":"ESTJ 常常给人果断、直接、讲效率的印象。你重视责任与结果，也习惯把任务拆分、排程、推进，确保事情不停留在空谈中。你通常不会对混乱坐视不管，而会本能地去组织和纠偏。","strengthSummary":"在执行、组织、管理和流程推进上通常很有力量；面对需要定标准、盯节点、压进度的事务时，往往能迅速进入状态。","blindSpotSummary":"当你过于强调效率与规则时，可能让人感受到压力。对犹豫、低效、含糊不清的容忍度较低，也可能让你在关系里显得不够柔软。","relationshipStyle":"你重视靠谱、守约和直白。对你来说，关系中的稳定和责任感往往比花哨表达更重要。","workStyle":"你适合项目落地、流程管理、团队执行、运营统筹、组织协调等需要强推进力的工作。","stressMode":"在高压下，你可能会进一步强化掌控，试图通过更快决策、更严标准来维持秩序，但这也可能增加自身与他人的紧张感。","growthAdvice":"在推进结果之外，也给他人的节奏和情绪留一点缓冲区；更有效并不总意味着更强硬。","posterTags":["执行到位","讲规则","把事拉回正轨"],"shareCopy":"让事情回到该有的秩序里。","subtitle":"很容易让局面变得可执行、可落地。","highlights":["直接","清晰","效率","组织力"],"strengths":["在执行、组织、管理和流程推进上通常很有力量","面对需要定标准、盯节点、压进度的事务时，往往能迅速进入状态"],"blindSpots":["当你过于强调效率与规则时，可能让人感受到压力。对犹豫、低效、含糊不清的容忍度较低，也可能让你在关系里显得不够柔软"],"relationshipNotes":["你重视靠谱、守约和直白。对你来说，关系中的稳定和责任感往往比花哨表达更重要。"],"workNotes":["你适合项目落地、流程管理、团队执行、运营统筹、组织协调等需要强推进力的工作。"],"stressNotes":["在高压下，你可能会进一步强化掌控，试图通过更快决策、更严标准来维持秩序，但这也可能增加自身与他人的紧张感。"],"growthNotes":["在推进结果之外，也给他人的节奏和情绪留一点缓冲区；更有效并不总意味着更强硬。"]},{"key":"ESFJ","alias":"关系协调者","typeCode":"ESFJ","nickname":"关系协调者","title":"ESFJ · 关系协调者","keywords":["体贴","配合感","回应快","氛围感"],"firstImpression":"很会照顾场面，也很会照顾人的感受。","summary":"你通常能同时看见关系中的氛围、他人的感受和现实中的秩序需求，并努力让它们彼此兼容。","overview":"ESFJ 往往有很强的人际敏感度和责任感。你擅长在互动中捕捉反馈，也乐于让关系、合作和氛围变得更顺。相比抽象远景，你更在意眼前的人是否被妥善回应、具体的事情是否被照顾周全。","strengthSummary":"通常会主动维持互动质量，也愿意在细节和感受上投入；对群体氛围和合作状态很敏感；能帮助一群人更顺地配合起来。","blindSpotSummary":"因为过于在意反馈，你有时会把外界评价和关系状态看得太重。面对冲突或冷淡时，也可能比别人更容易受到影响。","relationshipStyle":"你重视及时回应、礼貌、体贴和明确投入。对你来说，关系里“有没有被看见”是很重要的体验。","workStyle":"你适合服务、运营、协调、用户沟通、团队配合、社群维护等需要人与流程并重的场景。","stressMode":"在高压下，你可能仍然努力维持对外的稳定和体面，但内心会对被忽视、被冷处理或关系失衡更敏感。","growthAdvice":"不必把所有关系的平衡都放在自己肩上；适时把注意力收回到自身需求上，会让你的稳定更健康。","posterTags":["很会照顾人","氛围稳定器","回应感强"],"shareCopy":"让关系有温度，也让合作更顺畅。","subtitle":"很会照顾场面，也很会照顾人的感受。","highlights":["体贴","配合感","回应快","氛围感"],"strengths":["通常会主动维持互动质量，也愿意在细节和感受上投入","对群体氛围和合作状态很敏感","能帮助一群人更顺地配合起来"],"blindSpots":["因为过于在意反馈，你有时会把外界评价和关系状态看得太重。面对冲突或冷淡时，也可能比别人更容易受到影响"],"relationshipNotes":["你重视及时回应、礼貌、体贴和明确投入。对你来说，关系里“有没有被看见”是很重要的体验。"],"workNotes":["你适合服务、运营、协调、用户沟通、团队配合、社群维护等需要人与流程并重的场景。"],"stressNotes":["在高压下，你可能仍然努力维持对外的稳定和体面，但内心会对被忽视、被冷处理或关系失衡更敏感。"],"growthNotes":["不必把所有关系的平衡都放在自己肩上；适时把注意力收回到自身需求上，会让你的稳定更健康。"]},{"key":"ISTP","alias":"务实解题者","typeCode":"ISTP","nickname":"务实解题者","title":"ISTP · 务实解题者","keywords":["冷静","上手快","观察力","现场感"],"firstImpression":"不吵不闹，但一遇到问题就很能打。","summary":"你通常会先观察局面、判断变量，然后迅速进入解决问题的状态。相比空谈，你更相信直接上手和现场验证。","overview":"ISTP 往往安静、独立、冷静，对外界保持一定距离感，但在真正需要处理问题时往往非常高效。你不太喜欢被过度干涉，也不喜欢在无意义的表达和流程里消耗。","strengthSummary":"对现实问题的判断通常很直接；有不错的动手与应变能力；面对突发状况或需要快速排障的场景时，往往比多数人更能保持清醒。","blindSpotSummary":"你不太擅长把复杂情绪说得很完整，也可能因为习惯“先自己处理”而显得疏离。长期关系中，如果缺少主动解释，别人可能不容易真正理解你。","relationshipStyle":"你更喜欢自然、轻松、不黏不压迫的关系状态。你尊重彼此空间，也希望关系里少一点强行拉扯、多一点真实与舒服。","workStyle":"你适合技术、排障、执行支持、产品打磨、现场处理等需要判断力和解决能力的工作。","stressMode":"在高压下，你可能会进一步减少表达，把更多精力收回到“先解决问题”上，却因此更难让别人知道你的真实状态。","growthAdvice":"解决问题是你的强项，但被理解同样重要；适当把自己的想法和感受说出来，会让关系更顺。","posterTags":["冷静处理","现场反应快","问题终结者"],"shareCopy":"先看清问题，再迅速把它解开。","subtitle":"不吵不闹，但一遇到问题就很能打。","highlights":["冷静","上手快","观察力","现场感"],"strengths":["对现实问题的判断通常很直接","有不错的动手与应变能力","面对突发状况或需要快速排障的场景时，往往比多数人更能保持清醒"],"blindSpots":["你不太擅长把复杂情绪说得很完整，也可能因为习惯“先自己处理”而显得疏离。长期关系中，如果缺少主动解释，别人可能不容易真正理解你"],"relationshipNotes":["你更喜欢自然、轻松、不黏不压迫的关系状态。你尊重彼此空间，也希望关系里少一点强行拉扯、多一点真实与舒服。"],"workNotes":["你适合技术、排障、执行支持、产品打磨、现场处理等需要判断力和解决能力的工作。"],"stressNotes":["在高压下，你可能会进一步减少表达，把更多精力收回到“先解决问题”上，却因此更难让别人知道你的真实状态。"],"growthNotes":["解决问题是你的强项，但被理解同样重要；适当把自己的想法和感受说出来，会让关系更顺。"]},{"key":"ISFP","alias":"真实体验者","typeCode":"ISFP","nickname":"真实体验者","title":"ISFP · 真实体验者","keywords":["温和","审美感","真实","感受力"],"firstImpression":"安静舒服，不会强压别人，但很有自己的感受标准。","summary":"你更重视真实感受、当下体验和内心认同，不喜欢被过度定义，也不喜欢在违背自己节奏的状态里生活。","overview":"ISFP 通常温和、低调、敏感，对审美、氛围和情绪体验有较高感知力。你不一定想成为最主动表达的人，但对舒服与不舒服、真诚与敷衍、适合与不适合，心里通常有很清楚的感受。","strengthSummary":"通常有较好的感受力、审美感和对细节氛围的把握；待人不张扬，却往往能给人一种舒服、真实、不带压迫感的相处体验。","blindSpotSummary":"当外界节奏太快、要求太硬时，你容易产生消耗感。重要需求若长期不表达，也可能让别人误以为你没有意见或不在意。","relationshipStyle":"你更重视被尊重、被理解和相处时的自然舒适。相比轰轰烈烈，你更在意关系是否真实、是否让人安心。","workStyle":"你适合设计、审美表达、内容体验、创作支持、用户感受优化等需要细腻感知的任务。","stressMode":"在高压下，你可能会先后退一步，保护自己的空间与情绪。如果持续得不到缓冲，行动力和表达欲都可能下降。","growthAdvice":"保留你对真实感受的尊重，同时学会更早表达需求与边界，让外界更有机会真正理解你。","posterTags":["真实感强","审美在线","温柔但不将就"],"shareCopy":"温和地做自己，也认真感受世界。","subtitle":"安静舒服，不会强压别人，但很有自己的感受标准。","highlights":["温和","审美感","真实","感受力"],"strengths":["通常有较好的感受力、审美感和对细节氛围的把握","待人不张扬，却往往能给人一种舒服、真实、不带压迫感的相处体验"],"blindSpots":["当外界节奏太快、要求太硬时，你容易产生消耗感。重要需求若长期不表达，也可能让别人误以为你没有意见或不在意"],"relationshipNotes":["你更重视被尊重、被理解和相处时的自然舒适。相比轰轰烈烈，你更在意关系是否真实、是否让人安心。"],"workNotes":["你适合设计、审美表达、内容体验、创作支持、用户感受优化等需要细腻感知的任务。"],"stressNotes":["在高压下，你可能会先后退一步，保护自己的空间与情绪。如果持续得不到缓冲，行动力和表达欲都可能下降。"],"growthNotes":["保留你对真实感受的尊重，同时学会更早表达需求与边界，让外界更有机会真正理解你。"]},{"key":"ESTP","alias":"行动应变者","typeCode":"ESTP","nickname":"行动应变者","title":"ESTP · 行动应变者","keywords":["果敢","现场反应","机会感","直接"],"firstImpression":"很会抓当下，也很敢下场。","summary":"你更习惯在真实场景中快速判断、快速试错、快速调整，而不是停留在过多预设和纸面推演里。","overview":"ESTP 往往反应快、胆量足、现实感强，对外界变化和现场反馈有很高敏感度。你更相信行动会带来答案，也更愿意在局面里边走边看、边试边调。","strengthSummary":"通常具有很强的即时应变能力；面对突发情况能快速进入状态；对机会和反馈的捕捉也通常很及时。","blindSpotSummary":"因为更信任即时反馈，你有时可能低估长期规划、提前准备和稳定积累的重要性。面对低刺激、慢反馈、重复性高的任务时，也更容易失去耐心。","relationshipStyle":"你通常偏好直接、轻松、有互动感的相处方式，不喜欢过度猜测和长期拉扯。关系里你更愿意用真实反应而不是复杂表演来推进交流。","workStyle":"你适合销售、商务、活动、执行、现场协调、危机处理等需要快速判断和即时反应的工作环境。","stressMode":"在高压下，你可能会进一步依赖行动和外部刺激来分散压迫感，表面很能扛，但也可能忽略真正需要沉下来整理的部分。","growthAdvice":"行动是你的优势，但适度提前规划会让你的效率更高、代价更低；不是所有问题都需要到了现场才处理。","posterTags":["行动派","现场感强","反应很快"],"shareCopy":"先进入场景，再把机会抓住。","subtitle":"很会抓当下，也很敢下场。","highlights":["果敢","现场反应","机会感","直接"],"strengths":["通常具有很强的即时应变能力","面对突发情况能快速进入状态","对机会和反馈的捕捉也通常很及时"],"blindSpots":["因为更信任即时反馈，你有时可能低估长期规划、提前准备和稳定积累的重要性。面对低刺激、慢反馈、重复性高的任务时，也更容易失去耐心"],"relationshipNotes":["你通常偏好直接、轻松、有互动感的相处方式，不喜欢过度猜测和长期拉扯。关系里你更愿意用真实反应而不是复杂表演来推进交流。"],"workNotes":["你适合销售、商务、活动、执行、现场协调、危机处理等需要快速判断和即时反应的工作环境。"],"stressNotes":["在高压下，你可能会进一步依赖行动和外部刺激来分散压迫感，表面很能扛，但也可能忽略真正需要沉下来整理的部分。"],"growthNotes":["行动是你的优势，但适度提前规划会让你的效率更高、代价更低；不是所有问题都需要到了现场才处理。"]},{"key":"ESFP","alias":"活力感染者","typeCode":"ESFP","nickname":"活力感染者","title":"ESFP · 活力感染者","keywords":["热情","亲和","表现力","氛围感"],"firstImpression":"有温度，也有存在感，很容易把人带进状态。","summary":"你通常能把现场气氛、人际温度和真实体验带活。你对当下有很强的参与感，也很容易把这种生命力传递出去。","overview":"ESFP 往往自然、亲切、有表现力，重视互动感、真实感和生活本身的鲜活度。你不喜欢冷冰冰地完成任务，更希望人和事情都能有温度、有回应、有参与感。","strengthSummary":"通常有较强的亲和力、现场感和表达感染力；无论是在关系里还是在协作中，都容易让氛围变得更轻松、更有人味。","blindSpotSummary":"因为对外部反馈很敏感，你的状态也更容易被环境影响。面对过度压抑、重复僵化或长期冷淡的场景时，你会比较容易消耗。","relationshipStyle":"你重视回应、陪伴、参与感和情绪温度。对你来说，关系不只是“在一起”，更是有没有真正交流、真正感受到彼此。","workStyle":"你适合内容表达、活动执行、品牌互动、社群沟通、用户体验等需要人际互动和现场感的工作。","stressMode":"在高压下，你可能会先用忙碌、热闹或继续投入人群的方式撑住自己，但真正的疲惫往往会在后面慢慢显现。","growthAdvice":"保留你的活力和温度，同时给自己建立一点节奏与边界，让热情不至于总被环境消耗。","posterTags":["氛围感强","感染力高","现场小太阳"],"shareCopy":"把温度、活力和参与感带进每个现场。","subtitle":"有温度，也有存在感，很容易把人带进状态。","highlights":["热情","亲和","表现力","氛围感"],"strengths":["通常有较强的亲和力、现场感和表达感染力","无论是在关系里还是在协作中，都容易让氛围变得更轻松、更有人味"],"blindSpots":["因为对外部反馈很敏感，你的状态也更容易被环境影响。面对过度压抑、重复僵化或长期冷淡的场景时，你会比较容易消耗"],"relationshipNotes":["你重视回应、陪伴、参与感和情绪温度。对你来说，关系不只是“在一起”，更是有没有真正交流、真正感受到彼此。"],"workNotes":["你适合内容表达、活动执行、品牌互动、社群沟通、用户体验等需要人际互动和现场感的工作。"],"stressNotes":["在高压下，你可能会先用忙碌、热闹或继续投入人群的方式撑住自己，但真正的疲惫往往会在后面慢慢显现。"],"growthNotes":["保留你的活力和温度，同时给自己建立一点节奏与边界，让热情不至于总被环境消耗。"]}],"extensions":{"scoring":{"dimensions":[{"key":"ie","label":"I 内向 ←→ E 外向"},{"key":"sn","label":"S 实感 ←→ N 直觉"},{"key":"ft","label":"F 情感 ←→ T 思考"},{"key":"jp","label":"J 判断 ←→ P 感知"}]},"share":{"captionTone":"insightful"},"intro":{"tagline":"OEJTS 正式版首发，结果页支持回看、保存、分享与一键导出人格海报。","priceLabel":"32 题完整版","accessSummary":"输入随机测试口令后开始，有效期内可重复进入","valuePoints":["16 型结果","四条维度倾向","关系 / 工作 / 压力提示"],"flowSteps":["输入测试口令","完成 32 题","查看完整结果"],"detailSections":[{"title":"OEJTS 是什么","description":"OEJTS 16 型人格图谱是一套基于 I/E、S/N、F/T、J/P 四条人格偏好维度的自我探索测试。它关注你更自然的注意力方向、判断方式与行动节奏，而不是给你贴上固定不变的标签。"},{"title":"这套题适合谁","description":"适合想快速了解自己在四条人格维度上更偏向哪一侧，以及这些偏好如何影响关系、沟通与做事方式的人。"},{"title":"你会得到什么","description":"结果页会展示你的 16 型结果、四条维度位置，以及围绕关系、工作和压力情境的补充解读。"},{"title":"答题方式","description":"每题都在两种倾向之间做 5 级选择，按第一反应作答即可，不需要刻意追求“最好”的答案。"}]}}}',
+  'OEJTS 正式版首发运行时配置'
+);
 
-UPDATE quizzes SET current_draft_version_id = current_published_version_id;
+UPDATE quizzes
+SET current_draft_version_id = 'quiz_version_oejts_v1'
+WHERE id = 'quiz_oejts_personality_map';
 
 INSERT OR REPLACE INTO products (
   id,
@@ -94,51 +63,17 @@ INSERT OR REPLACE INTO products (
   intro_mode,
   landing_visible,
   description
-) VALUES
-  (
-    'product_personality_single',
-    '人格原型单测体验',
-    'single_product',
-    'active',
-    'xiaohongshu',
-    'https://example.com/personality',
-    'code_gate',
-    1,
-    '单码单题集，适合标准付费售卖。'
-  ),
-  (
-    'product_relationship_bundle',
-    '人格 + 关系双题合集',
-    'bundle',
-    'active',
-    'xiaohongshu',
-    'https://example.com/bundle',
-    'code_gate',
-    1,
-    '一码可解锁人格原型实验室和亲密关系模式图谱。'
-  ),
-  (
-    'product_love_shared',
-    '亲密关系模式图谱 · MVP 单测',
-    'single_product',
-    'active',
-    'xiaohongshu',
-    'https://example.com/love-mvp',
-    'code_gate',
-    1,
-    'MVP 阶段单题集通用码方案，验证付费链路与结果表达。'
-  ),
-  (
-    'product_promo_experience',
-    '职场能量免费体验码',
-    'promo',
-    'active',
-    'xiaohongshu',
-    'https://example.com/promo',
-    'hybrid',
-    1,
-    '前期拉新体验用，强调低门槛试用。'
-  );
+) VALUES (
+  'product_oejts_single',
+  'OEJTS 16 型人格图谱 · 正式版单测',
+  'single_product',
+  'active',
+  'xiaohongshu',
+  'https://example.com/oejts',
+  'code_gate',
+  1,
+  '当前采用一套题一个随机口令的正式版交付方案。'
+);
 
 INSERT OR REPLACE INTO product_quizzes (
   id,
@@ -146,42 +81,13 @@ INSERT OR REPLACE INTO product_quizzes (
   quiz_id,
   sort_order,
   access_json
-) VALUES
-  (
-    'pq_personality_single',
-    'product_personality_single',
-    'quiz_personality_archetype',
-    1,
-    '{"mode":"full_access"}'
-  ),
-  (
-    'pq_bundle_personality',
-    'product_relationship_bundle',
-    'quiz_personality_archetype',
-    1,
-    '{"mode":"full_access"}'
-  ),
-  (
-    'pq_bundle_love',
-    'product_relationship_bundle',
-    'quiz_love_pattern_map',
-    2,
-    '{"mode":"full_access"}'
-  ),
-  (
-    'pq_love_shared',
-    'product_love_shared',
-    'quiz_love_pattern_map',
-    1,
-    '{"mode":"full_access"}'
-  ),
-  (
-    'pq_promo_workplace',
-    'product_promo_experience',
-    'quiz_workplace_energy_profile',
-    1,
-    '{"mode":"trial"}'
-  );
+) VALUES (
+  'pq_oejts_single',
+  'product_oejts_single',
+  'quiz_oejts_personality_map',
+  1,
+  '{"mode":"full_access"}'
+);
 
 INSERT OR REPLACE INTO code_batches (
   id,
@@ -193,51 +99,17 @@ INSERT OR REPLACE INTO code_batches (
   status,
   expires_at,
   policy_json
-) VALUES
-  (
-    'batch_personality_launch',
-    'product_personality_single',
-    '人格原型首发批次',
-    'single_product',
-    'ST',
-    12,
-    'active',
-    '2026-12-31T23:59:59.000Z',
-    '{"scopeMode":"product","tokenTtlDays":30,"introVisible":true,"notes":"首发标准售卖批次"}'
-  ),
-  (
-    'batch_bundle_campaign',
-    'product_relationship_bundle',
-    '双题合集 618 批次',
-    'bundle',
-    'ST',
-    12,
-    'active',
-    '2026-12-31T23:59:59.000Z',
-    '{"scopeMode":"product","tokenTtlDays":30,"introVisible":true,"notes":"618 打包活动"}'
-  ),
-  (
-    'batch_love_shared_mvp',
-    'product_love_shared',
-    '关系题 MVP 通用码批次',
-    'single_product',
-    'SOUL',
-    14,
-    'active',
-    '2026-12-31T23:59:59.000Z',
-    '{"scopeMode":"product","verificationMode":"shared_code","tokenTtlDays":30,"introVisible":true,"notes":"MVP 通用码，后续可平滑切换为一单一码"}'
-  ),
-  (
-    'batch_promo_trial',
-    'product_promo_experience',
-    '免费体验推广码',
-    'promo',
-    'ST',
-    12,
-    'active',
-    '2026-06-30T23:59:59.000Z',
-    '{"scopeMode":"custom_scope","allowQuizSlugs":["workplace-energy-profile"],"tokenTtlDays":7,"introVisible":true,"notes":"KOL 推广批次"}'
-  );
+) VALUES (
+  'batch_oejts_launch',
+  'product_oejts_single',
+  'OEJTS 正式版首发批次',
+  'single_product',
+  'OEJTS',
+  14,
+  'active',
+  '2026-12-31T23:59:59.000Z',
+  '{"scopeMode":"product","verificationMode":"shared_code","tokenTtlDays":30,"introVisible":true,"notes":"正式版首发阶段先采用一套题一个随机口令"}'
+);
 
 INSERT OR REPLACE INTO codes (
   code,
@@ -245,35 +117,13 @@ INSERT OR REPLACE INTO codes (
   status,
   expires_at,
   metadata_json
-) VALUES
-  (
-    'ST-DEMO-ALPHA',
-    'batch_personality_launch',
-    'active',
-    '2026-12-31T23:59:59.000Z',
-    '{"channel":"manual","remark":"单题集联调码"}'
-  ),
-  (
-    'ST-PACK-618',
-    'batch_bundle_campaign',
-    'active',
-    '2026-12-31T23:59:59.000Z',
-    '{"channel":"campaign","remark":"双题合集联调码"}'
-  ),
-  (
-    'SOUL-LOVE-0313',
-    'batch_love_shared_mvp',
-    'active',
-    '2026-12-31T23:59:59.000Z',
-    '{"channel":"mvp","remark":"亲密关系模式图谱 MVP 通用码"}'
-  ),
-  (
-    'ST-PROMO-OPEN',
-    'batch_promo_trial',
-    'active',
-    '2026-06-30T23:59:59.000Z',
-    '{"channel":"promo","remark":"体验码联调"}'
-  );
+) VALUES (
+  'OEJTS-7Q4X-9M2P',
+  'batch_oejts_launch',
+  'active',
+  '2026-12-31T23:59:59.000Z',
+  '{"channel":"formal-launch","remark":"OEJTS 正式版随机口令"}'
+);
 
 INSERT OR REPLACE INTO admins (
   id,

@@ -1,4 +1,4 @@
-﻿import {
+import {
   getMockAccessGrant,
   getMockAdminOverview,
   getMockCatalogItems,
@@ -34,6 +34,8 @@ interface QuizRow {
   category: string | null
   price: number | null
   config_json: string | null
+  sales_channel?: string | null
+  purchase_url?: string | null
 }
 
 interface ProductRow {
@@ -104,26 +106,127 @@ function isExpired(isoValue: string | null | undefined) {
   return new Date(isoValue).getTime() < Date.now()
 }
 
+interface RuntimeIntroConfig {
+  tagline?: string
+  priceLabel?: string
+  accessSummary?: string
+  valuePoints?: string[]
+  flowSteps?: string[]
+  detailSections?: Array<{ title: string; description: string }>
+}
+
+export class SubmissionValidationError extends Error {
+  details?: unknown
+
+  constructor(message: string, details?: unknown) {
+    super(message)
+    this.name = "SubmissionValidationError"
+    this.details = details
+  }
+}
+
+function getRuntimeIntroConfig(runtime: QuizRuntimeConfig | null | undefined): RuntimeIntroConfig {
+  const intro = (runtime?.extensions?.intro ?? {}) as RuntimeIntroConfig
+
+  return {
+    tagline: typeof intro.tagline === "string" ? intro.tagline : undefined,
+    priceLabel: typeof intro.priceLabel === "string" ? intro.priceLabel : undefined,
+    accessSummary: typeof intro.accessSummary === "string" ? intro.accessSummary : undefined,
+    valuePoints: Array.isArray(intro.valuePoints)
+      ? intro.valuePoints.filter((item): item is string => typeof item === "string")
+      : undefined,
+    flowSteps: Array.isArray(intro.flowSteps)
+      ? intro.flowSteps.filter((item): item is string => typeof item === "string")
+      : undefined,
+    detailSections: Array.isArray(intro.detailSections)
+      ? intro.detailSections.filter(
+          (item): item is { title: string; description: string } =>
+            typeof item === "object" &&
+            item !== null &&
+            typeof item.title === "string" &&
+            typeof item.description === "string",
+        )
+      : undefined,
+  }
+}
+
+function getAnswerOptionId(answer: unknown) {
+  if (typeof answer === "string" && answer.trim().length > 0) {
+    return answer
+  }
+
+  if (
+    Array.isArray(answer) &&
+    answer.length === 1 &&
+    typeof answer[0] === "string" &&
+    answer[0].trim().length > 0
+  ) {
+    return answer[0]
+  }
+
+  return undefined
+}
+
+function validateSubmissionAnswers(runtime: QuizRuntimeConfig, answers: Record<string, unknown>) {
+  if (!answers || typeof answers !== "object" || Array.isArray(answers)) {
+    throw new SubmissionValidationError("答题数据格式不正确")
+  }
+
+  const runtimeQuestions = runtime.questions as Array<{
+    id?: unknown
+    options?: Array<{ id?: unknown }>
+  }>
+  const questionIds = new Set(runtimeQuestions.map((question) => String(question.id ?? "")))
+  const unknownQuestionIds = Object.keys(answers).filter((questionId) => !questionIds.has(questionId))
+
+  if (unknownQuestionIds.length > 0) {
+    throw new SubmissionValidationError("答题数据包含未知题目", { unknownQuestionIds })
+  }
+
+  const issues = runtimeQuestions.flatMap((question) => {
+    const questionId = String(question.id ?? "")
+    const selectedOptionId = getAnswerOptionId(answers[questionId])
+
+    if (!questionId) {
+      return [] as Array<Record<string, unknown>>
+    }
+
+    if (!selectedOptionId) {
+      return [{ questionId, code: "missing_answer" }]
+    }
+
+    const optionIds = new Set((question.options ?? []).map((option) => String(option.id ?? "")))
+
+    if (!optionIds.has(selectedOptionId)) {
+      return [{ questionId, code: "invalid_option", selectedOptionId }]
+    }
+
+    return [] as Array<Record<string, unknown>>
+  })
+
+  if (issues.length > 0) {
+    throw new SubmissionValidationError("请完整并正确地完成所有题目后再提交", { issues })
+  }
+}
+
 function normalizeCatalogItem(row: QuizRow): QuizCatalogItem {
-  const fallback = getMockCatalogItems().find((item) => item.slug === row.slug)
   const runtime = parseJson<QuizRuntimeConfig | null>(row.config_json, null)
+  const intro = getRuntimeIntroConfig(runtime)
 
   return {
     id: row.id,
     slug: row.slug,
     title: row.title,
-    category: row.category ?? fallback?.category ?? runtime?.meta.category ?? "未分类",
-    summary: row.summary ?? fallback?.summary ?? runtime?.meta.summary ?? "",
-    tagline: fallback?.tagline ?? runtime?.meta.summary ?? row.summary ?? "",
-    priceLabel:
-      fallback?.priceLabel ?? ((row.price ?? 0) <= 0 ? "免费体验" : "单测体验"),
-    durationMinutes:
-      fallback?.durationMinutes ?? runtime?.meta.estimatedMinutes ?? runtime?.questions.length ?? 0,
-    questionCount: fallback?.questionCount ?? runtime?.questions.length ?? 0,
-    accessSummary: fallback?.accessSummary ?? "支持动态验证码策略",
-    tags: fallback?.tags ?? runtime?.meta.tags ?? [],
-    valuePoints: fallback?.valuePoints ?? ["后续可映射 D1 发布版本与扩展配置"],
-    flowSteps: fallback?.flowSteps ?? ["输入验证码", "完成测试", "查看结果"],
+    category: row.category ?? runtime?.meta.category ?? "未分类",
+    summary: row.summary ?? runtime?.meta.summary ?? "",
+    tagline: intro.tagline ?? runtime?.meta.summary ?? row.summary ?? "",
+    priceLabel: intro.priceLabel ?? ((row.price ?? 0) <= 0 ? "免费体验" : "单测体验"),
+    durationMinutes: runtime?.meta.estimatedMinutes ?? runtime?.questions.length ?? 0,
+    questionCount: runtime?.questions.length ?? 0,
+    accessSummary: intro.accessSummary ?? "输入测试口令后开始",
+    tags: runtime?.meta.tags ?? [],
+    valuePoints: intro.valuePoints ?? ["完整结果报告", "支持保存与分享", "口令有效期内可重复进入"],
+    flowSteps: intro.flowSteps ?? ["输入测试口令", "完成测试", "查看结果"],
   }
 }
 
@@ -158,10 +261,15 @@ async function getQuizIntroFromD1(slug: string, env: CloudflareEnv) {
         q.summary,
         q.category,
         q.price,
-        v.config_json
+        v.config_json,
+        p.sales_channel,
+        p.purchase_url
       FROM quizzes q
       LEFT JOIN quiz_versions v ON v.id = q.current_published_version_id
+      LEFT JOIN product_quizzes pq ON pq.quiz_id = q.id
+      LEFT JOIN products p ON p.id = pq.product_id AND p.status = 'active' AND p.landing_visible = 1
       WHERE q.slug = ?1
+      ORDER BY pq.sort_order ASC
       LIMIT 1
     `,
   )
@@ -172,12 +280,15 @@ async function getQuizIntroFromD1(slug: string, env: CloudflareEnv) {
     return undefined
   }
 
-  const fallback = getMockQuizIntro(slug)
+  const runtime = parseJson<QuizRuntimeConfig | null>(row.config_json, null)
+  const intro = getRuntimeIntroConfig(runtime)
   const normalized = normalizeCatalogItem(row)
 
   return {
     ...normalized,
-    detailSections: fallback?.detailSections ?? [],
+    salesChannel: row.sales_channel ?? undefined,
+    purchaseUrl: row.purchase_url ?? undefined,
+    detailSections: intro.detailSections ?? [],
   } satisfies QuizIntro
 }
 
@@ -334,22 +445,24 @@ async function lookupCodeInD1(code: string, env: CloudflareEnv): Promise<AccessG
   }
 }
 
+function mergeCatalogItemsWithMock(items: QuizCatalogItem[]) {
+  const existingSlugs = new Set(items.map((item) => item.slug))
+  const fallbackItems = getMockCatalogItems().filter((item) => !existingSlugs.has(item.slug))
+
+  return [...items, ...fallbackItems]
+}
+
 export async function listPublicQuizzes(env: CloudflareEnv) {
   if (isMockMode(env)) {
     return getMockCatalogItems()
   }
 
   try {
-    const items = await listPublicQuizzesFromD1(env)
-
-    if (items.length > 0) {
-      return items
-    }
+    const d1Items = await listPublicQuizzesFromD1(env)
+    return mergeCatalogItemsWithMock(d1Items)
   } catch {
-    // fall through to mock data
+    return getMockCatalogItems()
   }
-
-  return getMockCatalogItems()
 }
 
 export async function getQuizIntro(slug: string, env: CloudflareEnv) {
@@ -358,16 +471,10 @@ export async function getQuizIntro(slug: string, env: CloudflareEnv) {
   }
 
   try {
-    const item = await getQuizIntroFromD1(slug, env)
-
-    if (item) {
-      return item
-    }
+    return (await getQuizIntroFromD1(slug, env)) ?? getMockQuizIntro(slug)
   } catch {
-    // fall through to mock data
+    return getMockQuizIntro(slug)
   }
-
-  return getMockQuizIntro(slug)
 }
 
 export async function getRuntimeConfig(slug: string, env: CloudflareEnv) {
@@ -376,16 +483,10 @@ export async function getRuntimeConfig(slug: string, env: CloudflareEnv) {
   }
 
   try {
-    const runtime = await getRuntimeConfigFromD1(slug, env)
-
-    if (runtime) {
-      return runtime
-    }
+    return (await getRuntimeConfigFromD1(slug, env)) ?? getMockRuntimeConfig(slug)
   } catch {
-    // fall through to mock data
+    return getMockRuntimeConfig(slug)
   }
-
-  return getMockRuntimeConfig(slug)
 }
 
 export async function lookupAccessGrant(code: string, env: CloudflareEnv) {
@@ -396,16 +497,10 @@ export async function lookupAccessGrant(code: string, env: CloudflareEnv) {
   }
 
   try {
-    const grant = await lookupCodeInD1(normalizedCode, env)
-
-    if (grant) {
-      return grant
-    }
+    return (await lookupCodeInD1(normalizedCode, env)) ?? getMockAccessGrant(normalizedCode)
   } catch {
-    // fall through to mock data
+    return getMockAccessGrant(normalizedCode)
   }
-
-  return getMockAccessGrant(normalizedCode)
 }
 
 export async function getAdminOverview(env: CloudflareEnv) {
@@ -571,6 +666,8 @@ export async function recordSubmission(
   if (!runtime) {
     throw new Error("runtime_not_found")
   }
+
+  validateSubmissionAnswers(runtime, input.answers)
 
   const { result, scoreBreakdown } = selectResult(runtime, input.answers)
   const submissionId = crypto.randomUUID()

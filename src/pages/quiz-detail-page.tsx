@@ -1,8 +1,7 @@
-﻿import { ArrowRight, Clock3, LoaderCircle, ShieldCheck, X } from "lucide-react"
-import { useEffect, useRef, useState, type FormEvent } from "react"
+﻿import { ArrowRight, Clock3, ExternalLink, ScanLine, Sparkles } from "lucide-react"
+import { useEffect, useState, type FormEvent } from "react"
 import { Navigate, useNavigate, useParams } from "react-router"
-import { AnimatePresence, motion } from "framer-motion"
-
+import { AccessCodeDialog } from "@/components/quiz/access-code-dialog"
 import { Spotlight } from "@/components/ui/spotlight"
 import { Button } from "@/components/ui/button"
 import { fetchQuizIntro, verifyAccessCode } from "@/features/quizzes/api"
@@ -16,95 +15,169 @@ const OEJTS_OUTCOME_ITEMS = [
   "关系、工作、压力场景下的建议",
 ]
 
-const OEJTS_MODEL_INTRO =
-  "OEJTS 16 型人格图谱是一套基于 I/E、S/N、F/T、J/P 四条人格偏好维度的自我探索测试。它关注你更自然的注意力方向、判断方式与行动节奏，而不是把结果当成固定标签。"
-
-function ResultPreviewCard() {
-  const [imageFailed, setImageFailed] = useState(false)
-
-  const previewRows = [
-    { label: "内向 / 外向", value: 72 },
-    { label: "实感 / 直觉", value: 68 },
-    { label: "情感 / 思考", value: 79 },
-    { label: "判断 / 感知", value: 64 },
-  ]
+function ResultPreviewCard({ quizSlug }: { quizSlug: string }) {
+  const isRelationshipQuiz = quizSlug === "relationship-preference-test"
+  const preview = isRelationshipQuiz
+    ? {
+        badge: "RELATIONSHIP",
+        title: "精心的时刻",
+        subtitle: "主通道 · 被专注陪伴打动",
+        description: "主语言 / 次语言、五维分布、关系里的失落触发点，以及适合直接导出的关系海报。",
+        rows: [
+          { label: "肯定的言辞", value: 50 },
+          { label: "精心的时刻", value: 83 },
+          { label: "接受礼物", value: 33 },
+          { label: "服务的行动", value: 67 },
+          { label: "身体的接触", value: 17 },
+        ],
+        chips: [
+          { title: "主语言", body: "你最容易因为被认真陪伴而感到被爱。" },
+          { title: "次语言", body: "行动上的照顾，会进一步加强你的安全感。" },
+        ],
+        posterTitle: "关系海报",
+        posterBody: "结果页支持回看、分享与一键导出，适合发给伴侣一起看。",
+        glowClass: "bg-rose-500/18",
+        shellClass: "bg-[linear-gradient(180deg,rgba(95,22,52,0.92)_0%,rgba(35,10,22,0.98)_100%)]",
+        innerClass: "bg-[#190913]/95",
+        barClass: "bg-gradient-to-r from-rose-400 via-pink-400 to-amber-300",
+      }
+    : {
+        badge: "OEJTS",
+        title: "INTJ",
+        subtitle: "分析者原型 · 冷静规划型",
+        description: "四条维度倾向、关系 / 工作 / 压力场景建议，以及适合保存分享的人格海报。",
+        rows: [
+          { label: "内向 / 外向", value: 72 },
+          { label: "实感 / 直觉", value: 68 },
+          { label: "情感 / 思考", value: 79 },
+          { label: "判断 / 感知", value: 64 },
+        ],
+        chips: [
+          { title: "关系", body: "偏好稳定、深度、低消耗的沟通方式。" },
+          { title: "工作", body: "擅长规划、独立判断和长期推进复杂任务。" },
+        ],
+        posterTitle: "人格海报",
+        posterBody: "完整结果支持回看、保存与一键导出分享。",
+        glowClass: "bg-fuchsia-500/16",
+        shellClass: "bg-[linear-gradient(180deg,rgba(49,24,92,0.92)_0%,rgba(6,14,39,0.98)_100%)]",
+        innerClass: "bg-slate-950/90",
+        barClass: "bg-gradient-to-r from-fuchsia-400 via-violet-400 to-sky-400",
+      }
 
   return (
-    <div aria-hidden="true" className="relative hidden w-full max-w-[420px] lg:block">
-      <div className="absolute -inset-6 rounded-[40px] bg-fuchsia-500/18 blur-3xl" />
-      <div className="relative overflow-hidden rounded-[32px] border border-white/12 bg-white/6 shadow-[0_32px_120px_rgba(15,23,42,0.32)]">
-        {imageFailed ? (
-          <div className="relative h-[460px] w-full overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(168,85,247,0.28),_transparent_30%),linear-gradient(180deg,#111827_0%,#020617_100%)]">
-            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(2,6,23,0.08)_0%,rgba(2,6,23,0.26)_34%,rgba(2,6,23,0.94)_100%)]" />
-            <img
-              alt="抽象测试结果预览插图"
-              className="absolute inset-x-0 bottom-0 mx-auto w-[72%] translate-y-8 opacity-85 mix-blend-screen"
-              loading="eager"
-              src={heroArt}
-            />
-          </div>
-        ) : (
-          <>
-            <img
-              alt="紫色光影中的人物剪影"
-              className="h-[460px] w-full object-cover object-center opacity-72"
-              crossOrigin="anonymous"
-              decoding="async"
-              loading="eager"
-              onError={() => setImageFailed(true)}
-              referrerPolicy="no-referrer"
-              src="https://images.unsplash.com/photo-1684254153218-564ec144448b?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-            />
-            <img
-              alt="抽象测试结果预览插图"
-              className="pointer-events-none absolute inset-x-0 bottom-0 mx-auto w-[72%] translate-y-8 opacity-40 mix-blend-screen"
-              loading="eager"
-              src={heroArt}
-            />
-          </>
-        )}
-
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(2,6,23,0.06)_0%,rgba(2,6,23,0.32)_35%,rgba(2,6,23,0.92)_100%),radial-gradient(circle_at_top_right,rgba(168,85,247,0.28),transparent_36%)]" />
-
-        <div className="absolute left-5 top-5 inline-flex items-center gap-2 rounded-full border border-white/14 bg-black/35 px-3 py-1.5 text-[10px] uppercase tracking-[0.28em] text-white/62 backdrop-blur-md">
-          结果页预览
-        </div>
-
-        <div className="absolute inset-x-5 bottom-5 rounded-[28px] border border-white/12 bg-black/45 p-5 backdrop-blur-xl">
-          <div className="flex items-start justify-between gap-4">
+    <div aria-hidden="true" className="relative hidden w-full max-w-[336px] lg:block xl:max-w-[360px]">
+      <div className={`absolute -inset-5 rounded-[36px] blur-3xl ${preview.glowClass}`} />
+      <div className={`relative rounded-[30px] border border-white/10 p-3 shadow-[0_28px_100px_rgba(15,23,42,0.28)] ${preview.shellClass}`}>
+        <div className={`rounded-[24px] border border-white/12 p-4 ${preview.innerClass}`}>
+          <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-[10px] uppercase tracking-[0.3em] text-white/45">结果示意</p>
-              <p className="mt-3 text-4xl font-semibold tracking-tight text-white">INTJ</p>
-              <p className="mt-2 text-sm text-white/60">分析者原型 · 长报告页预览</p>
+              <p className="text-[10px] uppercase tracking-[0.28em] text-white/45">结果页预览</p>
+              <p className="mt-2.5 text-[1.85rem] font-semibold tracking-tight text-white">{preview.title}</p>
+              <p className="mt-1.5 text-xs leading-5 text-white/58">{preview.subtitle}</p>
             </div>
             <div className="rounded-full border border-white/12 bg-white/8 px-3 py-1 text-[10px] uppercase tracking-[0.22em] text-white/50">
-              OEJTS
+              {preview.badge}
             </div>
           </div>
 
-          <div className="mt-6 space-y-3">
-            {previewRows.map((row) => (
+          <p className="mt-3 text-[13px] leading-6 text-white/62">{preview.description}</p>
+
+          <div className="mt-4 space-y-2.5">
+            {preview.rows.map((row) => (
               <div key={row.label}>
                 <div className="flex items-center justify-between text-[11px] text-white/58">
                   <span>{row.label}</span>
                   <span>{row.value}%</span>
                 </div>
-                <div className="mt-2 h-2 rounded-full bg-white/10">
-                  <div
-                    className="h-full rounded-full bg-gradient-to-r from-fuchsia-400 via-violet-400 to-sky-400"
-                    style={{ width: `${row.value}%` }}
-                  />
+                <div className="mt-1.5 h-2 rounded-full bg-white/10">
+                  <div className={`h-full rounded-full ${preview.barClass}`} style={{ width: `${row.value}%` }} />
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="mt-6 rounded-[22px] border border-white/10 bg-white/6 p-4 text-sm leading-6 text-white/62">
-            冷静分析、长期规划、独立判断，以及关系、工作、压力场景下的建议。
+          <div className="mt-4 grid grid-cols-2 gap-2.5">
+            {preview.chips.map((chip) => (
+              <div className="rounded-[16px] border border-white/10 bg-white/6 p-2.5" key={chip.title}>
+                <p className="text-[10px] uppercase tracking-[0.22em] text-white/40">{chip.title}</p>
+                <p className="mt-1.5 text-xs leading-5 text-white/66">{chip.body}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="relative mt-4 overflow-hidden rounded-[18px] border border-white/10 bg-white/6 p-3.5">
+            <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.22em] text-white/45">
+              <Sparkles className="size-3.5" />
+              <span>{preview.posterTitle}</span>
+            </div>
+            <p className="mt-1.5 max-w-[72%] text-xs leading-5 text-white/66">{preview.posterBody}</p>
+            <img
+              alt="抽象测试结果预览插图"
+              className="pointer-events-none absolute bottom-0 right-1 w-16 opacity-30 mix-blend-screen"
+              loading="eager"
+              src={heroArt}
+            />
           </div>
         </div>
       </div>
     </div>
+  )
+}
+
+function PurchaseQrPlaceholder({
+  purchaseUrl,
+  salesChannel,
+}: {
+  purchaseUrl?: string
+  salesChannel?: string
+}) {
+  const channelLabel = salesChannel === "xiaohongshu" ? "小红书店铺" : "购买入口"
+  const hasPurchaseLink = Boolean(purchaseUrl && !purchaseUrl.includes("example.com"))
+
+  const cardContent = (
+    <div className="flex flex-col items-center text-center">
+      <div className="mx-auto flex aspect-square w-[124px] items-center justify-center rounded-[20px] bg-white p-3 shadow-[0_18px_60px_rgba(15,23,42,0.18)] sm:w-[136px]">
+        <div className="relative flex h-full w-full items-center justify-center rounded-[16px] border-[5px] border-slate-950 bg-slate-50">
+          <div className="absolute left-3 top-3 h-5 w-5 rounded-[4px] border-[4px] border-slate-950" />
+          <div className="absolute right-3 top-3 h-5 w-5 rounded-[4px] border-[4px] border-slate-950" />
+          <div className="absolute bottom-3 left-3 h-5 w-5 rounded-[4px] border-[4px] border-slate-950" />
+          <div className="absolute bottom-4 right-4 h-3.5 w-3.5 rounded-[4px] bg-slate-950" />
+
+          <div className="flex flex-col items-center justify-center gap-1 text-slate-950">
+            <ScanLine className="size-6" />
+            <span className="text-xs font-semibold tracking-[0.22em]">灵测</span>
+          </div>
+        </div>
+      </div>
+
+      <p className="mt-3 text-sm font-medium text-white">{channelLabel}二维码</p>
+      <p className="mt-1 max-w-[180px] text-[12px] leading-5 text-white/58">
+        {hasPurchaseLink ? "扫码或点击即可跳转购买" : "预留展示区域，后续可替换为真实店铺二维码"}
+      </p>
+    </div>
+  )
+
+  if (!hasPurchaseLink || !purchaseUrl) {
+    return (
+      <div className="w-full max-w-[220px] rounded-[22px] border border-dashed border-white/14 bg-white/6 p-4 backdrop-blur-md sm:ml-auto">
+        {cardContent}
+      </div>
+    )
+  }
+
+  return (
+    <a
+      className="group block w-full max-w-[220px] rounded-[22px] border border-dashed border-white/14 bg-white/6 p-4 backdrop-blur-md transition hover:border-fuchsia-300/35 hover:bg-white/8 sm:ml-auto"
+      href={purchaseUrl}
+      rel="noreferrer"
+      target="_blank"
+    >
+      {cardContent}
+      <div className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-[14px] border border-white/10 bg-white/8 px-3 py-2 text-sm text-white transition group-hover:bg-white/10">
+        去{channelLabel}购买
+        <ExternalLink className="size-4" />
+      </div>
+    </a>
   )
 }
 
@@ -118,7 +191,6 @@ export function QuizDetailPage() {
   const [code, setCode] = useState("")
   const [dialogOpen, setDialogOpen] = useState(false)
   const [verifying, setVerifying] = useState(false)
-  const codeInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (!slug) {
@@ -169,39 +241,6 @@ export function QuizDetailPage() {
     }
   }, [slug])
 
-  useEffect(() => {
-    if (!dialogOpen || typeof document === "undefined") {
-      return
-    }
-
-    const originalOverflow = document.body.style.overflow
-    const focusHandle = window.requestAnimationFrame(() => codeInputRef.current?.focus())
-    document.body.style.overflow = "hidden"
-
-    return () => {
-      document.body.style.overflow = originalOverflow
-      window.cancelAnimationFrame(focusHandle)
-    }
-  }, [dialogOpen])
-
-  useEffect(() => {
-    if (!dialogOpen || typeof window === "undefined") {
-      return
-    }
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape" && !verifying) {
-        setDialogOpen(false)
-        setAccessErrorMessage(undefined)
-      }
-    }
-
-    window.addEventListener("keydown", handleKeyDown)
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown)
-    }
-  }, [dialogOpen, verifying])
-
   function handleOpenAccessDialog() {
     setAccessErrorMessage(undefined)
     setDialogOpen(true)
@@ -222,7 +261,7 @@ export function QuizDetailPage() {
     const normalizedCode = code.trim().toUpperCase()
 
     if (!normalizedCode || !slug) {
-      setAccessErrorMessage("请输入口令后再开始测试")
+      setAccessErrorMessage("请输入验证码后再开始测试")
       return
     }
 
@@ -233,14 +272,13 @@ export function QuizDetailPage() {
       const session = await verifyAccessCode(normalizedCode)
 
       if (!session.allowedQuizzes.some((item) => item.slug === slug)) {
-        throw new Error("当前口令未授权这套测试")
+        throw new Error("当前验证码未授权这套测试")
       }
 
       writeAccessSession(session)
-      setDialogOpen(false)
       navigate(`/${slug}/test`)
     } catch (error) {
-      setAccessErrorMessage(error instanceof Error ? error.message : "口令验证失败，请稍后重试")
+      setAccessErrorMessage(error instanceof Error ? error.message : "验证码验证失败，请稍后重试")
     } finally {
       setVerifying(false)
     }
@@ -270,6 +308,10 @@ export function QuizDetailPage() {
 
   const outcomeItems = quiz.slug === "oejts-personality-map" ? OEJTS_OUTCOME_ITEMS : quiz.valuePoints.slice(0, 3)
   const hasRememberedCode = code.trim().length > 0
+  const introNarrative =
+    quiz.slug === "oejts-personality-map"
+      ? "OEJTS 16 型人格图谱以经典心理类型理论中的四维偏好框架为参考，围绕 I/E、S/N、F/T、J/P 四条维度观察一个人在注意力投向、信息加工、判断决策与行动节奏上的自然偏好。它更适合用来做自我理解、关系沟通与场景反思，而不是给人下定论式标签；按第一反应作答，通常更能看见你在真实情境中的稳定倾向。"
+      : quiz.detailSections.map((section) => section.description).join(" ") || quiz.summary
 
   return (
     <>
@@ -278,67 +320,80 @@ export function QuizDetailPage() {
           <Spotlight className="-top-24 left-0 md:-top-36 md:left-60" fill="#a855f7" />
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_0%,_rgba(168,85,247,0.24),_transparent_30%),radial-gradient(circle_at_86%_14%,_rgba(56,189,248,0.16),_transparent_26%)]" />
 
-          <div className="relative lg:grid lg:grid-cols-[minmax(0,1fr)_420px] lg:items-center lg:gap-10 xl:gap-14">
-            <div className="max-w-3xl">
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/6 px-4 py-2 text-[11px] uppercase tracking-[0.28em] text-white/68 backdrop-blur-md">
-                <span className="size-1.5 rounded-full bg-fuchsia-300" />
-                {quiz.category}
+          <div className="relative lg:grid lg:grid-cols-[minmax(0,1.22fr)_340px] lg:items-start lg:gap-10 xl:grid-cols-[minmax(0,1.18fr)_360px] xl:gap-12">
+            <div>
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.2em] text-amber-400 backdrop-blur-md shadow-[0_0_20px_rgba(245,158,11,0.15)]">
+                  <Sparkles className="size-3.5" />
+                  PRO 深度解析版
+                </div>
+                <div className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/6 px-4 py-2 text-[11px] uppercase tracking-[0.28em] text-white/68 backdrop-blur-md">
+                  <span className="size-1.5 rounded-full bg-fuchsia-300" />
+                  {quiz.category}
+                </div>
               </div>
 
-              <h1 className="mt-5 max-w-3xl font-display text-[2.65rem] font-semibold tracking-[-0.04em] text-white sm:text-5xl md:text-6xl">
+              <h1 className="mt-5 max-w-4xl font-display text-[2.65rem] font-semibold tracking-[-0.04em] text-white sm:text-5xl md:text-6xl drop-shadow-sm">
                 {quiz.title}
               </h1>
 
-              <p className="mt-5 max-w-2xl text-[15px] leading-7 text-white/72 md:text-lg md:leading-8">
-                {quiz.summary}
-              </p>
-
-              {quiz.slug === "oejts-personality-map" ? (
-                <div className="mt-5 max-w-2xl rounded-[24px] border border-white/10 bg-white/6 p-5 backdrop-blur-md">
-                  <p className="text-[11px] uppercase tracking-[0.28em] text-white/45">OEJTS 全名与说明</p>
-                  <p className="mt-3 text-base font-medium text-white">OEJTS 16 型人格图谱</p>
-                  <p className="mt-3 text-sm leading-7 text-white/68">{OEJTS_MODEL_INTRO}</p>
-                </div>
-              ) : null}
-
-              <div className="mt-5 flex flex-wrap items-center gap-3 text-sm text-slate-300">
-                <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/6 px-3.5 py-2 backdrop-blur-md">
-                  <Clock3 className="size-4 text-fuchsia-300" />
-                  <span>约 {quiz.durationMinutes} 分钟</span>
-                </span>
-                <span className="inline-flex items-center rounded-full border border-white/10 bg-white/6 px-3.5 py-2 backdrop-blur-md">
-                  {quiz.questionCount} 题
-                </span>
-              </div>
-
-              <div className="mt-7 max-w-2xl rounded-[28px] border border-white/12 bg-white/8 p-5 shadow-[0_18px_50px_rgba(15,23,42,0.18)] backdrop-blur-xl md:p-6">
-                <p className="text-[11px] uppercase tracking-[0.28em] text-white/45">开始前验证</p>
-                <h2 className="mt-3 text-xl font-semibold tracking-tight text-white md:text-2xl">点击开始测试，再输入测试口令</h2>
-                <p className="mt-3 text-sm leading-7 text-white/68 md:text-base">
-                  口令输入放到独立弹窗中，步骤更清晰；验证成功后会自动进入答题页，手机上也更方便输入和查看提示。
+              <div className="mt-6 max-w-4xl rounded-[30px] border border-white/12 bg-white/[0.07] p-5 shadow-[0_18px_50px_rgba(15,23,42,0.18)] backdrop-blur-xl md:p-7 lg:max-w-none">
+                <p className="text-[11px] uppercase tracking-[0.28em] text-white/45">测试简介</p>
+                <p className="mt-4 text-[15px] leading-8 text-white/78 md:text-[17px] md:leading-8">
+                  {introNarrative}
                 </p>
 
-                <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
-                  <Button
-                    className="h-14 rounded-[18px] bg-violet-500 px-6 text-base font-medium text-white shadow-[0_18px_50px_rgba(139,92,246,0.35)] transition hover:bg-violet-400"
-                    onClick={handleOpenAccessDialog}
-                    type="button"
-                  >
-                    开始测试
-                    <ArrowRight className="size-4" />
-                  </Button>
-                  <p className="text-sm text-slate-300">口令可在小红书购买 · 有效期内可重复测试</p>
+                <div className="mt-5 flex flex-wrap items-center gap-3 text-sm text-slate-300">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/6 px-3.5 py-2 backdrop-blur-md">
+                    <Clock3 className="size-4 text-fuchsia-300" />
+                    <span>约 {quiz.durationMinutes} 分钟</span>
+                  </span>
+                  <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/6 px-3.5 py-2 backdrop-blur-md">
+                    <span className="size-1.5 rounded-full bg-sky-300" />
+                    {quiz.questionCount} 题
+                  </span>
+                  {quiz.priceLabel ? (
+                    <span className="inline-flex items-center gap-2 rounded-full border border-amber-500/20 bg-amber-500/10 px-3.5 py-2 text-amber-200 backdrop-blur-md font-medium">
+                      {quiz.priceLabel}
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="mt-6 rounded-[28px] border border-white/12 bg-white/8 p-5 shadow-[0_18px_50px_rgba(15,23,42,0.18)] backdrop-blur-xl md:p-6 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-fuchsia-500/10 rounded-full blur-[80px] pointer-events-none" />
+                <p className="text-[11px] uppercase tracking-[0.28em] text-white/45 relative z-10">开始前验证</p>
+                <div className="mt-3 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between relative z-10">
+                  <div className="max-w-xl">
+                    <h2 className="text-xl font-semibold tracking-tight text-white md:text-2xl">输入购买后获得的验证码即可开始测试</h2>
+                    <p className="mt-3 text-sm leading-7 text-white/68 md:text-base">
+                      验证码可在小红书订单或发货消息中查看，验证成功后会自动进入答题页。
+                    </p>
+                  </div>
+
+                  <div className="w-full lg:w-[240px] lg:flex-none">
+                    <Button
+                      className="group h-14 w-full rounded-[18px] bg-gradient-to-r from-violet-600 to-fuchsia-600 px-6 text-base font-bold text-white shadow-[0_18px_50px_rgba(168,85,247,0.35)] transition-all hover:scale-[1.02] hover:from-violet-500 hover:to-fuchsia-500"
+                      onClick={handleOpenAccessDialog}
+                      type="button"
+                    >
+                      <Sparkles className="mr-2 size-4 text-white/80" />
+                      开始深度探索
+                      <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-1" />
+                    </Button>
+                    <p className="mt-3 text-xs text-slate-400 text-center">本次有效期内可随时中断或重复测试</p>
+                  </div>
                 </div>
 
                 {hasRememberedCode ? (
-                  <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-emerald-400/18 bg-emerald-500/10 px-3.5 py-2 text-xs text-emerald-100">
-                    <span className="size-1.5 rounded-full bg-emerald-300" />
-                    已识别到你上次输入的口令，打开弹窗后可直接继续验证。
+                  <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-emerald-400/18 bg-emerald-500/10 px-3.5 py-2 text-xs text-emerald-100 relative z-10">
+                    <span className="size-1.5 rounded-full bg-emerald-300 animate-pulse" />
+                    已识别到上次输入的验证码，打开弹窗后可直接继续验证。
                   </div>
                 ) : null}
               </div>
 
-              <div className="mt-8 border-t border-white/10 pt-6">
+              <div className="mt-6 border-t border-white/10 pt-5">
                 <p className="text-xs uppercase tracking-[0.28em] text-white/38">做完你会看到</p>
                 <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-3 text-sm text-white/72">
                   {outcomeItems.map((item) => (
@@ -351,124 +406,41 @@ export function QuizDetailPage() {
               </div>
             </div>
 
-            <ResultPreviewCard />
+            <div className="mt-8 lg:mt-1 lg:flex lg:flex-col lg:items-end">
+              <ResultPreviewCard quizSlug={quiz.slug} />
+              <div className="mt-4 w-full lg:max-w-[220px] xl:max-w-[236px]">
+                <PurchaseQrPlaceholder purchaseUrl={quiz.purchaseUrl} salesChannel={quiz.salesChannel} />
+              </div>
+            </div>
           </div>
         </section>
 
         <div className="mt-6 text-center">
-          <p className="text-xs text-slate-400">基于 OEJTS 1.2 开发 · 结果仅供自我探索参考</p>
+          <p className="text-xs text-slate-400">正式版测试链路已启用 · 结果仅供自我探索参考</p>
         </div>
       </div>
 
-      <AnimatePresence>
-        {dialogOpen ? (
-          <motion.div
-            animate={{ opacity: 1 }}
-            className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/68 px-4 pb-4 pt-16 backdrop-blur-sm md:items-center md:px-6"
-            initial={{ opacity: 0 }}
-            exit={{ opacity: 0 }}
-          >
-            <button
-              aria-label="关闭测试口令弹窗"
-              className="absolute inset-0"
-              disabled={verifying}
-              onClick={handleCloseAccessDialog}
-              type="button"
-            />
-
-            <motion.div
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              className="relative z-10 w-full max-w-md overflow-hidden rounded-[30px] border border-white/10 bg-slate-950/96 p-6 text-white shadow-[0_32px_120px_rgba(15,23,42,0.42)] md:rounded-[32px] md:p-7"
-              exit={{ opacity: 0, scale: 0.98, y: 24 }}
-              initial={{ opacity: 0, scale: 0.98, y: 24 }}
-              transition={{ duration: 0.22, ease: "easeOut" }}
-            >
-              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(168,85,247,0.22),_transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.04),rgba(2,6,23,0.08))]" />
-
-              <button
-                aria-label="关闭"
-                className="absolute right-4 top-4 inline-flex size-10 items-center justify-center rounded-full border border-white/10 bg-white/6 text-white/70 transition hover:bg-white/10 hover:text-white"
-                disabled={verifying}
-                onClick={handleCloseAccessDialog}
-                type="button"
-              >
-                <X className="size-4" />
-              </button>
-
-              <div className="relative">
-                <div className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/8 px-4 py-2 text-[11px] uppercase tracking-[0.28em] text-white/70">
-                  <ShieldCheck className="size-4 text-fuchsia-300" />
-                  输入测试口令
-                </div>
-
-                <h2 className="mt-5 text-2xl font-semibold tracking-[-0.04em] text-white">验证后开始 OEJTS 测试</h2>
-                <p className="mt-3 text-sm leading-7 text-white/68">
-                  输入你购买后获得的测试口令，验证成功后会自动进入答题页。
-                </p>
-
-                <form className="mt-6 space-y-4" onSubmit={(event) => void handleStart(event)}>
-                  <div>
-                    <label className="sr-only" htmlFor="detail-access-code-dialog">
-                      输入测试口令
-                    </label>
-                    <input
-                      autoCapitalize="characters"
-                      autoComplete="off"
-                      className="h-14 w-full rounded-[18px] border border-white/12 bg-white/10 px-5 text-base text-white outline-none backdrop-blur-md transition placeholder:text-white/35 focus:border-fuchsia-400/70 focus:ring-4 focus:ring-fuchsia-500/15"
-                      id="detail-access-code-dialog"
-                      inputMode="text"
-                      onChange={(event) => {
-                        setCode(event.target.value.toUpperCase())
-                        if (accessErrorMessage) {
-                          setAccessErrorMessage(undefined)
-                        }
-                      }}
-                      placeholder="请输入测试口令"
-                      ref={codeInputRef}
-                      spellCheck={false}
-                      value={code}
-                    />
-                    <p className="mt-3 text-sm text-white/52">口令可在小红书购买记录或你收到的发货消息里查看。</p>
-                  </div>
-
-                  {accessErrorMessage ? (
-                    <div className="rounded-[18px] border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
-                      {accessErrorMessage}
-                    </div>
-                  ) : null}
-
-                  {hasRememberedCode ? (
-                    <div className="rounded-[18px] border border-emerald-400/18 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
-                      已为你带入口令草稿，确认无误后可直接验证。
-                    </div>
-                  ) : null}
-
-                  <div className="flex flex-col gap-3 sm:flex-row">
-                    <Button
-                      className="h-14 flex-1 rounded-[18px] bg-violet-500 px-6 text-base font-medium text-white shadow-[0_18px_50px_rgba(139,92,246,0.35)] transition hover:bg-violet-400"
-                      disabled={verifying}
-                      type="submit"
-                    >
-                      {verifying ? <LoaderCircle className="size-4 animate-spin" /> : null}
-                      {verifying ? "正在验证" : "验证并开始测试"}
-                      {!verifying ? <ArrowRight className="size-4" /> : null}
-                    </Button>
-                    <Button
-                      className="h-14 rounded-[18px] border-white/12 bg-white/6 px-5 text-base text-white hover:bg-white/10"
-                      disabled={verifying}
-                      onClick={handleCloseAccessDialog}
-                      type="button"
-                      variant="outline"
-                    >
-                      稍后再说
-                    </Button>
-                  </div>
-                </form>
-              </div>
-            </motion.div>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
+      <AccessCodeDialog
+        badgeLabel="输入测试验证码"
+        description="输入你在小红书购买后获得的测试验证码，验证成功后会自动进入答题页。"
+        draftNotice={hasRememberedCode ? "已为你带入上次输入的验证码，可直接确认验证。" : undefined}
+        errorMessage={accessErrorMessage}
+        helperText="验证码可在小红书订单或发货消息中查看。"
+        inputLabel="输入测试验证码"
+        inputPlaceholder="请输入测试验证码"
+        onClose={handleCloseAccessDialog}
+        onSubmit={handleStart}
+        onValueChange={(value) => {
+          setCode(value)
+          if (accessErrorMessage) {
+            setAccessErrorMessage(undefined)
+          }
+        }}
+        open={dialogOpen}
+        submitting={verifying}
+        title={quiz ? `验证后开始${quiz.title}` : "验证后开始测试"}
+        value={code}
+      />
     </>
   )
 }

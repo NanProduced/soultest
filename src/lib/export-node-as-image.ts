@@ -47,3 +47,7 @@ export async function exportNodeAsPng(node: HTMLElement, options: ExportNodeAsPn
 
   triggerDownload(blob, filename)
 }
+
+export async function exportNodeAsImage(node: HTMLElement, filename: string) {
+  return exportNodeAsPng(node, { filename })
+}

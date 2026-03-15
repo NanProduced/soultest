@@ -46,20 +46,20 @@ export function SiteHeader() {
             : "mx-auto max-w-7xl bg-transparent px-6 py-4",
         )}
       >
-        <Link className={cn("flex items-center gap-3 transition-colors", shouldFloat ? "text-white" : "text-slate-950")} to="/">
+        <Link className={cn("flex items-center gap-3 transition-colors", shouldFloat ? "text-white" : "text-white")} to="/">
           <div
             className={cn(
               "flex size-11 items-center justify-center rounded-3xl border shadow-sm transition-colors",
               shouldFloat
                 ? "border-white/20 bg-white/10 text-white"
-                : "border-slate-200 bg-slate-950 text-white shadow-[0_14px_40px_rgba(15,23,42,0.10)]",
+                : "border-white/10 bg-white/5 text-white shadow-[0_14px_40px_rgba(0,0,0,0.20)]",
             )}
           >
             <Sparkles className="size-5" />
           </div>
           <div>
             <p className="font-display text-lg font-semibold tracking-tight">SoulTest</p>
-            <p className={cn("text-xs transition-colors", shouldFloat ? "text-white/60" : "text-slate-500")}>
+            <p className={cn("text-xs transition-colors", shouldFloat ? "text-white/60" : "text-slate-400")}>
               认真做完，再看结果。
             </p>
           </div>

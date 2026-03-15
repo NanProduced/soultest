@@ -11,6 +11,12 @@ importers:
       '@fontsource-variable/geist':
         specifier: ^5.2.8
         version: 5.2.8
+      '@fontsource-variable/inter':
+        specifier: ^5.2.8
+        version: 5.2.8
+      '@fontsource-variable/noto-sans-sc':
+        specifier: ^5.2.10
+        version: 5.2.10
       '@fontsource/noto-serif-sc':
         specifier: ^5.2.9
         version: 5.2.9
@@ -23,6 +29,9 @@ importers:
       framer-motion:
         specifier: ^12.36.0
         version: 12.36.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      gsap:
+        specifier: ^3.13.0
+        version: 3.14.2
       html-to-image:
         specifier: ^1.11.13
         version: 1.11.13
@@ -518,6 +527,12 @@ packages:
 
   '@fontsource-variable/geist@5.2.8':
     resolution: {integrity: sha512-cJ6m9e+8MQ5dCYJsLylfZrgBh6KkG4bOLckB35Tr9J/EqdkEM6QllH5PxqP1dhTvFup+HtMRPuz9xOjxXJggxw==}
+
+  '@fontsource-variable/inter@5.2.8':
+    resolution: {integrity: sha512-kOfP2D+ykbcX/P3IFnokOhVRNoTozo5/JxhAIVYLpea/UBmCQ/YWPBfWIDuBImXX/15KH+eKh4xpEUyS2sQQGQ==}
+
+  '@fontsource-variable/noto-sans-sc@5.2.10':
+    resolution: {integrity: sha512-zdk10i5HrDQTXI7ldD61zToX1fsgig8vDTsu7zB48SXOitWfuX0e5viZAwnkHuhwh096PU6X6i1AyAsbBCISpA==}
 
   '@fontsource/noto-serif-sc@5.2.9':
     resolution: {integrity: sha512-+wosdNmyrtRjnqJ/4A6i99jApm6ye34n8Nh7jUO3P/+6Hd1ZBY1gB9yGaI5jVxb56RS1lM2kTc0DzX1ifRO2MA==}
@@ -2391,6 +2406,9 @@ packages:
     resolution: {integrity: sha512-gGgrVCoDKlIZ8fIqXBBb0pPKqDgki0Z/FSKNiQzSGj2uEYHr1tq5wmBegGwJx6QB5S5cM0khSBpi/JFHMCvsmQ==}
     engines: {node: ^12.22.0 || ^14.16.0 || ^16.0.0 || >=17.0.0}
 
+  gsap@3.14.2:
+    resolution: {integrity: sha512-P8/mMxVLU7o4+55+1TCnQrPmgjPKnwkzkXOK1asnR9Jg2lna4tEY5qBJjMmAaOBDDZWtlRjBXjLa0w53G/uBLA==}
+
   has-flag@4.0.0:
     resolution: {integrity: sha512-EykJT/Q1KjTWctppgIAgfSO0tKVuZUjhgMr17kqTumMl6Afv3EISleU7qZUzoXDFTAHTDC4NOoG/ZxU3EvlMPQ==}
     engines: {node: '>=8'}
@@ -3987,6 +4005,10 @@ snapshots:
   '@floating-ui/utils@0.2.11': {}
 
   '@fontsource-variable/geist@5.2.8': {}
+
+  '@fontsource-variable/inter@5.2.8': {}
+
+  '@fontsource-variable/noto-sans-sc@5.2.10': {}
 
   '@fontsource/noto-serif-sc@5.2.9': {}
 
@@ -5846,6 +5868,8 @@ snapshots:
   graceful-fs@4.2.11: {}
 
   graphql@16.13.1: {}
+
+  gsap@3.14.2: {}
 
   has-flag@4.0.0: {}
 

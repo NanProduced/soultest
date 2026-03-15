@@ -1,4 +1,4 @@
-﻿import type {
+import type {
   QuizQuestion,
   QuizResultDefinition,
   QuizRuntimeConfig,
@@ -474,6 +474,20 @@ export function evaluateQuiz(runtime: QuizRuntimeConfig, answers: Record<string,
 export function getQuizTheme(runtime?: QuizRuntimeConfig) {
   const themeKey = typeof runtime?.presentation?.themeKey === "string" ? runtime.presentation.themeKey : undefined
   return themePresets[themeKey ?? ""] ?? themePresets["violet-lab"]
+}
+
+export function getQuizShareCardKey(runtime?: QuizRuntimeConfig) {
+  return typeof runtime?.presentation?.shareCardKey === "string" ? runtime.presentation.shareCardKey : undefined
+}
+
+export function getQuizPosterExportId(runtime?: QuizRuntimeConfig) {
+  const shareCardKey = getQuizShareCardKey(runtime)
+
+  if (shareCardKey === "oejts-type-poster") {
+    return "oejts-result-poster"
+  }
+
+  return shareCardKey ? `${shareCardKey}-poster` : undefined
 }
 
 export function getTopDimensions(scoreBreakdown: ScoreBreakdownItem[], limit = 3) {

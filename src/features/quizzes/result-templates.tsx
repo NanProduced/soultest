@@ -11,7 +11,7 @@ import { motion } from "framer-motion"
 
 import { Noise } from "@/components/ui/noise"
 import { cn } from "@/lib/utils"
-import { getOejtsAxisMeta, type QuizThemePreset } from "@/features/quizzes/engine"
+import { getOejtsAxisMeta, getQuizPosterExportId, type QuizThemePreset } from "@/features/quizzes/engine"
 import type {
   QuizResultDefinition,
   QuizRuntimeConfig,
@@ -86,8 +86,371 @@ function DefaultStoryTemplate({ submission, result, theme }: QuizResultTemplateP
   )
 }
 
-function RelationshipStoryTemplate(props: QuizResultTemplateProps) {
-  return <DefaultStoryTemplate {...props} />
+const relationshipDimensionOrder = [
+  "words_of_affirmation",
+  "quality_time",
+  "receiving_gifts",
+  "acts_of_service",
+  "physical_touch",
+] as const
+
+type RelationshipPreferenceExtension = {
+  dimensionOrder?: string[]
+  maxScorePerDimension?: number
+  dualPrimaryDelta?: number
+  balancedSpreadDelta?: number
+  pairNarratives?: Record<string, string>
+}
+
+function getRelationshipPreferenceExtension(runtime: QuizRuntimeConfig) {
+  return (runtime.extensions?.relationshipPreference ?? {}) as RelationshipPreferenceExtension
+}
+
+function getRelationshipDimensionOrder(runtime: QuizRuntimeConfig) {
+  const extension = getRelationshipPreferenceExtension(runtime)
+  return Array.isArray(extension.dimensionOrder) && extension.dimensionOrder.length > 0
+    ? extension.dimensionOrder
+    : [...relationshipDimensionOrder]
+}
+
+function getRelationshipMaxScore(runtime: QuizRuntimeConfig) {
+  const extension = getRelationshipPreferenceExtension(runtime)
+  return typeof extension.maxScorePerDimension === "number" ? extension.maxScorePerDimension : 12
+}
+
+function getRelationshipResult(runtime: QuizRuntimeConfig, key: string | undefined) {
+  if (!key) {
+    return undefined
+  }
+
+  return runtime.results.find((item) => item.dimensionKey === key || item.key === key)
+}
+
+function sortRelationshipScoreBreakdown(runtime: QuizRuntimeConfig, scoreBreakdown: ScoreBreakdownItem[]) {
+  const labels = new Map(
+    (runtime.extensions?.scoring?.dimensions ?? [])
+      .filter(
+        (item): item is { key: string; label: string } =>
+          typeof item === "object" && item !== null && typeof item.key === "string" && typeof item.label === "string",
+      )
+      .map((item) => [item.key, item.label]),
+  )
+
+  const scoreMap = new Map(scoreBreakdown.map((item) => [item.key, item]))
+
+  return getRelationshipDimensionOrder(runtime)
+    .map((key) => scoreMap.get(key) ?? { key, label: labels.get(key) ?? key, score: 0 })
+    .sort((left, right) => right.score - left.score)
+}
+
+function getRelationshipPairKey(firstKey: string, secondKey: string, order: string[]) {
+  const filtered = order.filter((item) => item === firstKey || item === secondKey)
+  return filtered.length === 2 ? filtered.join("|") : [firstKey, secondKey].sort().join("|")
+}
+
+function RelationshipPosterCard({
+  result,
+  runtime,
+  scoreBreakdown,
+  secondaryTitle,
+  theme,
+}: {
+  result: QuizResultDefinition
+  runtime: QuizRuntimeConfig
+  scoreBreakdown: ScoreBreakdownItem[]
+  secondaryTitle?: string
+  theme: QuizThemePreset
+}) {
+  const posterExportId = getQuizPosterExportId(runtime) ?? "relationship-preference-poster"
+  const maxScore = getRelationshipMaxScore(runtime)
+
+  return (
+    <article
+      className="relative mx-auto w-full max-w-[380px] overflow-hidden rounded-[32px] border border-white/12 bg-[linear-gradient(180deg,rgba(95,22,52,0.98),rgba(35,10,22,1))] p-5 text-white shadow-[0_28px_100px_rgba(15,23,42,0.28)]"
+      id={posterExportId}
+    >
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(251,113,133,0.24),transparent_42%),radial-gradient(circle_at_84%_24%,rgba(251,191,36,0.14),transparent_26%)]" />
+      <div className="relative flex min-h-[620px] flex-col">
+        <div className="inline-flex w-fit items-center gap-2 rounded-full border border-white/12 bg-white/10 px-3 py-1 text-[10px] uppercase tracking-[0.28em] text-white/72">
+          <Sparkles className="size-3.5" />
+          SoulTest · 亲密关系偏好测试
+        </div>
+
+        <div className="mt-7">
+          <p className="text-sm font-medium text-white/62">你的关系偏好主通道</p>
+          <h3 className="mt-3 text-4xl font-semibold tracking-[-0.05em] text-white">{result.title}</h3>
+          <p className="mt-3 text-sm leading-7 text-white/74">{result.firstImpression ?? result.summary}</p>
+        </div>
+
+        <div className="mt-6 flex flex-wrap gap-2">
+          <span className="rounded-full border border-white/12 bg-white/10 px-3 py-1 text-xs text-white/86">主语言</span>
+          {secondaryTitle ? (
+            <span className="rounded-full border border-white/12 bg-white/10 px-3 py-1 text-xs text-white/78">次语言 · {secondaryTitle}</span>
+          ) : null}
+        </div>
+
+        <div className="mt-7 space-y-3 rounded-[24px] border border-white/10 bg-white/6 p-4">
+          {scoreBreakdown.map((item) => {
+            const percent = Math.round((item.score / Math.max(maxScore, 1)) * 100)
+
+            return (
+              <div key={item.key}>
+                <div className="flex items-center justify-between gap-3 text-[11px] text-white/66">
+                  <span>{item.label}</span>
+                  <span>
+                    {item.score}/{maxScore}
+                  </span>
+                </div>
+                <div className="mt-1.5 h-2.5 rounded-full bg-white/10">
+                  <div className={`h-full rounded-full bg-gradient-to-r ${theme.accentGradient}`} style={{ width: `${percent}%` }} />
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        <div className="mt-auto pt-7">
+          <p className="text-sm leading-7 text-white/72">{result.shareCopy ?? result.summary}</p>
+          <div className="mt-4 flex items-center justify-between gap-3 text-[11px] uppercase tracking-[0.28em] text-white/42">
+            <span>Relationship Poster</span>
+            <span>Ready to Export</span>
+          </div>
+        </div>
+      </div>
+    </article>
+  )
+}
+
+function RelationshipStoryTemplate({ result, runtime, submission, theme }: QuizResultTemplateProps) {
+  const scoreBreakdown = sortRelationshipScoreBreakdown(runtime, submission.scoreBreakdown ?? [])
+  const extension = getRelationshipPreferenceExtension(runtime)
+  const maxScore = getRelationshipMaxScore(runtime)
+  const primaryKey = result.dimensionKey ?? result.key
+  const secondaryItem = scoreBreakdown[1]
+  const lowestItem = [...scoreBreakdown].reverse()[0]
+  const secondaryResult = getRelationshipResult(runtime, secondaryItem?.key)
+  const lowestResult = getRelationshipResult(runtime, lowestItem?.key)
+  const dualPrimaryDelta = typeof extension.dualPrimaryDelta === "number" ? extension.dualPrimaryDelta : 1
+  const balancedSpreadDelta = typeof extension.balancedSpreadDelta === "number" ? extension.balancedSpreadDelta : 2
+  const topScore = scoreBreakdown[0]?.score ?? 0
+  const secondScore = secondaryItem?.score ?? 0
+  const lowestScore = lowestItem?.score ?? 0
+  const isDualPrimary = topScore - secondScore <= dualPrimaryDelta
+  const isBalanced = topScore - lowestScore <= balancedSpreadDelta
+  const pairNarratives = extension.pairNarratives ?? {}
+  const pairNarrative =
+    secondaryItem && secondaryResult
+      ? pairNarratives[getRelationshipPairKey(primaryKey, secondaryItem.key, getRelationshipDimensionOrder(runtime))]
+      : undefined
+
+  const presentationTags = [
+    `主语言 · ${result.title}`,
+    secondaryResult ? `次语言 · ${secondaryResult.title}` : undefined,
+    isDualPrimary ? "双主导偏好" : undefined,
+    isBalanced ? "整体偏均衡" : undefined,
+  ].filter((item): item is string => Boolean(item))
+
+  return (
+    <div className="space-y-6 md:space-y-8">
+      <motion.section
+        animate={{ opacity: 1, y: 0 }}
+        className="relative overflow-hidden rounded-[40px] border border-black/5 bg-white/92 p-7 shadow-[0_30px_100px_rgba(15,23,42,0.10)] md:p-10"
+        initial={{ opacity: 0, y: 18 }}
+        transition={{ duration: 0.45, ease: "easeOut" }}
+      >
+        <Noise />
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-56 bg-[radial-gradient(circle_at_top,rgba(251,113,133,0.14),transparent_60%)]" />
+
+        <div className="relative grid gap-6 xl:grid-cols-[1.04fr_0.96fr] xl:items-start">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-[11px] uppercase tracking-[0.28em] text-slate-500 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
+              <HeartHandshake className={`size-4 ${theme.accentText}`} />
+              亲密关系偏好结果
+            </div>
+
+            <h1 className="mt-6 max-w-3xl text-4xl font-semibold tracking-[-0.05em] text-slate-950 md:text-5xl">
+              {isDualPrimary && secondaryResult
+                ? `你是「${result.title} × ${secondaryResult.title}」双主导偏好`
+                : `你的关系偏好主通道是「${result.title}」`}
+            </h1>
+
+            <p className="mt-4 max-w-3xl text-base leading-8 text-slate-600">{result.firstImpression ?? result.summary}</p>
+
+            <div className="mt-6">
+              <StoryHighlights highlights={presentationTags} />
+            </div>
+
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              <article className="rounded-[28px] border border-rose-100 bg-[linear-gradient(180deg,rgba(255,241,242,0.9),rgba(255,255,255,0.96))] p-5 shadow-[0_12px_40px_rgba(15,23,42,0.04)]">
+                <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">主语言深读</p>
+                <p className="mt-3 text-lg font-semibold tracking-tight text-slate-950">{result.title}</p>
+                <p className="mt-3 text-sm leading-7 text-slate-600">{result.overview ?? result.summary}</p>
+              </article>
+
+              <article className="rounded-[28px] border border-amber-100 bg-[linear-gradient(180deg,rgba(255,251,235,0.96),rgba(255,255,255,0.98))] p-5 shadow-[0_12px_40px_rgba(15,23,42,0.04)]">
+                <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">次语言补充</p>
+                <p className="mt-3 text-lg font-semibold tracking-tight text-slate-950">{secondaryResult?.title ?? "等待更多样本"}</p>
+                <p className="mt-3 text-sm leading-7 text-slate-600">
+                  {secondaryResult?.relationshipStyle ?? "你的次语言会和主语言一起，构成你在关系里的第二需求通道。"}
+                </p>
+              </article>
+            </div>
+          </div>
+
+          <RelationshipPosterCard
+            result={result}
+            runtime={runtime}
+            scoreBreakdown={scoreBreakdown}
+            secondaryTitle={secondaryResult?.title}
+            theme={theme}
+          />
+        </div>
+      </motion.section>
+
+      <section className="grid gap-4 xl:grid-cols-[1.06fr_0.94fr]">
+        <motion.article
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-[32px] border border-black/5 bg-white/92 p-7 shadow-[0_16px_50px_rgba(15,23,42,0.04)]"
+          initial={{ opacity: 0, y: 16 }}
+          transition={{ delay: 0.05, duration: 0.4, ease: "easeOut" }}
+        >
+          <div className="flex items-center gap-2 text-sm font-semibold text-slate-950">
+            <Waves className={`size-4 ${theme.accentText}`} />
+            五维分布
+          </div>
+          <p className="mt-4 text-sm leading-8 text-slate-600">
+            分数表示你在这套题里对不同表达方式的相对敏感度，不代表关系能力高低，也不是对你的固定定义。
+          </p>
+
+          <div className="mt-6 space-y-4">
+            {scoreBreakdown.map((item) => {
+              const percent = Math.round((item.score / Math.max(maxScore, 1)) * 100)
+              const itemResult = getRelationshipResult(runtime, item.key)
+
+              return (
+                <article className="rounded-[24px] border border-slate-200 bg-slate-50/90 p-4" key={item.key}>
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-950">{item.label}</p>
+                      <p className="mt-1 text-xs leading-6 text-slate-500">{itemResult?.subtitle ?? "看你更容易被哪一种表达方式击中。"}</p>
+                    </div>
+                    <span className={cn("rounded-full px-3 py-1 text-xs font-semibold", theme.accentSoft)}>
+                      {item.score}/{maxScore}
+                    </span>
+                  </div>
+                  <div className="mt-3 h-2.5 rounded-full bg-slate-200">
+                    <div className={`h-full rounded-full bg-gradient-to-r ${theme.accentGradient}`} style={{ width: `${percent}%` }} />
+                  </div>
+                </article>
+              )
+            })}
+          </div>
+        </motion.article>
+
+        <motion.article
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-[32px] border border-black/5 bg-white/92 p-7 shadow-[0_16px_50px_rgba(15,23,42,0.04)]"
+          initial={{ opacity: 0, y: 16 }}
+          transition={{ delay: 0.1, duration: 0.4, ease: "easeOut" }}
+        >
+          <div className="flex items-center gap-2 text-sm font-semibold text-slate-950">
+            <Sparkles className={`size-4 ${theme.accentText}`} />
+            一句话看你的关系偏好
+          </div>
+          <p className="mt-4 text-base font-semibold leading-8 text-slate-950">{result.shareCopy ?? result.summary}</p>
+
+          {pairNarrative ? (
+            <div className="mt-6 rounded-[24px] border border-rose-100 bg-[linear-gradient(180deg,rgba(255,241,242,0.88),rgba(255,255,255,0.98))] p-5">
+              <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">主语言 × 次语言</p>
+              <p className="mt-3 text-sm leading-7 text-slate-600">{pairNarrative}</p>
+            </div>
+          ) : null}
+
+          <div className="mt-6 rounded-[24px] border border-amber-100 bg-[linear-gradient(180deg,rgba(255,251,235,0.96),rgba(255,255,255,0.98))] p-5">
+            <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">低敏感区提醒</p>
+            <p className="mt-3 text-sm leading-7 text-slate-600">
+              {lowestResult?.stressMode ?? "分数较低，不代表你完全不需要它，只是相较之下没有那么容易直接击中你。"}
+            </p>
+            {lowestItem ? (
+              <p className="mt-3 text-xs text-slate-500">
+                当前相对低敏感维度：{lowestItem.label} · {lowestItem.score}/{maxScore}
+              </p>
+            ) : null}
+          </div>
+        </motion.article>
+      </section>
+
+      <section className="grid gap-4 lg:grid-cols-2">
+        <article className="rounded-[32px] border border-black/5 bg-white/92 p-7 shadow-[0_16px_50px_rgba(15,23,42,0.04)]">
+          <div className="flex items-center gap-2 text-sm font-semibold text-slate-950">
+            <TrendingUp className={`size-4 ${theme.accentText}`} />
+            什么最容易让你有“被爱感”
+          </div>
+          <div className="mt-5 space-y-3 text-sm leading-7 text-slate-600">
+            {(result.strengths ?? []).map((item) => (
+              <p key={item}>{item}</p>
+            ))}
+          </div>
+
+          {(result.relationshipNotes ?? []).length > 0 ? (
+            <div className="mt-6 rounded-[24px] border border-slate-200 bg-slate-50 p-5">
+              <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">常见误解</p>
+              <div className="mt-3 space-y-3 text-sm leading-7 text-slate-600">
+                {(result.relationshipNotes ?? []).map((item) => (
+                  <p key={item}>{item}</p>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </article>
+
+        <article className="rounded-[32px] border border-black/5 bg-white/92 p-7 shadow-[0_16px_50px_rgba(15,23,42,0.04)]">
+          <div className="flex items-center gap-2 text-sm font-semibold text-slate-950">
+            <ShieldAlert className={`size-4 ${theme.accentText}`} />
+            关系里，你最容易卡住的点
+          </div>
+          <div className="mt-5 space-y-3 text-sm leading-7 text-slate-600">
+            {(result.blindSpots ?? []).map((item) => (
+              <p key={item}>{item}</p>
+            ))}
+          </div>
+          {result.blindSpotSummary ? <p className="mt-5 text-sm leading-7 text-slate-500">{result.blindSpotSummary}</p> : null}
+        </article>
+      </section>
+
+      <section className="grid gap-4 lg:grid-cols-2">
+        <article className="rounded-[32px] border border-black/5 bg-white/92 p-7 shadow-[0_16px_50px_rgba(15,23,42,0.04)]">
+          <div className="flex items-center gap-2 text-sm font-semibold text-slate-950">
+            <HeartHandshake className={`size-4 ${theme.accentText}`} />
+            如果想让你更有被爱感，可以这样做
+          </div>
+          <div className="mt-5 space-y-3 text-sm leading-7 text-slate-600">
+            {(result.growthNotes ?? []).map((item) => (
+              <p key={item}>{item}</p>
+            ))}
+          </div>
+          {result.growthAdvice ? <p className="mt-5 text-sm leading-7 text-slate-500">{result.growthAdvice}</p> : null}
+        </article>
+
+        <article className="rounded-[32px] border border-black/5 bg-white/92 p-7 shadow-[0_16px_50px_rgba(15,23,42,0.04)]">
+          <div className="flex items-center gap-2 text-sm font-semibold text-slate-950">
+            <Waves className={`size-4 ${theme.accentText}`} />
+            结果提示
+          </div>
+          <p className="mt-4 text-sm leading-8 text-slate-600">
+            这套结果更适合帮助你理解“你更容易被哪一种表达方式击中”，而不是给关系下绝对结论。真正重要的，不是谁更会爱，而是彼此有没有把对方最有感觉的通道对上。
+          </p>
+          <div className="mt-5 flex flex-wrap gap-2">
+            {(result.posterTags ?? []).map((item) => (
+              <span className={cn("rounded-full px-3 py-1 text-xs font-semibold", theme.accentSoft)} key={item}>
+                {item}
+              </span>
+            ))}
+          </div>
+        </article>
+      </section>
+    </div>
+  )
 }
 
 function CareerEnergyTemplate(props: QuizResultTemplateProps) {

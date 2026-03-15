@@ -36,6 +36,8 @@ export interface QuizCatalogItem {
 }
 
 export interface QuizIntro extends QuizCatalogItem {
+  salesChannel?: string
+  purchaseUrl?: string
   detailSections: Array<{
     title: string
     description: string
