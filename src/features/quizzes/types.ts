@@ -206,6 +206,20 @@ export interface AdminProduct {
   description: string
 }
 
+export interface AdminCodeBatchPolicy {
+  scopeMode: string
+  allowQuizSlugs?: string[]
+  verificationMode?: "shared_code" | "unique_code" | "none"
+  tokenTtlDays?: number
+  introVisible?: boolean
+  notes?: string
+}
+
+export interface AdminCodeBatchLinkedQuiz {
+  slug: string
+  title: string
+}
+
 export interface AdminCodeBatch {
   id: string
   name: string
@@ -215,4 +229,44 @@ export interface AdminCodeBatch {
   status: string
   codeCount: number
   expiresAt: string | null
+  codePrefix: string | null
+  codeLength: number
+  policy: AdminCodeBatchPolicy
+  linkedQuizzes: AdminCodeBatchLinkedQuiz[]
+  sampleCodes: AdminQuizVerificationCode[]
+}
+
+export type AdminQuizAccessType = "free" | "paid"
+
+export interface AdminQuizVerificationCode {
+  code: string
+  status: string
+  expiresAt: string | null
+}
+
+export interface AdminQuizVerificationSummary {
+  verificationMode: "none" | "shared_code" | "unique_code" | "unknown"
+  scopeMode?: string
+  batchStrategyType?: string
+  tokenTtlDays: number | null
+  notes?: string
+  batchName?: string
+  batchStatus?: string
+  activeCodeCount: number
+  sampleCodes: AdminQuizVerificationCode[]
+}
+
+export interface AdminQuizItem extends QuizCatalogItem {
+  status: string
+  accessType: AdminQuizAccessType
+  source: "d1" | "mock" | "static"
+  introPath: string
+  testPath: string
+  verification?: AdminQuizVerificationSummary
+}
+
+export interface AdminSessionSummary {
+  username: string
+  issuedAt: string
+  expiresAt: string
 }

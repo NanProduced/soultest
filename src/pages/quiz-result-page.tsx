@@ -25,23 +25,23 @@ const shareCardExportPresets: Record<
   }
 > = {
   "oejts-type-poster": {
-    title: "保存您的人格报告",
-    description: "保存精心设计的人格海报用于社交分享，或下载完整长页 PDF 用于深度阅读与个人留存。",
-    buttonLabel: "保存专属海报",
-    exportingLabel: "正在生成海报...",
+    title: "保存您的人格结果长图",
+    description: "导出包含类型说明、维度解读与场景建议的结果长图，适合直接分享，也适合个人留存。",
+    buttonLabel: "保存结果长图",
+    exportingLabel: "正在生成结果长图...",
     exportedLabel: "保存成功",
-    missingMessage: "未找到可导出的人格海报，请刷新后重试",
-    failedMessage: "人格海报导出失败，请稍后再试",
+    missingMessage: "未找到可导出的人格结果长图，请刷新后重试",
+    failedMessage: "人格结果长图导出失败，请稍后再试",
     backgroundColor: "#020617",
   },
   "relationship-preference-poster": {
-    title: "保存您的关系偏好报告",
-    description: "一键导出适合分享的关系海报，或下载完整长页 PDF，留给自己或伴侣一起查看。",
-    buttonLabel: "保存关系海报",
-    exportingLabel: "正在生成关系海报...",
+    title: "保存您的关系结果长图",
+    description: "导出包含主次语言、偏好解读与关系建议的结果长图，分享出去也能一眼看懂。",
+    buttonLabel: "保存结果长图",
+    exportingLabel: "正在生成结果长图...",
     exportedLabel: "保存成功",
-    missingMessage: "未找到可导出的关系海报，请刷新后重试",
-    failedMessage: "关系海报导出失败，请稍后再试",
+    missingMessage: "未找到可导出的关系结果长图，请刷新后重试",
+    failedMessage: "关系结果长图导出失败，请稍后再试",
     backgroundColor: "#2b1020",
   },
 }
@@ -127,10 +127,6 @@ export function QuizResultPage() {
       return
     }
 
-    const posterRect = posterNode.getBoundingClientRect()
-    const exportWidth = 1080
-    const exportHeight = Math.max(Math.round((posterRect.height / Math.max(posterRect.width, 1)) * exportWidth), 1200)
-
     try {
       setPosterExportError(undefined)
       setPosterExporting(true)
@@ -141,13 +137,10 @@ export function QuizResultPage() {
       await exportNodeAsPng(posterNode, {
         filename: posterFileName,
         backgroundColor: posterExportPreset.backgroundColor,
-        width: exportWidth,
-        height: exportHeight,
-        canvasWidth: exportWidth,
-        canvasHeight: exportHeight,
+        pixelRatio: 2,
         style: {
-          width: `${exportWidth}px`,
-          maxWidth: "none",
+          transform: "scale(1)",
+          transformOrigin: "top left",
         },
       })
 

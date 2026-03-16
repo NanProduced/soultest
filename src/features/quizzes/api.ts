@@ -1,7 +1,11 @@
-﻿import type {
+﻿import { ADMIN_API_BASE } from "@/features/admin/constants"
+import type {
   AdminCodeBatch,
+  AdminCodeBatchPolicy,
   AdminOverview,
   AdminProduct,
+  AdminQuizItem,
+  AdminSessionSummary,
   QuizCatalogItem,
   QuizIntro,
   QuizRuntimeResponse,
@@ -37,6 +41,7 @@ async function requestJson<T>(input: string, init?: RequestInit) {
   }
 
   const response = await fetch(input, {
+    credentials: "same-origin",
     ...init,
     headers,
   })
@@ -113,8 +118,31 @@ export function fetchSubmissionDetail(submissionId: string) {
   })
 }
 
+export async function fetchAdminSession() {
+  const response = await requestJson<{ session: AdminSessionSummary; source: string }>(`${ADMIN_API_BASE}/session`, {
+    method: "GET",
+  })
+
+  return response.session
+}
+
+export async function createAdminSession(username: string, password: string, accessKey: string) {
+  const response = await requestJson<{ session: AdminSessionSummary; source: string }>(`${ADMIN_API_BASE}/session`, {
+    method: "POST",
+    body: JSON.stringify({ username, password, accessKey }),
+  })
+
+  return response.session
+}
+
+export async function deleteAdminSession() {
+  await requestJson<{ ok: boolean }>(`${ADMIN_API_BASE}/session`, {
+    method: "DELETE",
+  })
+}
+
 export async function fetchAdminOverview() {
-  const response = await requestJson<{ overview: AdminOverview; source: string }>("/api/admin/overview", {
+  const response = await requestJson<{ overview: AdminOverview; source: string }>(`${ADMIN_API_BASE}/overview`, {
     method: "GET",
   })
 
@@ -122,7 +150,7 @@ export async function fetchAdminOverview() {
 }
 
 export async function fetchAdminQuizzes() {
-  const response = await requestJson<{ items: QuizCatalogItem[]; source: string }>("/api/admin/quizzes", {
+  const response = await requestJson<{ items: AdminQuizItem[]; source: string }>(`${ADMIN_API_BASE}/quizzes`, {
     method: "GET",
   })
 
@@ -130,7 +158,7 @@ export async function fetchAdminQuizzes() {
 }
 
 export async function fetchAdminProducts() {
-  const response = await requestJson<{ items: AdminProduct[]; source: string }>("/api/admin/products", {
+  const response = await requestJson<{ items: AdminProduct[]; source: string }>(`${ADMIN_API_BASE}/products`, {
     method: "GET",
   })
 
@@ -138,9 +166,18 @@ export async function fetchAdminProducts() {
 }
 
 export async function fetchAdminCodeBatches() {
-  const response = await requestJson<{ items: AdminCodeBatch[]; source: string }>("/api/admin/code-batches", {
+  const response = await requestJson<{ items: AdminCodeBatch[]; source: string }>(`${ADMIN_API_BASE}/code-batches`, {
     method: "GET",
   })
 
   return response.items
+}
+
+export async function updateAdminCodeBatchPolicy(batchId: string, policy: AdminCodeBatchPolicy) {
+  const response = await requestJson<{ item: AdminCodeBatch; source: string }>(`${ADMIN_API_BASE}/code-batches`, {
+    method: "PATCH",
+    body: JSON.stringify({ batchId, policy }),
+  })
+
+  return response.item
 }

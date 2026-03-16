@@ -1,12 +1,12 @@
-import {
+﻿import {
   getMockAccessGrant,
-  getMockAdminOverview,
   getMockCatalogItems,
   getMockCodeBatches,
   getMockProducts,
   getMockQuizIntro,
   getMockRuntimeConfig,
 } from "./mock-data"
+import { getMockAdminQuizzes } from "./admin-mock-data"
 import type {
   AccessGrant,
   AccessPolicy,
@@ -14,6 +14,7 @@ import type {
   AdminCodeBatch,
   AdminOverview,
   AdminProduct,
+  AdminQuizItem,
   AllowedQuiz,
   CloudflareEnv,
   QuizCatalogItem,
@@ -36,6 +37,7 @@ interface QuizRow {
   config_json: string | null
   sales_channel?: string | null
   purchase_url?: string | null
+  status?: string | null
 }
 
 interface ProductRow {
@@ -56,6 +58,14 @@ interface CodeBatchRow {
   status: string
   code_count: number | null
   expires_at: string | null
+  code_prefix: string | null
+  code_length: number | null
+  policy_json: string | null
+}
+
+interface CodeBatchLinkedQuizRow {
+  slug: string
+  title: string
 }
 
 interface CodeGrantRow {
@@ -68,6 +78,23 @@ interface CodeGrantRow {
   product_id: string
   product_name: string
   product_type: string
+}
+
+interface AdminQuizVerificationRow {
+  product_id: string
+  product_name: string
+  product_status: string
+  batch_id: string | null
+  batch_name: string | null
+  batch_status: string | null
+  strategy_type: string | null
+  policy_json: string | null
+}
+
+interface AdminQuizVerificationCodeRow {
+  code: string
+  status: string
+  expires_at: string | null
 }
 
 interface RuntimeRow {
@@ -343,6 +370,17 @@ async function listAdminProductsFromD1(env: CloudflareEnv) {
   })) satisfies AdminProduct[]
 }
 
+function normalizeEditableAccessPolicy(policy?: AccessPolicy): AccessPolicy {
+  return {
+    scopeMode: policy?.scopeMode ?? "product",
+    allowQuizSlugs: policy?.scopeMode === "custom_scope" ? policy.allowQuizSlugs ?? [] : undefined,
+    verificationMode: policy?.verificationMode ?? "shared_code",
+    tokenTtlDays: policy?.tokenTtlDays,
+    introVisible: policy?.introVisible ?? true,
+    notes: policy?.notes ?? "",
+  }
+}
+
 async function listAdminCodeBatchesFromD1(env: CloudflareEnv) {
   const result = await env.SOULTEST_DB.prepare(
     `
@@ -354,6 +392,9 @@ async function listAdminCodeBatchesFromD1(env: CloudflareEnv) {
         cb.strategy_type,
         cb.status,
         cb.expires_at,
+        cb.code_prefix,
+        cb.code_length,
+        cb.policy_json,
         COUNT(c.code) AS code_count
       FROM code_batches cb
       JOIN products p ON p.id = cb.product_id
@@ -363,16 +404,217 @@ async function listAdminCodeBatchesFromD1(env: CloudflareEnv) {
     `,
   ).all<CodeBatchRow>()
 
-  return result.results.map((row) => ({
-    id: row.id,
-    name: row.name,
-    productId: row.product_id,
-    productName: row.product_name,
-    strategyType: row.strategy_type,
-    status: row.status,
-    codeCount: row.code_count ?? 0,
-    expiresAt: row.expires_at,
-  })) satisfies AdminCodeBatch[]
+  return await Promise.all(
+    result.results.map(async (row) => {
+      const [linkedQuizResult, sampleCodeResult] = await Promise.all([
+        env.SOULTEST_DB.prepare(
+          `
+            SELECT q.slug, q.title
+            FROM product_quizzes pq
+            JOIN quizzes q ON q.id = pq.quiz_id
+            WHERE pq.product_id = ?1
+            ORDER BY pq.sort_order ASC, q.created_at DESC
+          `,
+        )
+          .bind(row.product_id)
+          .all<CodeBatchLinkedQuizRow>(),
+        env.SOULTEST_DB.prepare(
+          `
+            SELECT code, status, expires_at
+            FROM codes
+            WHERE batch_id = ?1
+            ORDER BY created_at DESC
+            LIMIT 3
+          `,
+        )
+          .bind(row.id)
+          .all<AdminQuizVerificationCodeRow>(),
+      ])
+
+      return {
+        id: row.id,
+        name: row.name,
+        productId: row.product_id,
+        productName: row.product_name,
+        strategyType: row.strategy_type,
+        status: row.status,
+        codeCount: row.code_count ?? 0,
+        expiresAt: row.expires_at,
+        codePrefix: row.code_prefix,
+        codeLength: row.code_length ?? 8,
+        policy: normalizeEditableAccessPolicy(parseJson<AccessPolicy | undefined>(row.policy_json, undefined)),
+        linkedQuizzes: linkedQuizResult.results.map((quiz) => ({
+          slug: quiz.slug,
+          title: quiz.title,
+        })),
+        sampleCodes: sampleCodeResult.results.map((code) => ({
+          code: code.code,
+          status: code.status,
+          expiresAt: code.expires_at,
+        })),
+      } satisfies AdminCodeBatch
+    }),
+  )
+}
+
+function normalizeAdminQuizItem(row: QuizRow, source: AdminQuizItem["source"] = "d1"): AdminQuizItem {
+  const base = normalizeCatalogItem(row)
+  const accessType = (row.price ?? 0) <= 0 ? "free" : "paid"
+
+  return {
+    ...base,
+    status: row.status ?? "published",
+    accessType,
+    source,
+    introPath: `/${row.slug}`,
+    testPath: `/${row.slug}/test`,
+  }
+}
+
+async function getAdminQuizVerificationSummary(quizId: string, env: CloudflareEnv) {
+  const bindingRow = await env.SOULTEST_DB.prepare(
+    `
+      SELECT
+        p.id AS product_id,
+        p.name AS product_name,
+        p.status AS product_status,
+        cb.id AS batch_id,
+        cb.name AS batch_name,
+        cb.status AS batch_status,
+        cb.strategy_type,
+        cb.policy_json
+      FROM product_quizzes pq
+      JOIN products p ON p.id = pq.product_id
+      LEFT JOIN code_batches cb ON cb.id = (
+        SELECT cb2.id
+        FROM code_batches cb2
+        WHERE cb2.product_id = p.id
+        ORDER BY
+          CASE cb2.status
+            WHEN 'active' THEN 0
+            WHEN 'draft' THEN 1
+            WHEN 'paused' THEN 2
+            WHEN 'expired' THEN 3
+            ELSE 4
+          END,
+          cb2.created_at DESC
+        LIMIT 1
+      )
+      WHERE pq.quiz_id = ?1
+      ORDER BY
+        CASE p.status
+          WHEN 'active' THEN 0
+          WHEN 'draft' THEN 1
+          WHEN 'paused' THEN 2
+          ELSE 3
+        END,
+        pq.sort_order ASC
+      LIMIT 1
+    `,
+  )
+    .bind(quizId)
+    .first<AdminQuizVerificationRow>()
+
+  if (!bindingRow) {
+    return {
+      verificationMode: "unknown" as const,
+      tokenTtlDays: null,
+      notes: "当前题集尚未绑定销售产品或验证码批次。",
+      activeCodeCount: 0,
+      sampleCodes: [],
+    }
+  }
+
+  const policy = parseJson<AccessPolicy | undefined>(bindingRow.policy_json, undefined)
+  const verificationMode = (policy?.verificationMode ?? "unknown") as "none" | "shared_code" | "unique_code" | "unknown"
+
+  if (!bindingRow.batch_id) {
+    return {
+      verificationMode,
+      scopeMode: policy?.scopeMode,
+      batchStrategyType: bindingRow.strategy_type ?? undefined,
+      tokenTtlDays: policy?.tokenTtlDays ?? null,
+      notes: policy?.notes ?? "当前产品已绑定题集，但尚未配置可用验证码批次。",
+      batchName: bindingRow.batch_name ?? undefined,
+      batchStatus: bindingRow.batch_status ?? undefined,
+      activeCodeCount: 0,
+      sampleCodes: [],
+    }
+  }
+
+  const [activeCountRow, sampleCodeResult] = await Promise.all([
+    env.SOULTEST_DB.prepare("SELECT COUNT(*) AS value FROM codes WHERE batch_id = ?1 AND status = 'active'")
+      .bind(bindingRow.batch_id)
+      .first<{ value: number }>(),
+    env.SOULTEST_DB.prepare(
+      `
+        SELECT code, status, expires_at
+        FROM codes
+        WHERE batch_id = ?1 AND status = 'active'
+        ORDER BY created_at DESC
+        LIMIT 3
+      `,
+    )
+      .bind(bindingRow.batch_id)
+      .all<AdminQuizVerificationCodeRow>(),
+  ])
+
+  return {
+    verificationMode,
+    scopeMode: policy?.scopeMode,
+    batchStrategyType: bindingRow.strategy_type ?? undefined,
+    tokenTtlDays: policy?.tokenTtlDays ?? null,
+    notes: policy?.notes ?? undefined,
+    batchName: bindingRow.batch_name ?? undefined,
+    batchStatus: bindingRow.batch_status ?? undefined,
+    activeCodeCount: activeCountRow?.value ?? 0,
+    sampleCodes: sampleCodeResult.results.map((row) => ({
+      code: row.code,
+      status: row.status,
+      expiresAt: row.expires_at,
+    })),
+  }
+}
+
+function mergeAdminQuizItemsWithFallback(items: AdminQuizItem[]) {
+  const existingSlugs = new Set(items.map((item) => item.slug))
+  const fallbackItems = getMockAdminQuizzes().filter((item) => !existingSlugs.has(item.slug))
+
+  return [...items, ...fallbackItems]
+}
+
+async function listAdminQuizzesFromD1(env: CloudflareEnv) {
+  const result = await env.SOULTEST_DB.prepare(
+    `
+      SELECT
+        q.id,
+        q.slug,
+        q.title,
+        q.summary,
+        q.category,
+        q.price,
+        q.status,
+        COALESCE(published.config_json, draft.config_json) AS config_json
+      FROM quizzes q
+      LEFT JOIN quiz_versions published ON published.id = q.current_published_version_id
+      LEFT JOIN quiz_versions draft ON draft.id = q.current_draft_version_id
+      ORDER BY q.created_at DESC
+    `,
+  ).all<QuizRow>()
+
+  const items = await Promise.all(
+    result.results.map(async (row) => {
+      const item = normalizeAdminQuizItem(row)
+
+      if (item.accessType === "paid") {
+        item.verification = await getAdminQuizVerificationSummary(row.id, env)
+      }
+
+      return item
+    }),
+  )
+
+  return items
 }
 
 async function lookupCodeInD1(code: string, env: CloudflareEnv): Promise<AccessGrant | undefined> {
@@ -504,34 +746,67 @@ export async function lookupAccessGrant(code: string, env: CloudflareEnv) {
 }
 
 export async function getAdminOverview(env: CloudflareEnv) {
+  const [quizItems, products, codeBatches] = await Promise.all([
+    listAdminQuizzes(env),
+    listAdminProducts(env),
+    listAdminCodeBatches(env),
+  ])
+
+  const fallbackActiveCodes = quizItems.reduce((count, item) => count + (item.verification?.activeCodeCount ?? 0), 0)
+
   if (isMockMode(env)) {
-    return getMockAdminOverview()
+    return {
+      quizzes: quizItems.length,
+      products: products.length,
+      codeBatches: codeBatches.length,
+      activeCodes: fallbackActiveCodes,
+      submissions: 0,
+      lastSeedAt: new Date().toISOString(),
+    } satisfies AdminOverview
   }
 
   try {
-    const [quizzes, products, codeBatches, activeCodes, submissions] = await Promise.all([
-      env.SOULTEST_DB.prepare("SELECT COUNT(*) AS value FROM quizzes").first<{ value: number }>(),
-      env.SOULTEST_DB.prepare("SELECT COUNT(*) AS value FROM products").first<{ value: number }>(),
-      env.SOULTEST_DB.prepare("SELECT COUNT(*) AS value FROM code_batches").first<{ value: number }>(),
+    const [activeCodes, submissions] = await Promise.all([
       env.SOULTEST_DB.prepare("SELECT COUNT(*) AS value FROM codes WHERE status = 'active'").first<{ value: number }>(),
       env.SOULTEST_DB.prepare("SELECT COUNT(*) AS value FROM submissions").first<{ value: number }>(),
     ])
 
     return {
-      quizzes: quizzes?.value ?? 0,
-      products: products?.value ?? 0,
-      codeBatches: codeBatches?.value ?? 0,
-      activeCodes: activeCodes?.value ?? 0,
+      quizzes: quizItems.length,
+      products: products.length,
+      codeBatches: codeBatches.length,
+      activeCodes: activeCodes?.value ?? fallbackActiveCodes,
       submissions: submissions?.value ?? 0,
       lastSeedAt: new Date().toISOString(),
     } satisfies AdminOverview
   } catch {
-    return getMockAdminOverview()
+    return {
+      quizzes: quizItems.length,
+      products: products.length,
+      codeBatches: codeBatches.length,
+      activeCodes: fallbackActiveCodes,
+      submissions: 0,
+      lastSeedAt: new Date().toISOString(),
+    } satisfies AdminOverview
   }
 }
 
 export async function listAdminQuizzes(env: CloudflareEnv) {
-  return listPublicQuizzes(env)
+  if (isMockMode(env)) {
+    return getMockAdminQuizzes()
+  }
+
+  try {
+    const quizItems = await listAdminQuizzesFromD1(env)
+
+    if (quizItems.length > 0) {
+      return mergeAdminQuizItemsWithFallback(quizItems)
+    }
+  } catch {
+    // fall through to mock data
+  }
+
+  return getMockAdminQuizzes()
 }
 
 export async function listAdminProducts(env: CloudflareEnv) {
@@ -550,6 +825,18 @@ export async function listAdminProducts(env: CloudflareEnv) {
   }
 
   return getMockProducts()
+}
+
+export async function updateAdminCodeBatchPolicy(batchId: string, policy: AccessPolicy, env: CloudflareEnv) {
+  await env.SOULTEST_DB.prepare(
+    `
+      UPDATE code_batches
+      SET policy_json = ?2
+      WHERE id = ?1
+    `,
+  )
+    .bind(batchId, JSON.stringify(normalizeEditableAccessPolicy(policy)))
+    .run()
 }
 
 export async function listAdminCodeBatches(env: CloudflareEnv) {
@@ -841,6 +1128,8 @@ export async function getSubmissionDetail(submissionId: string, env: CloudflareE
     result,
   }
 }
+
+
 
 
 

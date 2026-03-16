@@ -1,7 +1,10 @@
-﻿export interface CloudflareEnv {
+export interface CloudflareEnv {
   APP_ENV: string
   API_STUB_MODE: string
   ACCESS_TOKEN_TTL_DAYS: string
+  ADMIN_ACCESS_KEY_HASH?: string
+  ADMIN_LOGIN_MAX_ATTEMPTS?: string
+  ADMIN_LOGIN_WINDOW_SECONDS?: string
   SOULTEST_DB: D1Database
   SOULTEST_CACHE: KVNamespace
   SOULTEST_ASSETS: R2Bucket
@@ -182,6 +185,46 @@ export interface AdminCodeBatch {
   status: string
   codeCount: number
   expiresAt: string | null
+  codePrefix: string | null
+  codeLength: number
+  policy: AccessPolicy
+  linkedQuizzes: AllowedQuiz[]
+  sampleCodes: AdminQuizVerificationCode[]
+}
+
+export type AdminQuizAccessType = "free" | "paid"
+
+export interface AdminQuizVerificationCode {
+  code: string
+  status: string
+  expiresAt: string | null
+}
+
+export interface AdminQuizVerificationSummary {
+  verificationMode: "none" | "shared_code" | "unique_code" | "unknown"
+  scopeMode?: string
+  batchStrategyType?: string
+  tokenTtlDays: number | null
+  notes?: string
+  batchName?: string
+  batchStatus?: string
+  activeCodeCount: number
+  sampleCodes: AdminQuizVerificationCode[]
+}
+
+export interface AdminQuizItem extends QuizCatalogItem {
+  status: string
+  accessType: AdminQuizAccessType
+  source: "d1" | "mock" | "static"
+  introPath: string
+  testPath: string
+  verification?: AdminQuizVerificationSummary
+}
+
+export interface AdminSessionSummary {
+  username: string
+  issuedAt: string
+  expiresAt: string
 }
 
 export interface SubmissionInput {

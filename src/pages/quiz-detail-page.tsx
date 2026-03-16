@@ -35,7 +35,7 @@ function ResultPreviewCard({ quizSlug }: { quizSlug: string }) {
           { title: "次语言", body: "行动上的照顾，会进一步加强你的安全感。" },
         ],
         posterTitle: "关系海报",
-        posterBody: "结果页支持回看、分享与一键导出，适合发给伴侣一起看。",
+        posterBody: "结果支持回看，导出时会生成单独优化过的结果长图，适合发给伴侣一起看。",
         glowClass: "bg-rose-500/18",
         shellClass: "bg-[linear-gradient(180deg,rgba(95,22,52,0.92)_0%,rgba(35,10,22,0.98)_100%)]",
         innerClass: "bg-[#190913]/95",
@@ -57,7 +57,7 @@ function ResultPreviewCard({ quizSlug }: { quizSlug: string }) {
           { title: "工作", body: "擅长规划、独立判断和长期推进复杂任务。" },
         ],
         posterTitle: "人格海报",
-        posterBody: "完整结果支持回看、保存与一键导出分享。",
+        posterBody: "完整结果支持回看，导出时会生成更完整、更适合分享的结果长图。",
         glowClass: "bg-fuchsia-500/16",
         shellClass: "bg-[linear-gradient(180deg,rgba(49,24,92,0.92)_0%,rgba(6,14,39,0.98)_100%)]",
         innerClass: "bg-slate-950/90",
@@ -71,7 +71,7 @@ function ResultPreviewCard({ quizSlug }: { quizSlug: string }) {
         <div className={`rounded-[24px] border border-white/12 p-4 ${preview.innerClass}`}>
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-[10px] uppercase tracking-[0.28em] text-white/45">结果页预览</p>
+              <p className="text-[10px] uppercase tracking-[0.28em] text-white/45">结果样例</p>
               <p className="mt-2.5 text-[1.85rem] font-semibold tracking-tight text-white">{preview.title}</p>
               <p className="mt-1.5 text-xs leading-5 text-white/58">{preview.subtitle}</p>
             </div>

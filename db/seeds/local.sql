@@ -1,4 +1,4 @@
-PRAGMA foreign_keys = ON;
+﻿PRAGMA foreign_keys = ON;
 
 DELETE FROM submissions;
 DELETE FROM codes;
@@ -132,5 +132,7 @@ INSERT OR REPLACE INTO admins (
 ) VALUES (
   'admin_local_dev',
   'admin',
-  'dev-only-placeholder-hash'
+  'pbkdf2_sha256$210000$rR0FTbSpX5GsLUuQnCi2aA==$pKrsBCATXXP/XJk9dlJLacwZwEcVl7P4LmS+JwbFepE='
 );
+
+

@@ -7,7 +7,8 @@ import {
   Download,
   ScanLine,
   Smartphone,
-  ShieldCheck
+  ShieldCheck,
+  Palette
 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { Link } from "react-router"
@@ -299,14 +300,43 @@ export function HomePage() {
               </div>
             </Link>
 
-            {/* Placeholder for future free tests */}
-            <div className="hidden md:flex flex-col items-center justify-center rounded-[24px] border border-dashed border-white/10 bg-white/[0.02] p-6 text-center h-full min-h-[320px]">
-               <div className="size-12 rounded-full bg-white/5 flex items-center justify-center mb-4">
-                 <Sparkles className="size-5 text-white/20" />
-               </div>
-               <p className="text-white/40 font-medium mb-1">更多免费测试</p>
-               <p className="text-xs text-white/30">正在实验室孵化中，敬请期待</p>
-            </div>
+            {/* Free Test Card 3: Painting */}
+            <Link
+              to="/free/painting"
+              className="group flex flex-col relative overflow-hidden rounded-[24px] border border-white/10 bg-white/5 transition-all hover:border-indigo-500/50 hover:bg-white/10 hover:-translate-y-1 shadow-lg hover:shadow-[0_12px_40px_rgba(79,70,229,0.15)]"
+            >
+              <div className="relative aspect-[16/9] w-full bg-slate-900 overflow-hidden flex items-center justify-center">
+                <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?q=80&w=800')] bg-cover bg-center opacity-40 group-hover:scale-110 transition-transform duration-700" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0A0515] to-transparent opacity-80" />
+                
+                <div className="relative z-10 flex flex-col items-center">
+                   <div className="size-14 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 mb-2 group-hover:-translate-y-1 transition-transform duration-300">
+                     <Palette className="size-8 text-indigo-300" />
+                   </div>
+                </div>
+
+                <div className="absolute top-4 left-4 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-md border border-white/10 text-[11px] text-indigo-300 font-medium">
+                  艺术人格
+                </div>
+              </div>
+              <div className="p-6 flex flex-col flex-1 bg-[#0A0515]/50">
+                <h3 className="text-xl font-bold text-white mb-2 tracking-tight group-hover:text-indigo-100 transition-colors font-serif italic">你的灵魂是哪幅名画？</h3>
+                <p className="text-[13px] text-slate-400 line-clamp-2 mb-6 leading-relaxed">
+                  通过28道审美与直觉的对话，在5维人格空间中定位你的艺术坐标，匹配跨越时空的灵魂画作。
+                </p>
+                <div className="mt-auto flex items-center justify-between">
+                   <div className="flex items-center gap-3">
+                     <span className="text-xs text-white/50 flex items-center gap-1"><Clock className="size-3.5" /> 5分钟</span>
+                     <span className="text-xs text-white/50 flex items-center gap-1">28题</span>
+                   </div>
+                   <span className="text-indigo-400 text-sm font-medium flex items-center group-hover:text-indigo-300">
+                     去测测 <ArrowRight className="ml-1 size-4 group-hover:translate-x-1 transition-transform" />
+                   </span>
+                </div>
+              </div>
+            </Link>
+
+            {/* Placeholder for future free tests (moved or removed) */}
           </div>
         </div>
       </FadeInSection>

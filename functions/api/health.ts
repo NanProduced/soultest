@@ -1,4 +1,4 @@
-﻿import { json } from "../_lib/http"
+import { json } from "../_lib/http"
 import type { CloudflareEnv } from "../_lib/types"
 
 export const onRequestGet: PagesFunction<CloudflareEnv> = async ({ env }) => {
@@ -27,7 +27,7 @@ export const onRequestGet: PagesFunction<CloudflareEnv> = async ({ env }) => {
       "/api/access/verify",
       "/api/quizzes/:slug/runtime",
       "/api/submissions",
-      "/api/admin/overview",
+      "/api/private-room/overview",
     ],
   })
 }

@@ -40,7 +40,7 @@ const relationshipPreferenceQuestions = relationshipPreferenceQuestionContent.ma
   id: question.id,
   type: "single_choice" as const,
   title: question.title,
-  description: "按第一反应选择更有感觉的一项即可，不需要刻意平衡答案。",
+  description: "不是选“喜不喜欢”，而是选“哪一种更能打动你”。",
   options: [
     {
       id: `${question.id}_a`,
@@ -243,6 +243,20 @@ const mockCodeBatches: AdminCodeBatch[] = [
     status: "active",
     codeCount: 2,
     expiresAt: "2026-12-31T23:59:59.000Z",
+    codePrefix: "OEJTS",
+    codeLength: 14,
+    policy: {
+      scopeMode: "product",
+      verificationMode: "shared_code",
+      tokenTtlDays: 30,
+      introVisible: true,
+      notes: "MVP 阶段采用一套题一个随机口令，后续可切到一单一码。",
+    },
+    linkedQuizzes: [{ slug: "oejts-personality-map", title: "OEJTS 16 型人格图谱" }],
+    sampleCodes: [
+      { code: "SOUL-OEJTS-0313", status: "active", expiresAt: "2026-12-31T23:59:59.000Z" },
+      { code: "ST-DEMO-ALPHA", status: "active", expiresAt: "2026-12-31T23:59:59.000Z" },
+    ],
   },
   {
     id: "batch_relationship_preference_shared",
@@ -253,6 +267,20 @@ const mockCodeBatches: AdminCodeBatch[] = [
     status: "active",
     codeCount: 2,
     expiresAt: "2026-12-31T23:59:59.000Z",
+    codePrefix: "RPREF",
+    codeLength: 14,
+    policy: {
+      scopeMode: "product",
+      verificationMode: "shared_code",
+      tokenTtlDays: 30,
+      introVisible: true,
+      notes: "正式版首发期仍然采用共享验证码，便于投放和客服联调。",
+    },
+    linkedQuizzes: [{ slug: "relationship-preference-test", title: "亲密关系偏好测试" }],
+    sampleCodes: [
+      { code: "RPREF-8Q4M-2T7K", status: "active", expiresAt: "2026-12-31T23:59:59.000Z" },
+      { code: "ST-LOVE-BETA", status: "active", expiresAt: "2026-12-31T23:59:59.000Z" },
+    ],
   },
 ]
 
@@ -381,5 +409,4 @@ export function getMockProducts() {
 export function getMockCodeBatches() {
   return mockCodeBatches
 }
-
 

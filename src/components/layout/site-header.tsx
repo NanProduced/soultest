@@ -1,14 +1,15 @@
-﻿import { ArrowLeft, Sparkles } from "lucide-react"
-import { Link, useLocation } from "react-router"
+import { ArrowLeft, Sparkles } from "lucide-react"
 import { motion, useMotionValueEvent, useScroll } from "framer-motion"
 import { useState } from "react"
+import { Link, useLocation } from "react-router"
 
+import { isAdminPortalPath } from "@/features/admin/constants"
 import { cn } from "@/lib/utils"
 
 export function SiteHeader() {
   const location = useLocation()
   const isHome = location.pathname === "/"
-  const isAdmin = location.pathname.startsWith("/admin")
+  const isAdmin = isAdminPortalPath(location.pathname)
   const prefersFloating = !isHome
 
   const { scrollY } = useScroll()
