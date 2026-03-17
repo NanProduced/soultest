@@ -1,19 +1,13 @@
-import { useEffect, useState } from "react"
 import { Link } from "react-router"
-import { fetchPublicQuizzes } from "@/features/quizzes/api"
-import type { QuizCatalogItem } from "@/features/quizzes/types"
+
+const footerLinks = [
+  { label: "主页", to: "/" },
+  { label: "免费测试", to: "/quizzes?type=free" },
+  { label: "付费测试", to: "/quizzes?type=paid" },
+  { label: "浏览全部题集", to: "/quizzes" },
+]
 
 export function SiteFooter() {
-  const [quizzes, setQuizzes] = useState<QuizCatalogItem[]>([])
-
-  useEffect(() => {
-    let active = true
-    fetchPublicQuizzes()
-      .then((items) => { if (active) setQuizzes(items) })
-      .catch(() => {/* footer links are non-critical */})
-    return () => { active = false }
-  }, [])
-
   return (
     <footer className="border-t border-slate-200/80 bg-white/72">
       <div className="mx-auto flex max-w-7xl flex-col gap-4 px-6 py-8 text-sm text-slate-500 md:flex-row md:items-center md:justify-between">
@@ -22,17 +16,10 @@ export function SiteFooter() {
           <p className="mt-1 text-xs text-slate-500">结果仅供自我探索与娱乐参考。</p>
         </div>
 
-        <div className="flex items-center gap-5 flex-wrap">
-          <Link className="transition hover:text-slate-900" to="/">
-            主页
-          </Link>
-          {quizzes.map((quiz) => (
-            <Link
-              key={quiz.slug}
-              className="transition hover:text-slate-900"
-              to={`/${quiz.slug}`}
-            >
-              {quiz.title}
+        <div className="flex flex-wrap items-center gap-5">
+          {footerLinks.map((link) => (
+            <Link key={link.to} className="transition hover:text-slate-900" to={link.to}>
+              {link.label}
             </Link>
           ))}
         </div>

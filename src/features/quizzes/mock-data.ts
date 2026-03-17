@@ -19,6 +19,7 @@ export const quizCatalog: QuizCatalogItem[] = [
       "拿到一份更容易被共鸣的结果页",
     ],
     flowSteps: ["输入口令", "完成 28 道题", "生成专属人格画像", "保存结果页"],
+    accessType: "paid",
   },
   {
     id: "quiz_love_pattern",
@@ -38,6 +39,7 @@ export const quizCatalog: QuizCatalogItem[] = [
       "看到更适合你的相处建议",
     ],
     flowSteps: ["输入口令", "完成 8 道题", "生成关系画像", "查看相处建议"],
+    accessType: "paid",
   },
   {
     id: "quiz_workplace_energy",
@@ -57,6 +59,7 @@ export const quizCatalog: QuizCatalogItem[] = [
       "找到更容易发光的高能区",
     ],
     flowSteps: ["输入口令", "完成 20 道题", "生成能量画像", "查看行动建议"],
+    accessType: "paid",
   },
 ]
 

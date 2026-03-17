@@ -3,7 +3,8 @@ import { useNavigate } from "react-router"
 import { motion, AnimatePresence } from "framer-motion"
 import { ArrowLeft } from "lucide-react"
 
-import { banweiQuestions, calculateBanweiResult } from "@/features/free-quizzes/banwei-data"
+import { FreeQuizRuntimeLoadingScreen, FreeQuizRuntimeUnavailableScreen, useFreeQuizRuntime } from "@/features/free-quizzes/runtime"
+import { calculateBanweiResult } from "@/features/free-quizzes/runtime-calculators"
 
 export function FreeBanweiTestPage() {
   const navigate = useNavigate()
@@ -20,9 +21,24 @@ export function FreeBanweiTestPage() {
   })
   
   const [isTransitioning, setIsTransitioning] = useState(false)
+  const { freeRuntime, isLoading, error } = useFreeQuizRuntime("free/banwei")
 
+  const banweiQuestions = (freeRuntime?.questionSet ?? []) as Array<{
+    id: string
+    title: string
+    dimension?: string
+    options: Array<{ label: string; score: number; dimension: string }>
+  }>
   const currentQuestion = banweiQuestions[currentIndex]
-  const progress = ((currentIndex) / banweiQuestions.length) * 100
+  const progress = banweiQuestions.length > 0 ? (currentIndex / banweiQuestions.length) * 100 : 0
+
+  if (isLoading) {
+    return <FreeQuizRuntimeLoadingScreen className="bg-slate-100 text-slate-900" />
+  }
+
+  if (error || !currentQuestion) {
+    return <FreeQuizRuntimeUnavailableScreen className="bg-slate-950 text-white" backTo="/free/banwei" />
+  }
 
   const handleOptionClick = (score: number, dimension: string) => {
     if (isTransitioning) return
@@ -113,7 +129,7 @@ export function FreeBanweiTestPage() {
                 {currentQuestion.options.map((option, idx) => (
                   <button
                     key={idx}
-                    onClick={() => handleOptionClick(option.score, currentQuestion.dimension)}
+                    onClick={() => handleOptionClick(option.score, option.dimension)}
                     className="group relative flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white p-5 md:p-6 text-left transition-all hover:border-sky-400 hover:shadow-[0_8px_30px_rgba(14,165,233,0.12)] active:scale-[0.98]"
                   >
                     <span className="text-base text-slate-700 group-hover:text-slate-900 md:text-lg leading-relaxed font-medium">
@@ -132,3 +148,4 @@ export function FreeBanweiTestPage() {
     </div>
   )
 }
+

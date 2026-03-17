@@ -3,16 +3,33 @@ import { useNavigate } from "react-router"
 import { motion, AnimatePresence } from "framer-motion"
 import { ArrowLeft, Sparkles } from "lucide-react"
 
-import { paintingQuestions, calculatePaintingResult } from "@/features/free-quizzes/painting-data"
+import { FreeQuizRuntimeLoadingScreen, FreeQuizRuntimeUnavailableScreen, useFreeQuizRuntime } from "@/features/free-quizzes/runtime"
+import { calculatePaintingResult } from "@/features/free-quizzes/runtime-calculators"
 
 export function FreePaintingTestPage() {
   const navigate = useNavigate()
   const [currentIndex, setCurrentIndex] = useState(0)
   const [answers, setAnswers] = useState<number[]>([])
   const [isTransitioning, setIsTransitioning] = useState(false)
+  const { freeRuntime, isLoading, error } = useFreeQuizRuntime("free/painting")
 
+  const paintingQuestions = (freeRuntime?.questionSet ?? []) as Array<{
+    id: string
+    title: string
+    options: Array<{ label: string; scores: Record<string, number> }>
+  }>
+  const paintingResults = (freeRuntime?.resultMap ?? {}) as Record<string, { id: string; vector: number[] }>
+  const dimensionRanges = (freeRuntime?.dimensionRanges ?? {}) as Record<string, { min: number; max: number }>
   const currentQuestion = paintingQuestions[currentIndex]
-  const progress = ((currentIndex) / paintingQuestions.length) * 100
+  const progress = paintingQuestions.length > 0 ? (currentIndex / paintingQuestions.length) * 100 : 0
+
+  if (isLoading) {
+    return <FreeQuizRuntimeLoadingScreen className="bg-[#060010] text-white" />
+  }
+
+  if (error || !currentQuestion) {
+    return <FreeQuizRuntimeUnavailableScreen className="bg-[#060010] text-white" backTo="/free/painting" />
+  }
 
   const handleOptionClick = (choiceIndex: number) => {
     if (isTransitioning) return
@@ -28,7 +45,7 @@ export function FreePaintingTestPage() {
         setIsTransitioning(false)
       } else {
         // Test finished
-        const result = calculatePaintingResult(newAnswers)
+        const result = calculatePaintingResult(newAnswers, paintingQuestions, paintingResults, dimensionRanges)
         // We'll pass the result data via state or just the ID in the URL
         // To make it easy, we store in session/localStorage or just pass primary ID
         navigate(`/free/painting/result?id=${result.primary.id}&answers=${newAnswers.join(',')}`, { replace: true })
@@ -123,3 +140,4 @@ export function FreePaintingTestPage() {
     </div>
   )
 }
+

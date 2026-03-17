@@ -11,19 +11,22 @@
     "lint": "eslint .",
     "preview": "vite preview --configLoader native",
     "db:migrate:local": "node ./node_modules/wrangler/wrangler-dist/cli.js d1 migrations apply SOULTEST_DB --local --config wrangler.jsonc",
-    "db:seed:local": "node ./node_modules/wrangler/wrangler-dist/cli.js d1 execute SOULTEST_DB --local --file db/seeds/local.sql --config wrangler.jsonc",
+    "db:seed:local": "node scripts/build-free-runtime-seed.mjs && node ./node_modules/wrangler/wrangler-dist/cli.js d1 execute SOULTEST_DB --local --file db/seeds/local.sql --config wrangler.jsonc && node ./node_modules/wrangler/wrangler-dist/cli.js d1 execute SOULTEST_DB --local --file db/seeds/free-runtime.sql --config wrangler.jsonc",
     "cf:typegen": "node ./node_modules/wrangler/wrangler-dist/cli.js types --env-interface CloudflareEnv"
   },
   "dependencies": {
+    "@base-ui/react": "^1.3.0",
     "@fontsource-variable/geist": "^5.2.8",
     "@fontsource-variable/inter": "^5.2.8",
     "@fontsource-variable/noto-sans-sc": "^5.2.10",
     "@fontsource/noto-serif-sc": "^5.2.9",
+    "@radix-ui/react-slot": "^1.2.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "framer-motion": "^12.36.0",
     "gsap": "^3.13.0",
     "html-to-image": "^1.11.13",
+    "html2canvas": "^1.4.1",
     "lucide-react": "^0.577.0",
     "radix-ui": "^1.4.3",
     "react": "^19.2.4",
@@ -53,3 +56,4 @@
     "wrangler": "^4.72.0"
   }
 }
+

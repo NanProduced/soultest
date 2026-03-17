@@ -19,15 +19,16 @@
 2. **通用能力优先，专属能力可扩展**：大部分题集走统一渲染与统一计分；高复杂度题集允许专属渲染器与专属扩展块。
 3. **低成本优先于大数据平台**：只记录经营需要的数据，不做重埋点、重报表系统。
 4. **用户体验优先于强校验**：验证码不做使用次数扣减，重点控制有效期、状态与批次策略。
-5. **避免双真相源**：D1 负责业务状态；KV 只缓存；R2 只存素材与发布产物。
+5. **避免双真相源**：D1 负责业务状态；浏览器 `sessionStorage` 只保存当前页签内的短时授权与草稿；静态素材跟随代码发布。
 
 ### 2.2 技术原则
 
 - **React SPA** 满足当前交互需求与 Cloudflare 部署需求
 - **Pages Functions** 承担轻量 API，不引入独立服务器
-- **D1** 保存平台核心状态和题集版本源数据
-- **KV** 仅缓存热点验证码与公开元数据，避免把兑换状态写死在 KV
-- **R2** 保存封面图、结果图素材、已发布版本快照等大对象
+- **D1** 保存平台核心状态、题集版本源数据、验证码策略与提交记录
+- **Cloudflare Access** 保护 `/private-room`，不再把后台安全建立在自管账号密码之上
+- **浏览器 `sessionStorage`** 只保存当前页签生命周期内的短时访问授权与答题草稿
+- **项目内静态资源** 跟随前端构建产物发布，当前阶段不额外引入 R2
 
 ---
 
@@ -50,40 +51,41 @@ Cloudflare Pages Functions
 
 Cloudflare D1
   ├─ 题集、版本、商品、验证码批次、验证码、提交记录
-  └─ 管理员与后台配置
+  └─ 后台配置、审计日志
 
-Cloudflare Workers KV
-  ├─ 热点验证码缓存
-  └─ 已发布公开题集元数据缓存
+Cloudflare Access
+  └─ `/private-room` 入口保护、身份校验、MFA
 
-Cloudflare R2
-  ├─ 题集素材
-  ├─ 结果图素材
-  └─ 已发布题集快照 JSON
+Browser sessionStorage
+  ├─ 当前页签短时 access grant
+  └─ 误触返回时的答题草稿恢复
 ```
 
 ### 3.2 各存储角色
 
 | 组件 | 是否真相源 | 负责内容 |
 | --- | --- | --- |
-| **D1** | 是 | 平台业务状态、版本记录、发布指针、验证码状态、提交结果 |
-| **KV** | 否 | 热点缓存，减少 D1 读取压力 |
-| **R2** | 否 | 素材与发布产物存储，不承担业务状态真相源 |
+| **D1** | 是 | 平台业务状态、版本记录、发布指针、验证码状态、提交结果、审计日志 |
+| **Cloudflare Access** | 否 | 管理后台入口保护、身份断言、多因素校验 |
+| **Browser `sessionStorage`** | 否 | 当前页签短时授权与答题草稿，不跨页签、不跨浏览器长期保存 |
+| **项目静态资源** | 否 | 题目图片、结果页素材、分享图底图，跟随代码发布 |
 
-### 3.3 为什么不用“KV 标记 used”
+### 3.3 为什么不再使用服务端缓存型访问会话
 
-旧方案中的 `verify -> used=true` 不适合当前业务，原因如下：
+旧方案中的 `verify -> used=true` 或 `verify -> KV session` 都不适合当前业务，原因如下：
 
 - 用户中途中断后无法继续，容易引发客诉
 - 不支持“一码多题”与“套餐商品”
 - 不支持推广码、体验码等复用场景
-- KV 免费层写入能力更有限，不适合做业务真相源
+- 用户关闭页面后仍残留服务端状态，不符合“页签关闭即失效”的产品要求
+- 为前台短时会话单独维护 KV，会增加部署与运维复杂度
 
 新方案改为：
 
 - `verify` 只校验验证码是否有效
-- 校验通过后签发时效访问凭证 `access token`
-- 用户后续凭 `access token` 访问已授权题集
+- 校验通过后签发短时、带签名的 `access grant`
+- 前端把 `access grant` 与答题草稿保存在 `sessionStorage`
+- 用户后续凭 `access grant` 访问已授权题集；关闭页签后状态自动失效
 - 验证码本身只受 `状态 + 有效期 + 批次策略` 控制，不受次数控制
 
 ---
@@ -95,11 +97,11 @@ Cloudflare R2
 /:slug                     测试介绍页 / 验证码入口页
 /:slug/test                答题页
 /:slug/result/:submissionId 结果页
-/admin                     管理后台首页
-/admin/quizzes             题集管理
-/admin/products            商品管理
-/admin/codes               验证码批次与码管理
-/admin/analytics           经营统计
+/private-room                     管理后台首页
+/private-room/quizzes             题集管理
+/private-room/products            商品管理
+/private-room/batches             验证码批次与码管理
+/private-room/security            安全中心
 ```
 
 说明：
@@ -373,7 +375,7 @@ interface SourceManifest {
   "scopeMode": "product",
   "allowQuizSlugs": ["city-match", "dark-triad"],
   "introVisible": true,
-  "tokenTtlDays": 30,
+  "grantTtlMinutes": 120,
   "notes": "618 推广码"
 }
 ```
@@ -394,20 +396,21 @@ interface SourceManifest {
   -> /api/access/verify
   -> D1 查询 code + batch + product
   -> 校验状态、有效期、商品可用性
-  -> 签发 access token（带过期时间）
+  -> 签发短时 access grant（带过期时间与可访问题集范围）
   -> 返回本码可访问的题集列表
+  -> 前端写入 sessionStorage（仅当前页签有效）
   -> 前端进入某个题集的 intro/test 流程
 ```
 
 ### 7.6 为什么要签发访问凭证
 
-因为验证码与“访问会话”不是一回事。
+因为验证码与“当前页签内的短时访问授权”不是一回事。
 
 拆开后有几个好处：
 
 - 同一验证码在有效期内可重复进入，不易引发客诉
 - 一码多题时，前端可先展示该码有权限的所有题集
-- 以后要做扫码直达、入口记忆、最近访问题集时更容易扩展
+- 用户误触返回或刷新时可恢复当前页签状态，但关闭页签后不会保留长期会话
 
 ---
 
@@ -419,9 +422,9 @@ interface SourceManifest {
 | --- | --- | --- |
 | `GET` | `/api/quizzes/public` | Landing Page 使用，返回可公开展示的题集卡片 |
 | `GET` | `/api/quizzes/:slug/intro` | 返回测试介绍页所需的公开信息 |
-| `POST` | `/api/access/verify` | 验证验证码并签发访问凭证 |
-| `GET` | `/api/access/me` | 返回当前凭证下可访问的题集与商品信息 |
-| `GET` | `/api/quizzes/:slug/runtime` | 返回已发布的题集运行时配置，需要访问凭证 |
+| `POST` | `/api/access/verify` | 验证验证码并签发短时 access grant |
+| `GET` | `/api/access/me` | 可选接口，返回当前 access grant 下可访问的题集与商品信息 |
+| `GET` | `/api/quizzes/:slug/runtime` | 返回已发布的题集运行时配置，需要 access grant |
 | `POST` | `/api/submissions` | 提交答题结果 |
 | `POST` | `/api/submissions/:id/share` | 标记本次结果已导出/分享 |
 
@@ -429,15 +432,15 @@ interface SourceManifest {
 
 | Method | Path | 说明 |
 | --- | --- | --- |
-| `POST` | `/api/admin/login` | 管理员登录 |
-| `GET/POST` | `/api/admin/quizzes` | 题集列表、创建题集 |
-| `GET/POST` | `/api/admin/quizzes/:id/versions` | 查看版本、创建草稿版本 |
-| `POST` | `/api/admin/quizzes/:id/publish` | 发布指定版本 |
-| `GET/POST` | `/api/admin/products` | 商品管理 |
-| `GET/POST` | `/api/admin/code-batches` | 批次管理 |
-| `POST` | `/api/admin/code-batches/:id/generate` | 生成一批验证码 |
-| `POST` | `/api/admin/codes/revoke` | 撤销单码或批量撤销 |
-| `GET` | `/api/admin/analytics/summary` | 经营概览 |
+| `GET` | `/api/private-room/session` | 返回当前 Cloudflare Access 身份与保护模式 |
+| `GET/POST` | `/api/private-room/quizzes` | 题集列表、创建题集 |
+| `GET/POST` | `/api/private-room/quizzes/:id/versions` | 查看版本、创建草稿版本 |
+| `POST` | `/api/private-room/quizzes/:id/publish` | 发布指定版本 |
+| `GET/POST` | `/api/private-room/products` | 商品管理 |
+| `GET/POST` | `/api/private-room/code-batches` | 批次管理 |
+| `POST` | `/api/private-room/code-batches/:id/generate` | 生成一批验证码 |
+| `POST` | `/api/private-room/codes/revoke` | 撤销单码或批量撤销 |
+| `GET` | `/api/private-room/analytics/summary` | 经营概览 |
 
 ### 8.3 `verify` 接口示例
 
@@ -453,7 +456,7 @@ interface SourceManifest {
 
 ```json
 {
-  "accessToken": "signed-token",
+  "accessGrant": "signed-grant",
   "expiresAt": "2026-04-12T00:00:00Z",
   "product": {
     "id": "prod_bundle_001",
@@ -473,7 +476,7 @@ interface SourceManifest {
 - 校验访问凭证是否仍有效
 - 读取 D1 当前发布版本指针
 - 返回对应题集的运行时 JSON
-- 可选从 KV / R2 命中缓存或发布快照
+- 校验当前 access grant 是否包含该题集权限
 
 这样可以避免前端直接依赖静态 JSON 路径，也便于后续灰度与回滚。
 
@@ -489,25 +492,27 @@ interface SourceManifest {
   -> 预览
   -> 发布
   -> quizzes.current_published_version_id 指向新版本
-  -> 可选同步发布快照到 R2
-  -> 刷新 KV 缓存
 ```
 
-### 9.2 D1 / KV / R2 的协同关系
+### 9.2 当前基线存储职责
 
-- **D1**：保存草稿版本与发布指针
-- **KV**：缓存公开题集卡片、热点运行时配置、热点验证码元数据
-- **R2**：存封面图、结果图素材、已发布快照 JSON
+- **D1**：保存草稿版本、发布指针、验证码策略、码状态、提交记录、审计日志
+- **浏览器 `sessionStorage`**：保存当前页签的短时 access grant 与答题草稿
+- **项目静态资源**：保存题目图片、结果页底图与分享导出所需素材
 
-### 9.3 为什么发布快照仍可放 R2
+### 9.3 为什么当前不引入 KV / R2
 
-因为 R2 在这里是“发布产物仓库”，不是编辑源。
+因为当前产品边界很明确：
 
-只要满足以下原则，就不会形成双真相源：
+- 题目图片与结果页素材随代码发布即可满足需求
+- 分享长图只在前端生成并下载到用户本地，不需要对象存储
+- 前台访问状态只要求“误触返回可恢复、关闭页签即失效”，用 `sessionStorage` 更贴近实际需求
 
-- 编辑只改 D1 中的 `quiz_versions.config_json`
-- 发布指针只认 D1
-- R2 中的快照是发布后的派生产物
+后续只有在以下情况出现时，才重新评估是否引入额外存储：
+
+- 需要在不发版的情况下更换大量运营素材
+- 需要持久化保存用户生成的分享图并提供公网 URL
+- 需要在前台做跨页签、跨设备的长期会话恢复
 
 ---
 
@@ -535,7 +540,7 @@ Landing Page 有价值，但不是 P0 核心。它更像增长入口，而不是
 
 优先价值在于：
 
-- 承接分享长图二维码流量
+- 承接分享传播与题集导流流量
 - 建立品牌感而不是“裸奔 H5”
 - 展示全部测试，促进交叉购买
 - 承接免费试玩入口
@@ -585,7 +590,7 @@ Landing Page 有价值，但不是 P0 核心。它更像增长入口，而不是
 ### Phase 1：平台基础骨架
 
 - D1 表结构
-- 管理后台登录
+- Cloudflare Access 保护 `/private-room`
 - 题集与版本管理
 - 商品管理
 - 验证码批次与生成

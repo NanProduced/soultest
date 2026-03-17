@@ -1,4 +1,4 @@
-﻿import { Home, Undo2 } from "lucide-react"
+import { Home, Undo2 } from "lucide-react"
 import { Link } from "react-router"
 
 import { Button } from "@/components/ui/button"
@@ -20,7 +20,7 @@ export function NotFoundPage() {
             </Link>
           </Button>
           <Button asChild className="rounded-full px-5" variant="outline">
-            <Link to="/#catalog">
+            <Link to="/quizzes">
               <Undo2 className="size-4" />
               查看全部测试
             </Link>
@@ -30,3 +30,4 @@ export function NotFoundPage() {
     </div>
   )
 }
+

@@ -5,7 +5,7 @@ import { Link, Navigate, useParams } from "react-router"
 import { ResultLoadingRitual } from "@/components/quiz/result-loading-ritual"
 import { Button } from "@/components/ui/button"
 import { fetchSubmissionDetail } from "@/features/quizzes/api"
-import { getCustomQuizResultPage } from "@/features/quizzes/custom-pages"
+import { getQuizCustomPages } from "@/features/quizzes/pages/registry"
 import { getQuizPosterExportId, getQuizShareCardKey, getQuizTheme, resolveQuizStrategies } from "@/features/quizzes/engine"
 import { getResultTemplateComponent } from "@/features/quizzes/result-template-registry"
 import { readStoredQuizResult, writeStoredQuizResult } from "@/features/quizzes/session"
@@ -43,6 +43,26 @@ const shareCardExportPresets: Record<
     missingMessage: "未找到可导出的关系结果长图，请刷新后重试",
     failedMessage: "关系结果长图导出失败，请稍后再试",
     backgroundColor: "#2b1020",
+  },
+  "hexaco-poster": {
+    title: "保存您的六维人格结果长图",
+    description: "导出包含六维雷达图、维度深度解读与场景建议的结果长图，更全面地看见自己。",
+    buttonLabel: "保存结果长图",
+    exportingLabel: "正在生成结果长图...",
+    exportedLabel: "保存成功",
+    missingMessage: "未找到可导出的六维人格结果长图，请刷新后重试",
+    failedMessage: "六维人格结果长图导出失败，请稍后再试",
+    backgroundColor: "#1e1b4b",
+  },
+  "enneagram-drive-poster": {
+    title: "保存你的九型驱动力长图",
+    description: "导出包含主型、近邻类型、核心驱动力与社媒分享文案的结果长图，更适合直接发到小红书。",
+    buttonLabel: "保存结果长图",
+    exportingLabel: "正在生成结果长图...",
+    exportedLabel: "保存成功",
+    missingMessage: "未找到可导出的九型结果长图，请刷新后重试",
+    failedMessage: "九型结果长图导出失败，请稍后再试",
+    backgroundColor: "#130d1a",
   },
 }
 
@@ -197,12 +217,20 @@ export function QuizResultPage() {
   const posterExportId = getQuizPosterExportId(runtime)
   const posterExportPreset = shareCardKey ? shareCardExportPresets[shareCardKey] : undefined
   const supportsPosterExport = Boolean(posterExportId && posterExportPreset)
-  const CustomResultPage = strategies.renderer === "custom" ? getCustomQuizResultPage(slug) : undefined
+  const customPages = slug ? getQuizCustomPages(slug) : undefined
+  const CustomResultPage =
+    strategies.renderer === "custom" || customPages?.result ? customPages?.result : undefined
 
   if (CustomResultPage) {
     return (
       <div className="mx-auto max-w-6xl px-6 py-10 md:py-14">
-        <CustomResultPage result={result} runtime={runtime} submission={submission} />
+        <CustomResultPage
+          slug={slug}
+          submissionId={submissionId}
+          result={result}
+          runtime={runtime}
+          submission={submission}
+        />
       </div>
     )
   }
@@ -312,3 +340,5 @@ export function QuizResultPage() {
     </div>
   )
 }
+
+

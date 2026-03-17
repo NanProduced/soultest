@@ -1,4 +1,4 @@
-﻿{
+{
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "soultest",
   "compatibility_date": "2026-03-13",
@@ -8,7 +8,8 @@
     "APP_ENV": "local",
     "API_STUB_MODE": "d1",
     "ACCESS_TOKEN_TTL_DAYS": "30",
-    "ADMIN_ACCESS_KEY_HASH": "pbkdf2_sha256$210000$WkUj6/yGRyTtkcobeY+L6w==$dmfDxk4aoI5luBH8Sd1FEZLaSnG9K6vkTNqDPjLVmWY=",
+    "ALLOW_STATIC_ACCESS_GRANT_FALLBACK": "false",
+    "ADMIN_ACCESS_KEY_HASH": "pbkdf2_sha256$210000$s3ReGhH6Z59znoWIRqTA1g==$TcgE03kUWeXWPCe44mqhzVUbN7ILETeSIOl1+sZ4QF0=",
     "ADMIN_LOGIN_MAX_ATTEMPTS": "5",
     "ADMIN_LOGIN_WINDOW_SECONDS": "600"
   },
@@ -34,3 +35,5 @@
     }
   ]
 }
+
+

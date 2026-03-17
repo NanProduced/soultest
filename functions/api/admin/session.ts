@@ -6,7 +6,9 @@ import {
   getAdminSession,
   getAdminSessionClearCookieHeader,
   getAdminSessionCookieHeader,
+  getDevelopmentAdminSession,
   isAdminAccessKeyConfigured,
+  isDevelopmentAdminBypassEnabled,
   issueAdminSession,
   recordFailedAdminLoginAttempt,
 } from "../../_lib/admin-auth"
@@ -37,12 +39,26 @@ export const onRequestGet: PagesFunction<CloudflareEnv> = async ({ request, env 
       issuedAt: session.issuedAt,
       expiresAt: session.expiresAt,
     },
-    authMode: "password_access_key",
+    authMode: isDevelopmentAdminBypassEnabled(env) ? "development_bypass" : "password_access_key",
     source: env.API_STUB_MODE,
   })
 }
 
 export const onRequestPost: PagesFunction<CloudflareEnv> = async ({ request, env }) => {
+  if (isDevelopmentAdminBypassEnabled(env)) {
+    const session = getDevelopmentAdminSession()
+
+    return json({
+      session: {
+        username: session.username,
+        issuedAt: session.issuedAt,
+        expiresAt: session.expiresAt,
+      },
+      authMode: "development_bypass",
+      source: env.API_STUB_MODE,
+    })
+  }
+
   if (!isAdminAccessKeyConfigured(env)) {
     return errorResponse(503, "ADMIN_AUTH_MISCONFIGURED", "管理后台未配置访问密钥，已禁止公网登录")
   }

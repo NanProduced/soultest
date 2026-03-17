@@ -67,17 +67,17 @@ export function SiteHeader() {
         </Link>
 
         {isHome ? (
-          <a
+          <Link
             className={cn(
               "inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition",
               shouldFloat
                 ? "border border-white/20 bg-white/10 text-white backdrop-blur-sm hover:bg-white/20"
                 : "border border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:text-slate-950",
             )}
-            href="#catalog"
+            to="/quizzes"
           >
             浏览题集
-          </a>
+          </Link>
         ) : (
           <Link
             className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium text-white backdrop-blur-sm transition hover:bg-white/20"

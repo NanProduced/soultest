@@ -26,9 +26,15 @@ dist-ssr
 
 # local screenshot, do not commit
 .doc/screenshot/
+.doc/temp/
+.doc/cover/
+.doc/cover/
+.doc/test-question/
 
 # local AI document, do not commit
 .serena/
 .gemini/
 .claude/
 .trae/
+# local temp build artifacts
+.tmp-*/

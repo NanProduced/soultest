@@ -51,6 +51,7 @@
     --invert-foreground: oklch(0.985 0 0);
     --font-display: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
     --font-serif: "Noto Serif SC", "LXGW WenKai", "Source Han Serif SC", "Charter", "Bitstream Charter", "Sitka Text", Cambria, serif;
+    --destructive-foreground: var(--color-red-800);
 }
 
 .dark {
@@ -93,6 +94,7 @@
     --warning-foreground: oklch(0.205 0 0);
     --invert: oklch(0.985 0 0);
     --invert-foreground: oklch(0.205 0 0);
+    --destructive-foreground: var(--color-red-600);
 }
 
 @theme inline {
@@ -145,6 +147,7 @@
     --radius-4xl: calc(var(--radius) * 2.6);
     --animate-aurora: aurora 60s linear infinite;
     --animate-scroll: scroll var(--animation-duration, 40s) var(--animation-direction, forwards) linear infinite;
+    --color-destructive-foreground: var(--destructive-foreground);
 }
 
 @keyframes aurora {
@@ -202,5 +205,14 @@
   }
   .font-serif {
     font-family: var(--font-serif);
+  }
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+  .backface-hidden {
+    backface-visibility: hidden;
   }
 }

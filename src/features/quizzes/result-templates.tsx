@@ -1,4 +1,4 @@
-﻿import type { ReactNode } from "react"
+import type { ReactNode } from "react"
 import {
   BriefcaseBusiness,
   HeartHandshake,
@@ -6,12 +6,15 @@ import {
   Sparkles,
   TrendingUp,
   Waves,
+  Users,
+  Target,
+  Compass,
 } from "lucide-react"
 import { motion } from "framer-motion"
 
 import { Noise } from "@/components/ui/noise"
 import { cn } from "@/lib/utils"
-import { getOejtsAxisMeta, getQuizPosterExportId, type QuizThemePreset } from "@/features/quizzes/engine"
+import { getOejtsAxisMeta, type QuizThemePreset } from "@/features/quizzes/engine"
 import type {
   QuizResultDefinition,
   QuizRuntimeConfig,
@@ -26,6 +29,10 @@ export interface QuizResultTemplateProps {
   theme: QuizThemePreset
 }
 
+/**
+ * --- Shared UI Components ---
+ */
+
 function StoryHighlights({ highlights }: { highlights: string[] }) {
   return (
     <div className="flex flex-wrap gap-3">
@@ -38,861 +45,6 @@ function StoryHighlights({ highlights }: { highlights: string[] }) {
         </span>
       ))}
     </div>
-  )
-}
-
-function DefaultStoryTemplate({ submission, result, theme }: QuizResultTemplateProps) {
-  return (
-    <section className="rounded-[36px] border border-black/5 bg-white/90 p-8 shadow-[0_24px_80px_rgba(15,23,42,0.08)] md:p-10">
-      <div className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-xs uppercase tracking-[0.28em] text-slate-500">
-        测试结果
-      </div>
-      <h1 className="mt-6 text-4xl font-semibold tracking-tight text-slate-950 md:text-5xl">{submission.resultTitle}</h1>
-      <p className="mt-4 max-w-3xl text-base leading-8 text-slate-600">{result.summary}</p>
-      {(result.highlights ?? []).length > 0 ? (
-        <div className="mt-8">
-          <StoryHighlights highlights={result.highlights ?? []} />
-        </div>
-      ) : null}
-      <div className="mt-10 grid gap-4 md:grid-cols-2">
-        {(result.strengths ?? []).length > 0 ? (
-          <article className="rounded-[28px] border border-slate-200 bg-slate-50 p-5">
-            <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-              <TrendingUp className={`size-4 ${theme.accentText}`} />
-              更自然的优势
-            </div>
-            <div className="mt-4 space-y-3 text-sm leading-7 text-slate-600">
-              {(result.strengths ?? []).map((item) => (
-                <p key={item}>{item}</p>
-              ))}
-            </div>
-          </article>
-        ) : null}
-        {(result.blindSpots ?? []).length > 0 ? (
-          <article className="rounded-[28px] border border-slate-200 bg-slate-50 p-5">
-            <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-              <ShieldAlert className={`size-4 ${theme.accentText}`} />
-              容易卡住的地方
-            </div>
-            <div className="mt-4 space-y-3 text-sm leading-7 text-slate-600">
-              {(result.blindSpots ?? []).map((item) => (
-                <p key={item}>{item}</p>
-              ))}
-            </div>
-          </article>
-        ) : null}
-      </div>
-    </section>
-  )
-}
-
-const relationshipDimensionOrder = [
-  "words_of_affirmation",
-  "quality_time",
-  "receiving_gifts",
-  "acts_of_service",
-  "physical_touch",
-] as const
-
-type RelationshipPreferenceExtension = {
-  dimensionOrder?: string[]
-  maxScorePerDimension?: number
-  dualPrimaryDelta?: number
-  balancedSpreadDelta?: number
-  pairNarratives?: Record<string, string>
-}
-
-function getRelationshipPreferenceExtension(runtime: QuizRuntimeConfig) {
-  return (runtime.extensions?.relationshipPreference ?? {}) as RelationshipPreferenceExtension
-}
-
-function getRelationshipDimensionOrder(runtime: QuizRuntimeConfig) {
-  const extension = getRelationshipPreferenceExtension(runtime)
-  return Array.isArray(extension.dimensionOrder) && extension.dimensionOrder.length > 0
-    ? extension.dimensionOrder
-    : [...relationshipDimensionOrder]
-}
-
-function getRelationshipMaxScore(runtime: QuizRuntimeConfig) {
-  const extension = getRelationshipPreferenceExtension(runtime)
-  return typeof extension.maxScorePerDimension === "number" ? extension.maxScorePerDimension : 12
-}
-
-function getRelationshipResult(runtime: QuizRuntimeConfig, key: string | undefined) {
-  if (!key) {
-    return undefined
-  }
-
-  return runtime.results.find((item) => item.dimensionKey === key || item.key === key)
-}
-
-function sortRelationshipScoreBreakdown(runtime: QuizRuntimeConfig, scoreBreakdown: ScoreBreakdownItem[]) {
-  const labels = new Map(
-    (runtime.extensions?.scoring?.dimensions ?? [])
-      .filter(
-        (item): item is { key: string; label: string } =>
-          typeof item === "object" && item !== null && typeof item.key === "string" && typeof item.label === "string",
-      )
-      .map((item) => [item.key, item.label]),
-  )
-
-  const scoreMap = new Map(scoreBreakdown.map((item) => [item.key, item]))
-
-  return getRelationshipDimensionOrder(runtime)
-    .map((key) => scoreMap.get(key) ?? { key, label: labels.get(key) ?? key, score: 0 })
-    .sort((left, right) => right.score - left.score)
-}
-
-function getRelationshipPairKey(firstKey: string, secondKey: string, order: string[]) {
-  const filtered = order.filter((item) => item === firstKey || item === secondKey)
-  return filtered.length === 2 ? filtered.join("|") : [firstKey, secondKey].sort().join("|")
-}
-
-function getRelationshipStoryData(result: QuizResultDefinition, runtime: QuizRuntimeConfig, submission: StoredQuizResult) {
-  const scoreBreakdown = sortRelationshipScoreBreakdown(runtime, submission.scoreBreakdown ?? [])
-  const extension = getRelationshipPreferenceExtension(runtime)
-  const maxScore = getRelationshipMaxScore(runtime)
-  const primaryKey = result.dimensionKey ?? result.key
-  const secondaryItem = scoreBreakdown[1]
-  const lowestItem = [...scoreBreakdown].reverse()[0]
-  const secondaryResult = getRelationshipResult(runtime, secondaryItem?.key)
-  const lowestResult = getRelationshipResult(runtime, lowestItem?.key)
-  const dualPrimaryDelta = typeof extension.dualPrimaryDelta === "number" ? extension.dualPrimaryDelta : 1
-  const balancedSpreadDelta = typeof extension.balancedSpreadDelta === "number" ? extension.balancedSpreadDelta : 2
-  const topScore = scoreBreakdown[0]?.score ?? 0
-  const secondScore = secondaryItem?.score ?? 0
-  const lowestScore = lowestItem?.score ?? 0
-  const isDualPrimary = topScore - secondScore <= dualPrimaryDelta
-  const isBalanced = topScore - lowestScore <= balancedSpreadDelta
-  const pairNarratives = extension.pairNarratives ?? {}
-  const pairNarrative =
-    secondaryItem && secondaryResult
-      ? pairNarratives[getRelationshipPairKey(primaryKey, secondaryItem.key, getRelationshipDimensionOrder(runtime))]
-      : undefined
-
-  const presentationTags = [
-    `主语言 · ${result.title}`,
-    secondaryResult ? `次语言 · ${secondaryResult.title}` : undefined,
-    isDualPrimary ? "双主导偏好" : undefined,
-    isBalanced ? "整体偏均衡" : undefined,
-  ].filter((item): item is string => Boolean(item))
-
-  return {
-    scoreBreakdown,
-    maxScore,
-    secondaryItem,
-    lowestItem,
-    secondaryResult,
-    lowestResult,
-    isDualPrimary,
-    isBalanced,
-    pairNarrative,
-    presentationTags,
-  }
-}
-
-function PosterExportPortal({ children }: { children: ReactNode }) {
-  return (
-    <div aria-hidden="true" className="pointer-events-none fixed top-0" style={{ left: -10000 }}>
-      {children}
-    </div>
-  )
-}
-
-function PosterExportBulletList({ items }: { items: string[] }) {
-  return (
-    <div className="mt-4 space-y-2.5">
-      {items.map((item) => (
-        <p
-          className="relative pl-4 text-sm leading-7 text-white/76 before:absolute before:left-0 before:top-[0.72rem] before:size-1.5 before:rounded-full before:bg-current before:opacity-35"
-          key={item}
-        >
-          {item}
-        </p>
-      ))}
-    </div>
-  )
-}
-
-function RelationshipPosterCard({
-  result,
-  runtime,
-  scoreBreakdown,
-  secondaryTitle,
-  theme,
-}: {
-  result: QuizResultDefinition
-  runtime: QuizRuntimeConfig
-  scoreBreakdown: ScoreBreakdownItem[]
-  secondaryTitle?: string
-  theme: QuizThemePreset
-}) {
-  const maxScore = getRelationshipMaxScore(runtime)
-
-  return (
-    <article className="relative mx-auto w-full max-w-[380px] overflow-hidden rounded-[32px] border border-white/12 bg-[linear-gradient(180deg,rgba(95,22,52,0.98),rgba(35,10,22,1))] p-5 text-white shadow-[0_28px_100px_rgba(15,23,42,0.28)]">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(251,113,133,0.24),transparent_42%),radial-gradient(circle_at_84%_24%,rgba(251,191,36,0.14),transparent_26%)]" />
-      <div className="relative flex min-h-[620px] flex-col">
-        <div className="inline-flex w-fit items-center gap-2 rounded-full border border-white/12 bg-white/10 px-3 py-1 text-[10px] uppercase tracking-[0.28em] text-white/72">
-          <Sparkles className="size-3.5" />
-          SoulTest · 亲密关系偏好测试
-        </div>
-
-        <div className="mt-7">
-          <p className="text-sm font-medium text-white/62">你的关系偏好主通道</p>
-          <h3 className="mt-3 text-4xl font-semibold tracking-[-0.05em] text-white">{result.title}</h3>
-          <p className="mt-3 text-sm leading-7 text-white/74">{result.firstImpression ?? result.summary}</p>
-        </div>
-
-        <div className="mt-6 flex flex-wrap gap-2">
-          <span className="rounded-full border border-white/12 bg-white/10 px-3 py-1 text-xs text-white/86">主语言</span>
-          {secondaryTitle ? (
-            <span className="rounded-full border border-white/12 bg-white/10 px-3 py-1 text-xs text-white/78">次语言 · {secondaryTitle}</span>
-          ) : null}
-        </div>
-
-        <div className="mt-7 space-y-3 rounded-[24px] border border-white/10 bg-white/6 p-4">
-          {scoreBreakdown.map((item) => {
-            const percent = Math.round((item.score / Math.max(maxScore, 1)) * 100)
-
-            return (
-              <div key={item.key}>
-                <div className="flex items-center justify-between gap-3 text-[11px] text-white/66">
-                  <span>{item.label}</span>
-                  <span>
-                    {item.score}/{maxScore}
-                  </span>
-                </div>
-                <div className="mt-1.5 h-2.5 rounded-full bg-white/10">
-                  <div className={`h-full rounded-full bg-gradient-to-r ${theme.accentGradient}`} style={{ width: `${percent}%` }} />
-                </div>
-              </div>
-            )
-          })}
-        </div>
-
-        <div className="mt-auto pt-7">
-          <p className="text-sm leading-7 text-white/72">{result.shareCopy ?? result.summary}</p>
-          <p className="mt-3 text-xs leading-6 text-white/52">保存时会生成包含偏好解读与建议内容的完整分享长图。</p>
-          <div className="mt-4 flex items-center justify-between gap-3 text-[11px] uppercase tracking-[0.28em] text-white/42">
-            <span>Relationship Poster</span>
-            <span>Preview</span>
-          </div>
-        </div>
-      </div>
-    </article>
-  )
-}
-
-function RelationshipPosterExport({ result, runtime, submission, theme }: QuizResultTemplateProps) {
-  const posterExportId = getQuizPosterExportId(runtime) ?? "relationship-preference-poster"
-  const {
-    scoreBreakdown,
-    maxScore,
-    secondaryItem,
-    lowestItem,
-    secondaryResult,
-    lowestResult,
-    isDualPrimary,
-    pairNarrative,
-    presentationTags,
-  } = getRelationshipStoryData(result, runtime, submission)
-
-  return (
-    <PosterExportPortal>
-      <article
-        className="relative w-[720px] overflow-hidden rounded-[40px] border border-white/12 bg-[linear-gradient(180deg,rgba(95,22,52,0.98),rgba(35,10,22,1))] p-8 text-white shadow-[0_32px_120px_rgba(15,23,42,0.28)]"
-        id={posterExportId}
-      >
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(251,113,133,0.22),transparent_38%),radial-gradient(circle_at_85%_22%,rgba(251,191,36,0.14),transparent_24%),linear-gradient(180deg,rgba(255,255,255,0.05),transparent_28%)]" />
-
-        <div className="relative">
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/10 px-4 py-2 text-[11px] uppercase tracking-[0.28em] text-white/70">
-            <HeartHandshake className="size-4" />
-            SoulTest · 亲密关系偏好测试
-          </div>
-
-          <div className="mt-7">
-            <p className="text-sm uppercase tracking-[0.28em] text-white/42">结果长图</p>
-            <h2 className="mt-3 text-5xl font-semibold tracking-[-0.06em] text-white">
-              {isDualPrimary && secondaryResult ? `${result.title} × ${secondaryResult.title}` : result.title}
-            </h2>
-            <p className="mt-4 text-lg leading-8 text-white/86">{result.shareCopy ?? result.firstImpression ?? result.summary}</p>
-            <p className="mt-4 max-w-[620px] text-sm leading-7 text-white/62">
-              {result.overview ?? "这张长图关注你在亲密关系里最容易被什么击中、什么最容易让你失落，以及更适合你的表达方式。"}
-            </p>
-          </div>
-
-          {presentationTags.length > 0 ? (
-            <div className="mt-6 flex flex-wrap gap-2.5">
-              {presentationTags.map((item) => (
-                <span className="rounded-full border border-white/12 bg-white/10 px-3 py-1.5 text-xs text-white/86" key={item}>
-                  {item}
-                </span>
-              ))}
-            </div>
-          ) : null}
-
-          <div className="mt-8 grid gap-4 sm:grid-cols-2">
-            <article className="rounded-[28px] border border-white/10 bg-white/8 p-5">
-              <p className="text-[11px] uppercase tracking-[0.24em] text-white/42">主语言深读</p>
-              <p className="mt-3 text-xl font-semibold tracking-tight text-white">{result.title}</p>
-              <p className="mt-3 text-sm leading-7 text-white/72">{result.overview ?? result.summary}</p>
-            </article>
-
-            <article className="rounded-[28px] border border-white/10 bg-white/8 p-5">
-              <p className="text-[11px] uppercase tracking-[0.24em] text-white/42">次语言补充</p>
-              <p className="mt-3 text-xl font-semibold tracking-tight text-white">{secondaryResult?.title ?? "等待更多样本"}</p>
-              <p className="mt-3 text-sm leading-7 text-white/72">
-                {secondaryResult?.relationshipStyle ?? "你的次语言会和主语言一起，构成你在关系里的第二需求通道。"}
-              </p>
-            </article>
-          </div>
-
-          {pairNarrative ? (
-            <article className="mt-4 rounded-[28px] border border-rose-200/16 bg-[linear-gradient(180deg,rgba(255,255,255,0.1),rgba(255,255,255,0.06))] p-5">
-              <p className="text-[11px] uppercase tracking-[0.24em] text-white/42">主语言 × 次语言</p>
-              <p className="mt-3 text-sm leading-7 text-white/78">{pairNarrative}</p>
-            </article>
-          ) : null}
-
-          <section className="mt-8 rounded-[32px] border border-white/10 bg-black/12 p-6">
-            <div className="flex items-center gap-2 text-sm font-semibold text-white">
-              <Waves className={`size-4 ${theme.accentText}`} />
-              五维偏好解读
-            </div>
-            <p className="mt-3 text-sm leading-7 text-white/58">
-              分数不是能力高低，而是这套题里哪些表达方式更容易直接让你产生“被爱感”。
-            </p>
-
-            <div className="mt-5 space-y-4">
-              {scoreBreakdown.map((item) => {
-                const percent = Math.round((item.score / Math.max(maxScore, 1)) * 100)
-                const itemResult = getRelationshipResult(runtime, item.key)
-
-                return (
-                  <article className="rounded-[24px] border border-white/10 bg-white/7 p-4" key={item.key}>
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <p className="text-base font-semibold text-white">{item.label}</p>
-                        <p className="mt-2 text-sm leading-7 text-white/68">
-                          {itemResult?.subtitle ?? itemResult?.firstImpression ?? "看你更容易被哪一种表达方式击中。"}
-                        </p>
-                      </div>
-                      <span className="rounded-full border border-white/12 bg-white/10 px-3 py-1 text-xs font-semibold text-white/86">
-                        {item.score}/{maxScore}
-                      </span>
-                    </div>
-                    <div className="mt-3 h-2.5 rounded-full bg-white/10">
-                      <div className={`h-full rounded-full bg-gradient-to-r ${theme.accentGradient}`} style={{ width: `${percent}%` }} />
-                    </div>
-                  </article>
-                )
-              })}
-            </div>
-          </section>
-
-          <div className="mt-8 grid gap-4 sm:grid-cols-2">
-            <article className="rounded-[28px] border border-white/10 bg-white/8 p-5">
-              <div className="flex items-center gap-2 text-sm font-semibold text-white">
-                <TrendingUp className={`size-4 ${theme.accentText}`} />
-                什么最容易让你有“被爱感”
-              </div>
-              {result.strengths && result.strengths.length > 0 ? (
-                <PosterExportBulletList items={result.strengths.slice(0, 3)} />
-              ) : (
-                <p className="mt-4 text-sm leading-7 text-white/76">{result.strengthSummary ?? result.summary}</p>
-              )}
-            </article>
-
-            <article className="rounded-[28px] border border-white/10 bg-white/8 p-5">
-              <div className="flex items-center gap-2 text-sm font-semibold text-white">
-                <ShieldAlert className={`size-4 ${theme.accentText}`} />
-                关系里最容易失落的点
-              </div>
-              {result.blindSpots && result.blindSpots.length > 0 ? (
-                <PosterExportBulletList items={result.blindSpots.slice(0, 3)} />
-              ) : (
-                <p className="mt-4 text-sm leading-7 text-white/76">{result.blindSpotSummary ?? "长期没有回应、只有模糊表达，会慢慢削弱你的确认感。"}</p>
-              )}
-            </article>
-          </div>
-
-          <div className="mt-4 grid gap-4 sm:grid-cols-[1.15fr_0.85fr]">
-            <article className="rounded-[28px] border border-white/10 bg-white/8 p-5">
-              <div className="flex items-center gap-2 text-sm font-semibold text-white">
-                <Sparkles className={`size-4 ${theme.accentText}`} />
-                如果想让你更有被爱感，可以这样做
-              </div>
-              {result.growthNotes && result.growthNotes.length > 0 ? (
-                <PosterExportBulletList items={result.growthNotes.slice(0, 3)} />
-              ) : (
-                <p className="mt-4 text-sm leading-7 text-white/76">{result.growthAdvice ?? "用更具体、更稳定、更可感知的方式回应你，会比空泛表态更有效。"}</p>
-              )}
-            </article>
-
-            <article className="rounded-[28px] border border-white/10 bg-white/8 p-5">
-              <p className="text-[11px] uppercase tracking-[0.24em] text-white/42">低敏感区提醒</p>
-              <p className="mt-3 text-sm leading-7 text-white/72">
-                {lowestResult?.stressMode ?? "分数较低不代表完全不需要它，只是相较之下没有那么容易直接击中你。"}
-              </p>
-              {lowestItem ? (
-                <p className="mt-4 text-xs leading-6 text-white/48">
-                  当前相对低敏感维度：{lowestItem.label}
-                  {secondaryItem ? ` · 次语言 ${secondaryItem.label}` : ""}
-                </p>
-              ) : null}
-            </article>
-          </div>
-
-          <div className="mt-8 flex items-center justify-between gap-4 border-t border-white/10 pt-5 text-[11px] uppercase tracking-[0.28em] text-white/40">
-            <span>Relationship Result Sample</span>
-            <span>SoulTest</span>
-          </div>
-        </div>
-      </article>
-    </PosterExportPortal>
-  )
-}
-
-function RelationshipStoryTemplate({ result, runtime, submission, theme }: QuizResultTemplateProps) {
-  const {
-    scoreBreakdown,
-    maxScore,
-    lowestItem,
-    secondaryResult,
-    lowestResult,
-    isDualPrimary,
-    pairNarrative,
-    presentationTags,
-  } = getRelationshipStoryData(result, runtime, submission)
-
-  return (
-    <div className="space-y-6 md:space-y-8">
-      <motion.section
-        animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden rounded-[40px] border border-black/5 bg-white/92 p-7 shadow-[0_30px_100px_rgba(15,23,42,0.10)] md:p-10"
-        initial={{ opacity: 0, y: 18 }}
-        transition={{ duration: 0.45, ease: "easeOut" }}
-      >
-        <Noise />
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-56 bg-[radial-gradient(circle_at_top,rgba(251,113,133,0.14),transparent_60%)]" />
-
-        <div className="relative grid gap-6 xl:grid-cols-[1.04fr_0.96fr] xl:items-start">
-          <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-[11px] uppercase tracking-[0.28em] text-slate-500 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
-              <HeartHandshake className={`size-4 ${theme.accentText}`} />
-              亲密关系偏好结果
-            </div>
-
-            <h1 className="mt-6 max-w-3xl text-4xl font-semibold tracking-[-0.05em] text-slate-950 md:text-5xl">
-              {isDualPrimary && secondaryResult
-                ? `你是「${result.title} × ${secondaryResult.title}」双主导偏好`
-                : `你的关系偏好主通道是「${result.title}」`}
-            </h1>
-
-            <p className="mt-4 max-w-3xl text-base leading-8 text-slate-600">{result.firstImpression ?? result.summary}</p>
-
-            <div className="mt-6">
-              <StoryHighlights highlights={presentationTags} />
-            </div>
-
-            <div className="mt-6 grid gap-4 sm:grid-cols-2">
-              <article className="rounded-[28px] border border-rose-100 bg-[linear-gradient(180deg,rgba(255,241,242,0.9),rgba(255,255,255,0.96))] p-5 shadow-[0_12px_40px_rgba(15,23,42,0.04)]">
-                <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">主语言深读</p>
-                <p className="mt-3 text-lg font-semibold tracking-tight text-slate-950">{result.title}</p>
-                <p className="mt-3 text-sm leading-7 text-slate-600">{result.overview ?? result.summary}</p>
-              </article>
-
-              <article className="rounded-[28px] border border-amber-100 bg-[linear-gradient(180deg,rgba(255,251,235,0.96),rgba(255,255,255,0.98))] p-5 shadow-[0_12px_40px_rgba(15,23,42,0.04)]">
-                <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">次语言补充</p>
-                <p className="mt-3 text-lg font-semibold tracking-tight text-slate-950">{secondaryResult?.title ?? "等待更多样本"}</p>
-                <p className="mt-3 text-sm leading-7 text-slate-600">
-                  {secondaryResult?.relationshipStyle ?? "你的次语言会和主语言一起，构成你在关系里的第二需求通道。"}
-                </p>
-              </article>
-            </div>
-          </div>
-
-          <RelationshipPosterCard
-            result={result}
-            runtime={runtime}
-            scoreBreakdown={scoreBreakdown}
-            secondaryTitle={secondaryResult?.title}
-            theme={theme}
-          />
-        </div>
-      </motion.section>
-
-      <section className="grid gap-4 xl:grid-cols-[1.06fr_0.94fr]">
-        <motion.article
-          animate={{ opacity: 1, y: 0 }}
-          className="rounded-[32px] border border-black/5 bg-white/92 p-7 shadow-[0_16px_50px_rgba(15,23,42,0.04)]"
-          initial={{ opacity: 0, y: 16 }}
-          transition={{ delay: 0.05, duration: 0.4, ease: "easeOut" }}
-        >
-          <div className="flex items-center gap-2 text-sm font-semibold text-slate-950">
-            <Waves className={`size-4 ${theme.accentText}`} />
-            五维分布
-          </div>
-          <p className="mt-4 text-sm leading-8 text-slate-600">
-            分数表示你在这套题里对不同表达方式的相对敏感度，不代表关系能力高低，也不是对你的固定定义。
-          </p>
-
-          <div className="mt-6 space-y-4">
-            {scoreBreakdown.map((item) => {
-              const percent = Math.round((item.score / Math.max(maxScore, 1)) * 100)
-              const itemResult = getRelationshipResult(runtime, item.key)
-
-              return (
-                <article className="rounded-[24px] border border-slate-200 bg-slate-50/90 p-4" key={item.key}>
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-semibold text-slate-950">{item.label}</p>
-                      <p className="mt-1 text-xs leading-6 text-slate-500">{itemResult?.subtitle ?? "看你更容易被哪一种表达方式击中。"}</p>
-                    </div>
-                    <span className={cn("rounded-full px-3 py-1 text-xs font-semibold", theme.accentSoft)}>
-                      {item.score}/{maxScore}
-                    </span>
-                  </div>
-                  <div className="mt-3 h-2.5 rounded-full bg-slate-200">
-                    <div className={`h-full rounded-full bg-gradient-to-r ${theme.accentGradient}`} style={{ width: `${percent}%` }} />
-                  </div>
-                </article>
-              )
-            })}
-          </div>
-        </motion.article>
-
-        <motion.article
-          animate={{ opacity: 1, y: 0 }}
-          className="rounded-[32px] border border-black/5 bg-white/92 p-7 shadow-[0_16px_50px_rgba(15,23,42,0.04)]"
-          initial={{ opacity: 0, y: 16 }}
-          transition={{ delay: 0.1, duration: 0.4, ease: "easeOut" }}
-        >
-          <div className="flex items-center gap-2 text-sm font-semibold text-slate-950">
-            <Sparkles className={`size-4 ${theme.accentText}`} />
-            一句话看你的关系偏好
-          </div>
-          <p className="mt-4 text-base font-semibold leading-8 text-slate-950">{result.shareCopy ?? result.summary}</p>
-
-          {pairNarrative ? (
-            <div className="mt-6 rounded-[24px] border border-rose-100 bg-[linear-gradient(180deg,rgba(255,241,242,0.88),rgba(255,255,255,0.98))] p-5">
-              <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">主语言 × 次语言</p>
-              <p className="mt-3 text-sm leading-7 text-slate-600">{pairNarrative}</p>
-            </div>
-          ) : null}
-
-          <div className="mt-6 rounded-[24px] border border-amber-100 bg-[linear-gradient(180deg,rgba(255,251,235,0.96),rgba(255,255,255,0.98))] p-5">
-            <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">低敏感区提醒</p>
-            <p className="mt-3 text-sm leading-7 text-slate-600">
-              {lowestResult?.stressMode ?? "分数较低，不代表你完全不需要它，只是相较之下没有那么容易直接击中你。"}
-            </p>
-            {lowestItem ? (
-              <p className="mt-3 text-xs text-slate-500">
-                当前相对低敏感维度：{lowestItem.label} · {lowestItem.score}/{maxScore}
-              </p>
-            ) : null}
-          </div>
-        </motion.article>
-      </section>
-
-      <section className="grid gap-4 lg:grid-cols-2">
-        <article className="rounded-[32px] border border-black/5 bg-white/92 p-7 shadow-[0_16px_50px_rgba(15,23,42,0.04)]">
-          <div className="flex items-center gap-2 text-sm font-semibold text-slate-950">
-            <TrendingUp className={`size-4 ${theme.accentText}`} />
-            什么最容易让你有“被爱感”
-          </div>
-          <div className="mt-5 space-y-3 text-sm leading-7 text-slate-600">
-            {(result.strengths ?? []).map((item) => (
-              <p key={item}>{item}</p>
-            ))}
-          </div>
-
-          {(result.relationshipNotes ?? []).length > 0 ? (
-            <div className="mt-6 rounded-[24px] border border-slate-200 bg-slate-50 p-5">
-              <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">常见误解</p>
-              <div className="mt-3 space-y-3 text-sm leading-7 text-slate-600">
-                {(result.relationshipNotes ?? []).map((item) => (
-                  <p key={item}>{item}</p>
-                ))}
-              </div>
-            </div>
-          ) : null}
-        </article>
-
-        <article className="rounded-[32px] border border-black/5 bg-white/92 p-7 shadow-[0_16px_50px_rgba(15,23,42,0.04)]">
-          <div className="flex items-center gap-2 text-sm font-semibold text-slate-950">
-            <ShieldAlert className={`size-4 ${theme.accentText}`} />
-            关系里，你最容易卡住的点
-          </div>
-          <div className="mt-5 space-y-3 text-sm leading-7 text-slate-600">
-            {(result.blindSpots ?? []).map((item) => (
-              <p key={item}>{item}</p>
-            ))}
-          </div>
-          {result.blindSpotSummary ? <p className="mt-5 text-sm leading-7 text-slate-500">{result.blindSpotSummary}</p> : null}
-        </article>
-      </section>
-
-      <section className="grid gap-4 lg:grid-cols-2">
-        <article className="rounded-[32px] border border-black/5 bg-white/92 p-7 shadow-[0_16px_50px_rgba(15,23,42,0.04)]">
-          <div className="flex items-center gap-2 text-sm font-semibold text-slate-950">
-            <HeartHandshake className={`size-4 ${theme.accentText}`} />
-            如果想让你更有被爱感，可以这样做
-          </div>
-          <div className="mt-5 space-y-3 text-sm leading-7 text-slate-600">
-            {(result.growthNotes ?? []).map((item) => (
-              <p key={item}>{item}</p>
-            ))}
-          </div>
-          {result.growthAdvice ? <p className="mt-5 text-sm leading-7 text-slate-500">{result.growthAdvice}</p> : null}
-        </article>
-
-        <article className="rounded-[32px] border border-black/5 bg-white/92 p-7 shadow-[0_16px_50px_rgba(15,23,42,0.04)]">
-          <div className="flex items-center gap-2 text-sm font-semibold text-slate-950">
-            <Waves className={`size-4 ${theme.accentText}`} />
-            结果提示
-          </div>
-          <p className="mt-4 text-sm leading-8 text-slate-600">
-            这套结果更适合帮助你理解“你更容易被哪一种表达方式击中”，而不是给关系下绝对结论。真正重要的，不是谁更会爱，而是彼此有没有把对方最有感觉的通道对上。
-          </p>
-          <div className="mt-5 flex flex-wrap gap-2">
-            {(result.posterTags ?? []).map((item) => (
-              <span className={cn("rounded-full px-3 py-1 text-xs font-semibold", theme.accentSoft)} key={item}>
-                {item}
-              </span>
-            ))}
-          </div>
-        </article>
-      </section>
-
-      <RelationshipPosterExport result={result} runtime={runtime} submission={submission} theme={theme} />
-    </div>
-  )
-}
-
-function CareerEnergyTemplate(props: QuizResultTemplateProps) {
-  return <DefaultStoryTemplate {...props} />
-}
-
-function getAxisPercent(score: number) {
-  const min = 8
-  const max = 40
-  const clamped = Math.min(Math.max(score, min), max)
-  return ((clamped - min) / (max - min)) * 100
-}
-
-function getAxisNarrative(axisKey: string, score: number) {
-  const meta = getOejtsAxisMeta(axisKey)
-
-  if (!meta) {
-    return ""
-  }
-
-  const diff = score - 24
-  const leaningToHigh = diff > 0
-  const edgeLabel = leaningToHigh ? meta.highLabel : meta.lowLabel
-  const absolute = Math.abs(diff)
-
-  if (absolute <= 1) {
-    return `这条维度非常接近中线，你在 ${meta.lowLabel} 与 ${meta.highLabel} 两侧都可能随情境切换。`
-  }
-
-  if (absolute <= 4) {
-    return `这条维度略偏向 ${edgeLabel}，但在熟悉或高压场景下，另一侧偏好也可能明显出现。`
-  }
-
-  if (absolute <= 8) {
-    return `这条维度已经比较明确地偏向 ${edgeLabel}，会影响你沟通、判断和处理事情的默认节奏。`
-  }
-
-  return `这条维度更稳定地偏向 ${edgeLabel}，这种偏好通常会较明显地影响你的做事方式与互动习惯。`
-}
-
-function getAxisLeaningLabel(axisKey: string, score: number) {
-  const meta = getOejtsAxisMeta(axisKey)
-
-  if (!meta) {
-    return "接近中线"
-  }
-
-  const diff = score - 24
-  const absolute = Math.abs(diff)
-
-  if (absolute <= 1) {
-    return `${meta.lowLabel} / ${meta.highLabel} 接近中线`
-  }
-
-  const edgeLabel = diff > 0 ? meta.highLabel : meta.lowLabel
-
-  if (absolute <= 4) {
-    return `轻微偏向 ${edgeLabel}`
-  }
-
-  if (absolute <= 8) {
-    return `明显偏向 ${edgeLabel}`
-  }
-
-  return `稳定偏向 ${edgeLabel}`
-}
-
-const oejtsAxisOrder = ["ie", "sn", "ft", "jp"] as const
-
-function sortOejtsScoreBreakdown(items: ScoreBreakdownItem[]) {
-  const orderMap = new Map<string, number>(oejtsAxisOrder.map((key, index) => [key, index]))
-
-  return [...items].sort((left, right) => {
-    return (orderMap.get(left.key) ?? Number.POSITIVE_INFINITY) - (orderMap.get(right.key) ?? Number.POSITIVE_INFINITY)
-  })
-}
-
-function getOejtsProfileData(result: QuizResultDefinition, submission: StoredQuizResult) {
-  const scoreBreakdown = sortOejtsScoreBreakdown(submission.scoreBreakdown ?? [])
-  const rankedByContrast = [...scoreBreakdown].sort(
-    (left, right) => Math.abs(right.score - 24) - Math.abs(left.score - 24),
-  )
-  const strongestAxes = rankedByContrast.slice(0, 3).map((item) => {
-    const meta = getOejtsAxisMeta(item.key)
-
-    if (!meta) {
-      return item.label
-    }
-
-    if (Math.abs(item.score - 24) <= 1) {
-      return `${meta.lowLetter}/${meta.highLetter} 接近中线`
-    }
-
-    return item.score > 24 ? `${meta.highLetter} · ${meta.highLabel}` : `${meta.lowLetter} · ${meta.lowLabel}`
-  })
-  const strongestAxis = rankedByContrast[0]
-  const mostFlexibleAxis = [...rankedByContrast].reverse()[0]
-  const keywords = result.keywords ?? result.highlights ?? []
-  const typeCode = result.typeCode ?? result.title.split(" · ")[0] ?? result.title
-  const alias = result.alias ?? result.nickname ?? result.title.replace(`${typeCode} · `, "")
-
-  return {
-    scoreBreakdown,
-    strongestAxes,
-    strongestAxis,
-    mostFlexibleAxis,
-    keywords,
-    typeCode,
-    alias,
-  }
-}
-
-function getAxisBiasPercent(score: number) {
-  return Math.round((Math.abs(score - 24) / 16) * 100)
-}
-
-function getAxisDominantSummary(axisKey: string, score: number) {
-  const meta = getOejtsAxisMeta(axisKey)
-
-  if (!meta) {
-    return undefined
-  }
-
-  const diff = score - 24
-
-  if (Math.abs(diff) <= 1) {
-    return {
-      letter: "≈",
-      label: `${meta.lowLabel} / ${meta.highLabel}`,
-    }
-  }
-
-  return diff > 0
-    ? {
-        letter: meta.highLetter,
-        label: meta.highLabel,
-      }
-    : {
-        letter: meta.lowLetter,
-        label: meta.lowLabel,
-      }
-}
-
-function getAxisFormulaNarrative(axisKey: string, score: number) {
-  const meta = getOejtsAxisMeta(axisKey)
-
-  if (!meta) {
-    return ""
-  }
-
-  const diff = score - 24
-  const absolute = Math.abs(diff)
-
-  if (absolute <= 1) {
-    return `这条维度非常接近中线，你会在 ${meta.lowLabel} 与 ${meta.highLabel} 之间随场景切换。`
-  }
-
-  const edgeLabel = diff > 0 ? meta.highLabel : meta.lowLabel
-
-  if (absolute <= 4) {
-    return `这次结果轻微偏向 ${edgeLabel}，说明你会更常以这一侧的方式进入状态。`
-  }
-
-  if (absolute <= 8) {
-    return `你的默认节奏更偏向 ${edgeLabel}，这一点已经会稳定影响沟通和决策。`
-  }
-
-  return `${edgeLabel} 是你非常稳定的一侧偏好，很多第一反应都会从这里出发。`
-}
-
-function OejtsAxisCard({ item, theme }: { item: ScoreBreakdownItem; theme: QuizThemePreset }) {
-  const meta = getOejtsAxisMeta(item.key)
-
-  if (!meta) {
-    return null
-  }
-
-  const percent = getAxisPercent(item.score)
-  const biasPercent = getAxisBiasPercent(item.score)
-  const dominant = getAxisDominantSummary(item.key, item.score)
-
-  return (
-    <article className="overflow-hidden rounded-[30px] border border-black/5 bg-white/92 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.05)]">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-slate-400">{item.label}</p>
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            <p className="text-xl font-semibold tracking-tight text-slate-950">{getAxisLeaningLabel(item.key, item.score)}</p>
-            {dominant ? (
-              <span className={cn("rounded-full px-3 py-1 text-xs font-semibold", theme.accentSoft)}>{dominant.letter}</span>
-            ) : null}
-          </div>
-        </div>
-        <div className="text-right">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-400">偏向度</p>
-          <p className="mt-2 text-xl font-semibold tracking-tight text-slate-950">{biasPercent}%</p>
-        </div>
-      </div>
-
-      <div className="mt-5">
-        <div className="flex items-center justify-between text-[11px] font-semibold text-slate-400">
-          <span>
-            {meta.lowLetter} · {meta.lowLabel}
-          </span>
-          <span>
-            {meta.highLetter} · {meta.highLabel}
-          </span>
-        </div>
-        <div className="relative mt-3 h-3 rounded-full bg-slate-100">
-          <div className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-slate-300/90" />
-          <div className="absolute inset-y-0 left-0 rounded-full bg-slate-200" style={{ width: `${percent}%` }} />
-          <div
-            className={cn(
-              "absolute top-1/2 size-4 -translate-y-1/2 rounded-full border-2 border-white shadow-[0_8px_20px_rgba(15,23,42,0.16)]",
-              theme.accentStrong,
-            )}
-            style={{ left: `calc(${percent}% - 0.5rem)` }}
-          />
-        </div>
-      </div>
-
-      <p className="mt-5 text-sm leading-7 text-slate-600">{getAxisNarrative(item.key, item.score)}</p>
-    </article>
   )
 }
 
@@ -973,490 +125,176 @@ function NarrativeSection({
   )
 }
 
-function OejtsPosterCard({
-  result,
-  scoreBreakdown,
-  theme,
-}: {
-  result: QuizResultDefinition
-  scoreBreakdown: ScoreBreakdownItem[]
-  theme: QuizThemePreset
-}) {
-  const posterTags = result.posterTags ?? []
-  const typeCode = result.typeCode ?? result.title.split(" · ")[0] ?? result.title
-  const alias = result.alias ?? result.nickname ?? result.title.replace(`${typeCode} · `, "")
+/**
+ * --- OEJTS Profile Helpers ---
+ */
+
+function getAxisDominantSummary(key: string, score: number) {
+  const meta = getOejtsAxisMeta(key)
+  if (!meta) return null
+  return score <= 24
+    ? { letter: meta.lowLetter, label: meta.lowLabel }
+    : { letter: meta.highLetter, label: meta.highLabel }
+}
+
+function getAxisBiasPercent(score: number) {
+  const midpoint = 24
+  const spread = 16
+  const rawDiff = Math.abs(score - midpoint)
+  return Math.min(Math.round((rawDiff / spread) * 100), 100)
+}
+
+function OejtsAxisCard({ item, theme }: { item: ScoreBreakdownItem; theme: QuizThemePreset }) {
+  const dominant = getAxisDominantSummary(item.key, item.score)
+  if (!dominant) return null
 
   return (
-    <article
-      aria-label="适合截图分享的人格海报"
-      className="relative isolate overflow-hidden rounded-[36px] border border-slate-900 bg-slate-950 p-6 text-white shadow-[0_32px_120px_rgba(15,23,42,0.18)] md:p-7"
-    >
-      <div className={`pointer-events-none absolute inset-x-0 top-0 h-44 bg-gradient-to-b ${theme.heroGlow}`} />
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.12),transparent_28%),linear-gradient(180deg,rgba(15,23,42,0.06)_0%,rgba(15,23,42,0.04)_18%,rgba(15,23,42,0.5)_100%)]" />
-
-      <div className="relative flex min-h-[520px] flex-col">
-        <div className="flex items-center justify-between gap-4">
-          <div className="rounded-full border border-white/12 bg-white/8 px-4 py-2 text-[11px] uppercase tracking-[0.28em] text-white/68">
-            OEJTS Personality Poster
+    <article className="rounded-[32px] border border-black/5 bg-white/92 p-6 shadow-sm">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <div className={cn("size-10 rounded-2xl flex items-center justify-center text-white font-bold", theme.accentStrong)}>
+            {dominant.letter}
           </div>
-          <p className="text-[11px] uppercase tracking-[0.28em] text-white/40">支持一键导出 PNG</p>
+          <h4 className="text-base font-bold text-slate-900">{dominant.label}</h4>
         </div>
-
-        <div className="mt-10">
-          <p className="text-sm uppercase tracking-[0.28em] text-white/45">人格海报</p>
-          <div className="mt-4 flex flex-wrap items-end gap-3">
-            <span className="text-6xl font-semibold tracking-[-0.08em] md:text-7xl">{typeCode}</span>
-            <span className="pb-2 text-lg text-white/64">{alias}</span>
-          </div>
-          <p className="mt-5 max-w-md text-base leading-8 text-white/86">
-            {result.shareCopy ?? result.firstImpression ?? result.subtitle}
-          </p>
-        </div>
-
-        <div className="mt-8 grid gap-3">
-          {sortOejtsScoreBreakdown(scoreBreakdown).map((item) => {
-            const meta = getOejtsAxisMeta(item.key)
-
-            if (!meta) {
-              return null
-            }
-
-            const percent = getAxisPercent(item.score)
-            const dominant = getAxisDominantSummary(item.key, item.score)
-
-            return (
-              <div className="rounded-[20px] border border-white/10 bg-white/6 px-4 py-3" key={item.key}>
-                <div className="flex items-center justify-between gap-3 text-[11px] font-medium text-white/60">
-                  <span>
-                    {meta.lowLetter} / {meta.highLetter}
-                  </span>
-                  <span>{dominant?.label ?? getAxisLeaningLabel(item.key, item.score)}</span>
-                </div>
-                <div className="relative mt-3 h-2 rounded-full bg-white/10">
-                  <div className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-white/18" />
-                  <div
-                    className="absolute top-1/2 size-3 -translate-y-1/2 rounded-full border border-white bg-white shadow-[0_8px_18px_rgba(255,255,255,0.18)]"
-                    style={{ left: `calc(${percent}% - 0.375rem)` }}
-                  />
-                </div>
-              </div>
-            )
-          })}
-        </div>
-
-        {posterTags.length > 0 ? (
-          <div className="mt-8 flex flex-wrap gap-2">
-            {posterTags.map((item) => (
-              <span className="rounded-full border border-white/12 bg-white/8 px-3 py-1 text-xs text-white/88" key={item}>
-                {item}
-              </span>
-            ))}
-          </div>
-        ) : null}
-
-        <div className="mt-auto pt-8">
-          <div className="flex flex-wrap items-center justify-between gap-3 text-[11px] uppercase tracking-[0.28em] text-white/42">
-            <span>SoulTest · OEJTS 16 型人格图谱</span>
-            <span>{typeCode} Personality Poster</span>
-          </div>
-          <p className="mt-3 text-sm leading-7 text-white/60">
-            页面内展示的是精简预览卡；保存时会生成带维度说明与场景建议的完整结果长图。
-          </p>
-        </div>
+        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">偏向度 {getAxisBiasPercent(item.score)}%</span>
       </div>
+      <p className="text-sm leading-7 text-slate-600">
+        该维度反映了你在日常处理信息与决策时的基本倾向。
+      </p>
     </article>
   )
 }
 
-function OejtsPosterExport({ result, runtime, submission, theme }: QuizResultTemplateProps) {
-  const posterExportId = getQuizPosterExportId(runtime) ?? "oejts-result-poster"
-  const { scoreBreakdown, strongestAxis, mostFlexibleAxis, keywords, typeCode, alias } = getOejtsProfileData(result, submission)
-  const posterTags = result.posterTags?.length ? result.posterTags : keywords
+/**
+ * --- Exported Templates ---
+ */
 
+export function DefaultStoryTemplate({ submission, result, theme }: QuizResultTemplateProps) {
   return (
-    <PosterExportPortal>
-      <article
-        className="relative isolate w-[720px] overflow-hidden rounded-[40px] border border-slate-900 bg-slate-950 p-8 text-white shadow-[0_32px_120px_rgba(15,23,42,0.22)]"
-        id={posterExportId}
-      >
-        <div className={`pointer-events-none absolute inset-x-0 top-0 h-48 bg-gradient-to-b ${theme.heroGlow}`} />
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.12),transparent_28%),linear-gradient(180deg,rgba(15,23,42,0.04)_0%,rgba(15,23,42,0.12)_26%,rgba(15,23,42,0.58)_100%)]" />
-
-        <div className="relative">
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/8 px-4 py-2 text-[11px] uppercase tracking-[0.28em] text-white/68">
-            <Sparkles className={`size-4 ${theme.accentText}`} />
-            OEJTS 16 型人格结果长图
-          </div>
-
-          <div className="mt-7 flex flex-wrap items-end gap-x-4 gap-y-3">
-            <span className="text-6xl font-semibold tracking-[-0.08em] text-white">{typeCode}</span>
-            <span className="pb-2 text-2xl text-white/62">{alias}</span>
-          </div>
-
-          <p className="mt-4 text-lg leading-8 text-white/84">{result.shareCopy ?? result.firstImpression ?? result.subtitle}</p>
-          <p className="mt-4 max-w-[620px] text-sm leading-7 text-white/62">{result.overview ?? result.summary}</p>
-
-          {posterTags.length > 0 ? (
-            <div className="mt-6 flex flex-wrap gap-2.5">
-              {posterTags.slice(0, 6).map((item) => (
-                <span className="rounded-full border border-white/12 bg-white/8 px-3 py-1.5 text-xs text-white/88" key={item}>
-                  {item}
-                </span>
-              ))}
-            </div>
-          ) : null}
-
-          <div className="mt-8 grid gap-4 sm:grid-cols-2">
-            <article className="rounded-[28px] border border-white/10 bg-white/8 p-5">
-              <div className="flex items-center gap-2 text-sm font-semibold text-white">
-                <TrendingUp className={`size-4 ${theme.accentText}`} />
-                更自然的优势
-              </div>
-              {result.strengths && result.strengths.length > 0 ? (
-                <PosterExportBulletList items={result.strengths.slice(0, 3)} />
-              ) : (
-                <p className="mt-4 text-sm leading-7 text-white/76">{result.strengthSummary ?? result.summary}</p>
-              )}
-            </article>
-
-            <article className="rounded-[28px] border border-white/10 bg-white/8 p-5">
-              <div className="flex items-center gap-2 text-sm font-semibold text-white">
-                <ShieldAlert className={`size-4 ${theme.accentText}`} />
-                容易卡住的地方
-              </div>
-              {result.blindSpots && result.blindSpots.length > 0 ? (
-                <PosterExportBulletList items={result.blindSpots.slice(0, 3)} />
-              ) : (
-                <p className="mt-4 text-sm leading-7 text-white/76">{result.blindSpotSummary ?? "你的结果更适合帮助你理解默认节奏，而不是把你固定成单一标签。"}</p>
-              )}
-            </article>
-          </div>
-
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            {strongestAxis ? (
-              <article className="rounded-[28px] border border-white/10 bg-white/8 p-5">
-                <p className="text-[11px] uppercase tracking-[0.24em] text-white/42">最稳定的偏好</p>
-                <p className="mt-3 text-lg font-semibold tracking-tight text-white">
-                  {getAxisLeaningLabel(strongestAxis.key, strongestAxis.score)}
-                </p>
-                <p className="mt-3 text-sm leading-7 text-white/72">{getAxisFormulaNarrative(strongestAxis.key, strongestAxis.score)}</p>
-              </article>
-            ) : null}
-
-            {mostFlexibleAxis ? (
-              <article className="rounded-[28px] border border-white/10 bg-white/8 p-5">
-                <p className="text-[11px] uppercase tracking-[0.24em] text-white/42">最灵活的一维</p>
-                <p className="mt-3 text-lg font-semibold tracking-tight text-white">
-                  {getAxisLeaningLabel(mostFlexibleAxis.key, mostFlexibleAxis.score)}
-                </p>
-                <p className="mt-3 text-sm leading-7 text-white/72">{getAxisFormulaNarrative(mostFlexibleAxis.key, mostFlexibleAxis.score)}</p>
-              </article>
-            ) : null}
-          </div>
-
-          <section className="mt-8 rounded-[32px] border border-white/10 bg-black/12 p-6">
-            <div className="flex items-center gap-2 text-sm font-semibold text-white">
-              <Waves className={`size-4 ${theme.accentText}`} />
-              四维倾向解读
-            </div>
-            <p className="mt-3 text-sm leading-7 text-white/58">比起单纯看分数，这里更重要的是看每一维正在把你推向怎样的默认节奏。</p>
-
-            <div className="mt-5 space-y-4">
-              {scoreBreakdown.map((item) => {
-                const meta = getOejtsAxisMeta(item.key)
-                const percent = getAxisPercent(item.score)
-                const dominant = getAxisDominantSummary(item.key, item.score)
-
-                if (!meta) {
-                  return null
-                }
-
-                return (
-                  <article className="rounded-[24px] border border-white/10 bg-white/7 p-4" key={item.key}>
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-white/44">{item.label}</p>
-                        <p className="mt-2 text-lg font-semibold text-white">
-                          {dominant?.letter ?? `${meta.lowLetter}/${meta.highLetter}`} · {dominant?.label ?? getAxisLeaningLabel(item.key, item.score)}
-                        </p>
-                        <p className="mt-3 text-sm leading-7 text-white/72">{getAxisFormulaNarrative(item.key, item.score)}</p>
-                      </div>
-                      <span className="rounded-full border border-white/12 bg-white/10 px-3 py-1 text-xs font-semibold text-white/86">
-                        偏向度 {getAxisBiasPercent(item.score)}%
-                      </span>
-                    </div>
-                    <div className="relative mt-4 h-2.5 rounded-full bg-white/10">
-                      <div className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-white/18" />
-                      <div
-                        className={`absolute inset-y-0 left-0 rounded-full bg-gradient-to-r ${theme.accentGradient}`}
-                        style={{ width: `${percent}%` }}
-                      />
-                      <div
-                        className="absolute top-1/2 size-3 -translate-y-1/2 rounded-full border border-white bg-white shadow-[0_8px_18px_rgba(255,255,255,0.18)]"
-                        style={{ left: `calc(${percent}% - 0.375rem)` }}
-                      />
-                    </div>
-                  </article>
-                )
-              })}
-            </div>
-          </section>
-
-          <div className="mt-8 grid gap-4 sm:grid-cols-2">
-            <article className="rounded-[28px] border border-white/10 bg-white/8 p-5">
-              <div className="flex items-center gap-2 text-sm font-semibold text-white">
-                <HeartHandshake className={`size-4 ${theme.accentText}`} />
-                关系里的你
-              </div>
-              <p className="mt-4 text-sm leading-7 text-white/76">{result.relationshipStyle ?? result.relationshipNotes?.[0] ?? "你更在意关系里的回应方式、节奏与真实感。"}</p>
-            </article>
-
-            <article className="rounded-[28px] border border-white/10 bg-white/8 p-5">
-              <div className="flex items-center gap-2 text-sm font-semibold text-white">
-                <BriefcaseBusiness className={`size-4 ${theme.accentText}`} />
-                工作 / 学习中的你
-              </div>
-              <p className="mt-4 text-sm leading-7 text-white/76">{result.workStyle ?? result.workNotes?.[0] ?? "你会用自己最顺手的节奏推进任务、处理信息与合作关系。"}</p>
-            </article>
-
-            <article className="rounded-[28px] border border-white/10 bg-white/8 p-5">
-              <div className="flex items-center gap-2 text-sm font-semibold text-white">
-                <Waves className={`size-4 ${theme.accentText}`} />
-                高压状态
-              </div>
-              <p className="mt-4 text-sm leading-7 text-white/76">{result.stressMode ?? result.stressNotes?.[0] ?? "压力通常会放大你最稳定的那一侧偏好。"}</p>
-            </article>
-
-            <article className="rounded-[28px] border border-white/10 bg-white/8 p-5">
-              <div className="flex items-center gap-2 text-sm font-semibold text-white">
-                <Sparkles className={`size-4 ${theme.accentText}`} />
-                成长提醒
-              </div>
-              <p className="mt-4 text-sm leading-7 text-white/76">{result.growthAdvice ?? result.growthNotes?.[0] ?? "理解自己的默认节奏之后，练习在关键情境里做更有意识的调整。"}</p>
-            </article>
-          </div>
-
-          <div className="mt-8 flex items-center justify-between gap-4 border-t border-white/10 pt-5 text-[11px] uppercase tracking-[0.28em] text-white/40">
-            <span>{typeCode} Personality Sample</span>
-            <span>SoulTest</span>
-          </div>
+    <section className="rounded-[36px] border border-black/5 bg-white/90 p-8 shadow-[0_24px_80px_rgba(15,23,42,0.08)] md:p-10">
+      <div className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-xs uppercase tracking-[0.28em] text-slate-500">
+        测试结果
+      </div>
+      <h1 className="mt-6 text-4xl font-semibold tracking-tight text-slate-950 md:text-5xl">{submission.resultTitle}</h1>
+      <p className="mt-4 max-w-3xl text-base leading-8 text-slate-600">{result.summary}</p>
+      {(result.highlights ?? []).length > 0 ? (
+        <div className="mt-8">
+          <StoryHighlights highlights={result.highlights ?? []} />
         </div>
-      </article>
-    </PosterExportPortal>
+      ) : null}
+      <div className="mt-10 grid gap-4 md:grid-cols-2">
+        <BulletSection icon={<TrendingUp className={`size-4 ${theme.accentText}`} />} items={result.strengths} title="核心特质" />
+        <BulletSection icon={<ShieldAlert className={`size-4 ${theme.accentText}`} />} items={result.blindSpots} title="成长提醒" variant="warning" />
+      </div>
+    </section>
   )
 }
 
-function OejtsProfileTemplate({ result, runtime, submission, theme }: QuizResultTemplateProps) {
-  const { scoreBreakdown, strongestAxes, strongestAxis, mostFlexibleAxis, keywords, typeCode, alias } =
-    getOejtsProfileData(result, submission)
+export function OejtsProfileTemplate({ result, submission, theme }: QuizResultTemplateProps) {
+  const scoreBreakdown = submission.scoreBreakdown ?? []
+  const typeCode = result.typeCode || "XXXX"
+  const alias = result.alias || "未知人格"
 
   return (
     <div className="space-y-6 md:space-y-8">
       <motion.section
         animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden rounded-[40px] border border-black/5 bg-white/92 p-7 shadow-[0_30px_100px_rgba(15,23,42,0.10)] md:p-10"
+        className="relative overflow-hidden rounded-[40px] border border-black/5 bg-white/92 p-7 shadow-2xl md:p-10"
         initial={{ opacity: 0, y: 18 }}
         transition={{ duration: 0.45, ease: "easeOut" }}
       >
         <Noise />
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-56 bg-[radial-gradient(circle_at_top,rgba(236,72,153,0.14),transparent_60%)]" />
-        <div className="pointer-events-none absolute -right-16 top-10 h-44 w-44 rounded-full bg-fuchsia-500/10 blur-3xl" />
-
-        <div className="relative grid gap-6 xl:grid-cols-[1.02fr_0.98fr] xl:items-start">
+        <div className="relative grid gap-6 xl:grid-cols-[1.02fr_0.98fr] xl:items-start text-left">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-[11px] uppercase tracking-[0.28em] text-slate-500 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
+            <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-[11px] uppercase tracking-widest text-slate-500">
               <Sparkles className={`size-4 ${theme.accentText}`} />
               OEJTS 16 型人格结果
             </div>
-
             <div className="mt-6 flex flex-wrap items-end gap-x-4 gap-y-3">
-              <span className="text-5xl font-semibold tracking-[-0.06em] text-slate-950 md:text-6xl">{typeCode}</span>
+              <span className="text-5xl font-semibold tracking-tighter text-slate-950 md:text-6xl">{typeCode}</span>
               <span className="pb-1 text-lg font-medium text-slate-500 md:text-xl">{alias}</span>
             </div>
-
-            {result.firstImpression ? <p className="mt-4 text-base font-medium text-slate-800">{result.firstImpression}</p> : null}
             <p className="mt-4 max-w-3xl text-base leading-8 text-slate-600">{result.summary}</p>
-
-            {keywords.length > 0 ? (
-              <div className="mt-6">
-                <StoryHighlights highlights={keywords} />
-              </div>
-            ) : null}
-
-            <div className="mt-6 grid gap-4 sm:grid-cols-2">
-              {strongestAxis ? (
-                <article className="rounded-[28px] border border-black/5 bg-slate-50/90 p-5 shadow-[0_12px_40px_rgba(15,23,42,0.04)]">
-                  <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">最稳定的偏好</p>
-                  <p className="mt-3 text-lg font-semibold tracking-tight text-slate-950">
-                    {getAxisLeaningLabel(strongestAxis.key, strongestAxis.score)}
-                  </p>
-                  <p className="mt-3 text-sm leading-7 text-slate-600">
-                    {getAxisFormulaNarrative(strongestAxis.key, strongestAxis.score)}
-                  </p>
-                </article>
-              ) : null}
-
-              {mostFlexibleAxis ? (
-                <article className="rounded-[28px] border border-fuchsia-100 bg-[linear-gradient(180deg,rgba(253,244,255,0.96),rgba(255,255,255,0.98))] p-5 shadow-[0_12px_40px_rgba(15,23,42,0.04)]">
-                  <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">最灵活的一维</p>
-                  <p className="mt-3 text-lg font-semibold tracking-tight text-slate-950">
-                    {getAxisLeaningLabel(mostFlexibleAxis.key, mostFlexibleAxis.score)}
-                  </p>
-                  <p className="mt-3 text-sm leading-7 text-slate-600">
-                    {getAxisFormulaNarrative(mostFlexibleAxis.key, mostFlexibleAxis.score)}
-                  </p>
-                </article>
-              ) : null}
-            </div>
-
-            <p className="mt-6 max-w-3xl text-sm leading-7 text-slate-500">
-              OEJTS 关注四条偏好维度的位置与组合，帮助你理解自己的默认节奏，而不是给你贴上固定不变的标签。
-            </p>
           </div>
-
-          <OejtsPosterCard result={result} scoreBreakdown={scoreBreakdown} theme={theme} />
+          <div className={cn("rounded-[36px] p-8 text-white flex flex-col items-center justify-center min-h-[240px]", theme.accentStrong)}>
+             <h2 className="text-7xl font-black tracking-tighter">{typeCode}</h2>
+             <p className="text-xl mt-4 font-bold opacity-80">{alias}</p>
+          </div>
         </div>
       </motion.section>
 
-      <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
-        <motion.article
-          animate={{ opacity: 1, y: 0 }}
-          className="rounded-[32px] border border-black/5 bg-white/92 p-7 shadow-[0_16px_50px_rgba(15,23,42,0.04)]"
-          initial={{ opacity: 0, y: 16 }}
-          transition={{ delay: 0.05, duration: 0.4, ease: "easeOut" }}
-        >
-          <div className="flex items-center gap-2 text-sm font-semibold text-slate-950">
-            <Sparkles className={`size-4 ${theme.accentText}`} />
-            你的类型是怎么形成的
-          </div>
-          <p className="mt-4 text-sm leading-8 text-slate-600">
-            这次结果不是由某一道题决定的，而是由四条偏好维度共同组成。每个字母都代表你更自然的默认节奏。
-          </p>
-
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            {scoreBreakdown.map((item) => {
-              const meta = getOejtsAxisMeta(item.key)
-              const dominant = getAxisDominantSummary(item.key, item.score)
-
-              if (!meta || !dominant) {
-                return null
-              }
-
-              return (
-                <article className="rounded-[24px] border border-black/5 bg-slate-50/90 p-5" key={item.key}>
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">
-                        {meta.lowLetter} / {meta.highLetter}
-                      </p>
-                      <div className="mt-3 flex items-end gap-3">
-                        <span className="text-4xl font-semibold tracking-[-0.06em] text-slate-950">{dominant.letter}</span>
-                        <span className="pb-1 text-sm font-medium text-slate-500">{dominant.label}</span>
-                      </div>
-                    </div>
-                    <span className={cn("rounded-full px-3 py-1 text-xs font-semibold", theme.accentSoft)}>
-                      偏向度 {getAxisBiasPercent(item.score)}%
-                    </span>
-                  </div>
-                  <p className="mt-4 text-sm leading-7 text-slate-600">{getAxisFormulaNarrative(item.key, item.score)}</p>
-                </article>
-              )
-            })}
-          </div>
-        </motion.article>
-
-        <motion.article
-          animate={{ opacity: 1, y: 0 }}
-          className="rounded-[32px] border border-black/5 bg-white/92 p-7 shadow-[0_16px_50px_rgba(15,23,42,0.04)]"
-          initial={{ opacity: 0, y: 16 }}
-          transition={{ delay: 0.1, duration: 0.4, ease: "easeOut" }}
-        >
-          <div className="flex items-center gap-2 text-sm font-semibold text-slate-950">
-            <Sparkles className={`size-4 ${theme.accentText}`} />
-            结果解读
-          </div>
-          <p className="mt-4 text-sm leading-8 text-slate-600">{result.overview ?? result.summary}</p>
-
-          <div className="mt-6 rounded-[24px] border border-fuchsia-100 bg-[linear-gradient(180deg,rgba(253,244,255,0.96),rgba(255,255,255,0.98))] p-5">
-            <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">一句话看你</p>
-            <p className="mt-3 text-lg font-semibold leading-8 text-slate-950">
-              {result.shareCopy ?? result.firstImpression ?? result.subtitle}
-            </p>
-          </div>
-
-          {strongestAxes.length > 0 ? (
-            <div className="mt-6">
-              <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">偏好更明显的维度</p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {strongestAxes.map((item) => (
-                  <span className={cn("rounded-full px-3 py-1 text-xs font-semibold", theme.accentSoft)} key={item}>
-                    {item}
-                  </span>
-                ))}
-              </div>
-            </div>
-          ) : null}
-
-          <p className="mt-6 text-sm leading-7 text-slate-500">
-            本页展示的是四条偏好维度的位置与对应描述，不代表能力高低，也不等于固定不变的人格结论。
-          </p>
-        </motion.article>
-      </section>
-
-      <section className="grid gap-4 lg:grid-cols-2">
+      <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {scoreBreakdown.map((item) => (
           <OejtsAxisCard item={item} key={item.key} theme={theme} />
         ))}
       </section>
 
-      <section className="grid gap-4 lg:grid-cols-2">
-        <BulletSection
-          icon={<TrendingUp className={`size-4 ${theme.accentText}`} />}
-          items={result.strengths}
-          summary={result.strengths?.length ? undefined : result.strengthSummary}
-          title="你更自然的优势"
-        />
-        <BulletSection
-          icon={<ShieldAlert className={`size-4 ${theme.accentText}`} />}
-          items={result.blindSpots}
-          summary={result.blindSpots?.length ? undefined : result.blindSpotSummary}
-          title="容易卡住的地方"
-          variant="warning"
-        />
-        <NarrativeSection
-          body={result.relationshipStyle ?? result.relationshipNotes?.[0]}
-          icon={<HeartHandshake className={`size-4 ${theme.accentText}`} />}
-          title="关系里的你"
-        />
-        <NarrativeSection
-          body={result.workStyle ?? result.workNotes?.[0]}
-          icon={<BriefcaseBusiness className={`size-4 ${theme.accentText}`} />}
-          title="工作 / 学习中的你"
-        />
-        <NarrativeSection
-          body={result.stressMode ?? result.stressNotes?.[0]}
-          icon={<Waves className={`size-4 ${theme.accentText}`} />}
-          title="高压状态"
-          variant="dark"
-        />
-        <NarrativeSection
-          body={result.growthAdvice ?? result.growthNotes?.[0]}
-          icon={<Sparkles className={`size-4 ${theme.accentText}`} />}
-          title="成长提醒"
-          variant="soft"
-        />
+      <section className="grid gap-6 lg:grid-cols-2">
+        <BulletSection icon={<TrendingUp className="size-4" />} items={result.strengths} title="核心优势" />
+        <BulletSection icon={<ShieldAlert className="size-4" />} items={result.blindSpots} title="盲点提醒" variant="warning" />
+        <NarrativeSection body={result.relationshipStyle} icon={<HeartHandshake className="size-4" />} title="关系风格" />
+        <NarrativeSection body={result.workStyle} icon={<BriefcaseBusiness className="size-4" />} title="工作节奏" />
       </section>
-
-      <OejtsPosterExport result={result} runtime={runtime} submission={submission} theme={theme} />
     </div>
   )
 }
 
-export {
-  CareerEnergyTemplate,
-  DefaultStoryTemplate,
-  OejtsProfileTemplate,
-  RelationshipStoryTemplate,
+export function BigFiveProfileTemplate({ result, submission, theme }: QuizResultTemplateProps) {
+  const scoreBreakdown = submission.scoreBreakdown || []
+  
+  const getMeta = (key: string) => {
+    const metas: any = {
+      E: { label: "外向性", icon: <Users className="size-4" />, color: "bg-orange-400" },
+      A: { label: "宜人性", icon: <HeartHandshake className="size-4" />, color: "bg-emerald-400" },
+      C: { label: "尽责性", icon: <Target className="size-4" />, color: "bg-blue-400" },
+      N: { label: "情绪稳定性", icon: <Waves className="size-4" />, color: "bg-rose-400" },
+      O: { label: "开放性", icon: <Compass className="size-4" />, color: "bg-violet-400" }
+    }
+    return metas[key]
+  }
+
+  return (
+    <div className="space-y-6 md:space-y-8">
+      <section className="rounded-[40px] border border-black/5 bg-white p-10 shadow-xl text-left">
+        <h1 className="text-4xl font-bold tracking-tight text-slate-950">{result.title || "五维人格画像"}</h1>
+        <p className="mt-6 text-lg leading-8 text-slate-600 max-w-3xl">{result.summary}</p>
+      </section>
+      <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
+        {scoreBreakdown.map((item) => {
+          const meta = getMeta(item.key)
+          if (!meta) return null
+          const percentage = Math.round((item.score / 5) * 100)
+          return (
+            <article className="rounded-[32px] border border-black/5 bg-white/92 p-6 shadow-sm" key={item.key}>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className={cn("size-10 rounded-2xl flex items-center justify-center text-white", meta.color)}>{meta.icon}</div>
+                  <h4 className="text-base font-bold text-slate-900">{meta.label}</h4>
+                </div>
+                <span className="text-2xl font-bold">{percentage}%</span>
+              </div>
+              <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                <motion.div initial={{ width: 0 }} animate={{ width: `${percentage}%` }} className={cn("h-full rounded-full", meta.color)} />
+              </div>
+            </article>
+          )
+        })}
+      </section>
+    </div>
+  )
 }
 
-
+export function RelationshipStoryTemplate(props: QuizResultTemplateProps) { return <DefaultStoryTemplate {...props} /> }
+export function CareerEnergyTemplate(props: QuizResultTemplateProps) { return <DefaultStoryTemplate {...props} /> }
+export function EnneagramProfileTemplate(props: QuizResultTemplateProps) { return <DefaultStoryTemplate {...props} /> }
+export function HexacoProfileTemplate(props: QuizResultTemplateProps) { return <DefaultStoryTemplate {...props} /> }
+export function RiasecProfileTemplate(props: QuizResultTemplateProps) { return <DefaultStoryTemplate {...props} /> }
+export function TarotProfileTemplate(props: QuizResultTemplateProps) { 
+  return (
+    <div className="min-h-[400px] flex flex-col items-center justify-center bg-stone-950 rounded-[40px] text-white p-10">
+      <h1 className="text-4xl font-serif">{props.result.title}</h1>
+      <p className="mt-6 text-stone-400 italic">「{props.result.summary}」</p>
+    </div>
+  )
+}

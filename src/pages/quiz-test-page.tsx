@@ -20,7 +20,7 @@ import {
   submitQuizAnswers,
   verifyAccessCode,
 } from "@/features/quizzes/api"
-import { getCustomQuizPage } from "@/features/quizzes/custom-pages"
+import { getQuizCustomPages } from "@/features/quizzes/pages/registry"
 import { resolveQuizStrategies } from "@/features/quizzes/engine"
 import {
   clearAccessSession,
@@ -259,8 +259,9 @@ export function QuizTestPage() {
   }, [activeIndex, answers, draftHydrated, quizSlug, runtime])
 
   const strategies = useMemo(() => (runtime ? resolveQuizStrategies(runtime) : undefined), [runtime])
+  const customPages = slug ? getQuizCustomPages(slug) : undefined
   const CustomQuizPage =
-    slug && strategies?.renderer === "custom" ? getCustomQuizPage(slug) : undefined
+    slug && (strategies?.renderer === "custom" || customPages?.test) ? customPages?.test : undefined
 
   const totalQuestions = runtime?.questions.length ?? 0
   const currentQuestion = runtime?.questions[activeIndex]
@@ -579,7 +580,8 @@ export function QuizTestPage() {
                   </h2>
                   <p className="mt-6 max-w-2xl text-lg font-medium text-white/60 md:text-xl">
                     {currentQuestion.description ?? "按第一反应作答即可，不必刻意平衡答案。"}
-                  </p>                  {isBipolarScale ? (
+                  </p>
+                  {isBipolarScale ? (
                     <>
                       <div className="mt-16 grid gap-6 md:grid-cols-2">
                         <div className="rounded-3xl border border-white/5 bg-white/5 p-6 transition-all hover:bg-white/10">
@@ -639,23 +641,17 @@ export function QuizTestPage() {
                         })}
                       </div>
 
-                      <div className="mt-8 flex items-center justify-center gap-4 text-[10px] font-black uppercase tracking-[0.2em] text-white/20">
-                        <span>{currentQuestion.leftLabel}</span>
+                      <div className="mt-8 flex items-center justify-center gap-4 text-[11px] font-bold uppercase tracking-[0.2em] text-white/50">
+                        <span>1-2分（偏左边）</span>
                         <div className="h-px w-12 bg-white/10" />
-                        <span>{currentQuestion.rightLabel}</span>
+                        <span>4-5分（偏右边）</span>
                       </div>
                     </>
                   ) : isBinaryChoice ? (
                     <div className="mt-12">
-                      <div className="mb-5 flex flex-wrap items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.24em] text-white/42">
-                        <span>二选一</span>
-                        <div className="h-px w-10 bg-white/10" />
-                        <span>选更能打动你的那一项</span>
-                      </div>
-
-                      <div className="mb-4 hidden items-center justify-center lg:flex">
-                        <span className="rounded-full border border-white/10 bg-white/6 px-4 py-3 text-xs font-semibold uppercase tracking-[0.28em] text-white/40">
-                          VS
+                      <div className="mb-6 flex items-center justify-center">
+                        <span className="rounded-full border border-white/10 bg-white/6 px-6 py-3 text-xs font-semibold uppercase tracking-[0.28em] text-white/40">
+                          二选一
                         </span>
                       </div>
 

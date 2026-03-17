@@ -125,14 +125,1427 @@ INSERT OR REPLACE INTO codes (
   '{"channel":"formal-launch","remark":"OEJTS 正式版随机口令"}'
 );
 
+INSERT OR REPLACE INTO quizzes (
+  id,
+  slug,
+  title,
+  summary,
+  category,
+  status,
+  price,
+  landing_visible,
+  current_published_version_id
+) VALUES (
+  'quiz_relationship_preference_test',
+  'relationship-preference-test',
+  '亲密关系偏好测试',
+  '这是一套基于五种爱情语言模型改编的关系偏好测试，帮助你看见在亲密关系里最有感觉的被爱方式、次要通道与容易错位的表达差异。',
+  '关系 / 亲密关系',
+  'published',
+  29.9,
+  1,
+  'quiz_version_relationship_preference_v1'
+);
+
+INSERT OR REPLACE INTO quiz_versions (
+  id,
+  quiz_id,
+  version,
+  schema_version,
+  status,
+  config_json,
+  release_note
+) VALUES (
+  'quiz_version_relationship_preference_v1',
+  'quiz_relationship_preference_test',
+  1,
+  '1.0.0',
+  'published',
+  '{"meta":{"slug":"relationship-preference-test","title":"亲密关系偏好测试","summary":"这是一套基于五种爱情语言模型改编的关系偏好测试，帮助你看见在亲密关系里最有感觉的被爱方式、次要通道与容易错位的表达差异。","estimatedMinutes":6,"tags":["亲密关系偏好","30 题正式版","五种爱情语言","关系海报"],"category":"关系 / 亲密关系"},"runtime":{"rendererKey":"generic","resultTemplateKey":"relationship-story","scoringKey":"radar"},"presentation":{"themeKey":"rose-map","storyMode":true,"screenCount":4,"shareCardKey":"relationship-language-poster"},"questions":[],"results":[],"extensions":{"intro":{"tagline":"30 题正式版，支持结果回看、分享与关系海报导出。","priceLabel":"30 题正式版","accessSummary":"输入购买后获得的验证码开始测试，有效期内可重复进入","valuePoints":["主语言 / 次语言判断","五维分布与失落触发点","伴侣行动建议 + 可导出海报"],"flowSteps":["输入验证码","完成 30 题二选一","查看完整结果"],"detailSections":[]}}}',
+  '亲密关系偏好测试正式版运行时占位配置，题目内容由官方静态运行时补全。'
+);
+
+UPDATE quizzes
+SET current_draft_version_id = 'quiz_version_relationship_preference_v1'
+WHERE id = 'quiz_relationship_preference_test';
+
+INSERT OR REPLACE INTO products (
+  id,
+  name,
+  product_type,
+  status,
+  sales_channel,
+  purchase_url,
+  intro_mode,
+  landing_visible,
+  description
+) VALUES (
+  'product_relationship_preference_single',
+  '亲密关系偏好测试 · 正式版单测',
+  'single_product',
+  'active',
+  'xiaohongshu',
+  'https://example.com/relationship-preference',
+  'code_gate',
+  1,
+  '当前采用共享验证码交付亲密关系偏好测试正式版。'
+);
+
+INSERT OR REPLACE INTO product_quizzes (
+  id,
+  product_id,
+  quiz_id,
+  sort_order,
+  access_json
+) VALUES (
+  'pq_relationship_preference_single',
+  'product_relationship_preference_single',
+  'quiz_relationship_preference_test',
+  1,
+  '{"mode":"full_access"}'
+);
+
+INSERT OR REPLACE INTO code_batches (
+  id,
+  product_id,
+  name,
+  strategy_type,
+  code_prefix,
+  code_length,
+  status,
+  expires_at,
+  policy_json
+) VALUES (
+  'batch_relationship_preference_launch',
+  'product_relationship_preference_single',
+  '亲密关系偏好测试首发批次',
+  'single_product',
+  'RPREF',
+  14,
+  'active',
+  '2026-12-31T23:59:59.000Z',
+  '{"scopeMode":"product","verificationMode":"shared_code","tokenTtlDays":30,"introVisible":true,"notes":"正式版首发阶段采用共享验证码，便于投放与客服联调"}'
+);
+
+INSERT OR REPLACE INTO codes (
+  code,
+  batch_id,
+  status,
+  expires_at,
+  metadata_json
+) VALUES
+  (
+    'RPREF-8Q4M-2T7K',
+    'batch_relationship_preference_launch',
+    'active',
+    '2026-12-31T23:59:59.000Z',
+    '{"channel":"formal-launch","remark":"亲密关系偏好测试正式版随机验证码"}'
+  ),
+  (
+    'ST-LOVE-BETA',
+    'batch_relationship_preference_launch',
+    'active',
+    '2026-12-31T23:59:59.000Z',
+    '{"channel":"customer-support","remark":"亲密关系偏好测试客服联调验证码"}'
+  );
+
+INSERT OR REPLACE INTO quizzes (
+  id,
+  slug,
+  title,
+  summary,
+  category,
+  status,
+  price,
+  landing_visible,
+  current_published_version_id
+) VALUES (
+  'quiz_dark_triad',
+  'dark-triad',
+  '暗面力量测试',
+  '每个人都有不愿意承认的那一面。基于经典的暗黑三角模型，这套测试将帮你看见隐藏在人格深处的策略操盘、聚光主场与冷感冒险倾向。',
+  '专业量表',
+  'published',
+  29.9,
+  1,
+  'quiz_version_dark_triad_v1'
+);
+
+INSERT OR REPLACE INTO quiz_versions (
+  id,
+  quiz_id,
+  version,
+  schema_version,
+  status,
+  config_json,
+  release_note
+) VALUES (
+  'quiz_version_dark_triad_v1',
+  'quiz_dark_triad',
+  1,
+  '1.0.0',
+  'published',
+  '{"meta":{"slug":"dark-triad","title":"暗面力量测试","summary":"每个人都有不愿意承认的那一面。基于经典的暗黑三角模型，这套测试将帮你看见隐藏在人格深处的策略操盘、聚光主场与冷感冒险倾向。","estimatedMinutes":5,"tags":["暗面人格","生存策略","27 题","深度解析"],"category":"专业量表"},"runtime":{"renderer":"custom","resultTemplate":"custom"},"presentation":{"themeKey":"ink-glow","storyMode":true,"screenCount":5,"shareCardKey":"sd3-poster"},"questions":[],"results":[],"extensions":{"intro":{"tagline":"27 题专业版，探索你的暗面人格与生存策略。","priceLabel":"27 题正式版","accessSummary":"输入购买后获得的验证码开始测试，有效期内可重复进入","valuePoints":["三维人格分布图","9大暗面原型定位","人际与竞争策略拆解"],"flowSteps":["输入验证码","完成 27 题自评","解锁深度报告"],"detailSections":[]}}}',
+  '暗面力量测试正式版运行时占位配置，题目内容由官方静态运行时补全。'
+);
+
+UPDATE quizzes
+SET current_draft_version_id = 'quiz_version_dark_triad_v1'
+WHERE id = 'quiz_dark_triad';
+
+INSERT OR REPLACE INTO products (
+  id,
+  name,
+  product_type,
+  status,
+  sales_channel,
+  purchase_url,
+  intro_mode,
+  landing_visible,
+  description
+) VALUES (
+  'product_dark_triad_single',
+  '暗面力量测试 · 正式版单测',
+  'single_product',
+  'active',
+  'xiaohongshu',
+  'https://example.com/dark-triad',
+  'code_gate',
+  1,
+  '当前采用共享验证码交付暗面力量测试正式版。'
+);
+
+INSERT OR REPLACE INTO product_quizzes (
+  id,
+  product_id,
+  quiz_id,
+  sort_order,
+  access_json
+) VALUES (
+  'pq_dark_triad_single',
+  'product_dark_triad_single',
+  'quiz_dark_triad',
+  1,
+  '{"mode":"full_access"}'
+);
+
+INSERT OR REPLACE INTO code_batches (
+  id,
+  product_id,
+  name,
+  strategy_type,
+  code_prefix,
+  code_length,
+  status,
+  expires_at,
+  policy_json
+) VALUES (
+  'batch_dark_triad_launch',
+  'product_dark_triad_single',
+  '暗面力量测试首发批次',
+  'single_product',
+  'SD3',
+  14,
+  'active',
+  '2026-12-31T23:59:59.000Z',
+  '{"scopeMode":"product","verificationMode":"shared_code","tokenTtlDays":30,"introVisible":true,"notes":"正式版首发阶段采用共享验证码，便于投放与客服联调"}'
+);
+
+INSERT OR REPLACE INTO codes (
+  code,
+  batch_id,
+  status,
+  expires_at,
+  metadata_json
+) VALUES
+  (
+    'SD3-DARK-TRIAD',
+    'batch_dark_triad_launch',
+    'active',
+    '2026-12-31T23:59:59.000Z',
+    '{"channel":"formal-launch","remark":"暗黑三角测试正式版随机验证码"}'
+  ),
+  (
+    'ST-SD3-BETA',
+    'batch_dark_triad_launch',
+    'active',
+    '2026-12-31T23:59:59.000Z',
+    '{"channel":"customer-support","remark":"暗黑三角测试客服联调验证码"}'
+  );
+
+
+
+INSERT OR REPLACE INTO quizzes (
+  id,
+  slug,
+  title,
+  summary,
+  category,
+  status,
+  price,
+  landing_visible,
+  current_published_version_id
+) VALUES (
+  'quiz_bigfive_personality',
+  'bigfive',
+  '大五人格测试',
+  '基于国际通用 Big Five 模型的大五人格测试，帮助你看到自己在外向性、宜人性、尽责性、神经质与开放性五个维度上的稳定偏好。',
+  '人格 / 性格',
+  'published',
+  29.9,
+  1,
+  'quiz_version_bigfive_v1'
+);
+
+INSERT OR REPLACE INTO quiz_versions (
+  id,
+  quiz_id,
+  version,
+  schema_version,
+  status,
+  config_json,
+  release_note
+) VALUES (
+  'quiz_version_bigfive_v1',
+  'quiz_bigfive_personality',
+  1,
+  '1.0.0',
+  'published',
+  '{"meta":{"slug":"bigfive","title":"大五人格测试","summary":"基于国际通用 Big Five 模型的大五人格测试，帮助你看到自己在外向性、宜人性、尽责性、神经质与开放性五个维度上的稳定偏好。","estimatedMinutes":8,"tags":["大五人格","50 题","五维人格","正式版"],"category":"人格 / 性格"},"runtime":{"rendererKey":"generic","resultTemplateKey":"story-card","scoringKey":"radar"},"presentation":{"themeKey":"ink-glow","storyMode":true,"screenCount":5,"shareCardKey":"bigfive-profile-poster"},"questions":[],"results":[],"extensions":{"intro":{"tagline":"50 题正式版，支持保存人格画像与分享结果长图。","priceLabel":"50 题正式版","accessSummary":"输入购买后获得的验证码开始测试，有效期内可重复进入","valuePoints":["五维人格画像","关系 / 工作 / 压力解读","支持保存与分享"],"flowSteps":["输入验证码","完成 50 题","查看完整结果"],"detailSections":[]}}}',
+  '大五人格测试正式版运行时占位配置，题目内容由官方静态运行时补全。'
+);
+
+UPDATE quizzes
+SET current_draft_version_id = 'quiz_version_bigfive_v1'
+WHERE id = 'quiz_bigfive_personality';
+
+DELETE FROM codes WHERE batch_id = 'batch_dark_triad_launch';
+DELETE FROM code_batches WHERE id = 'batch_dark_triad_launch';
+DELETE FROM product_quizzes WHERE product_id = 'product_dark_triad_single';
+DELETE FROM products WHERE id = 'product_dark_triad_single';
+
+INSERT OR REPLACE INTO products (
+  id,
+  name,
+  product_type,
+  status,
+  sales_channel,
+  purchase_url,
+  intro_mode,
+  landing_visible,
+  description
+) VALUES (
+  'product_personality_bundle_shared',
+  '人格深测双题通用版',
+  'bundle',
+  'active',
+  'xiaohongshu',
+  'https://example.com/personality-pro',
+  'code_gate',
+  1,
+  '同一组验证码可访问大五人格测试与暗面力量测试。'
+);
+
+INSERT OR REPLACE INTO product_quizzes (
+  id,
+  product_id,
+  quiz_id,
+  sort_order,
+  access_json
+) VALUES
+  (
+    'pq_personality_bundle_bigfive',
+    'product_personality_bundle_shared',
+    'quiz_bigfive_personality',
+    1,
+    '{"mode":"full_access"}'
+  ),
+  (
+    'pq_personality_bundle_dark_triad',
+    'product_personality_bundle_shared',
+    'quiz_dark_triad',
+    2,
+    '{"mode":"full_access"}'
+  );
+
+INSERT OR REPLACE INTO code_batches (
+  id,
+  product_id,
+  name,
+  strategy_type,
+  code_prefix,
+  code_length,
+  status,
+  expires_at,
+  policy_json
+) VALUES (
+  'batch_personality_bundle_launch',
+  'product_personality_bundle_shared',
+  '人格深测双题通用批次',
+  'bundle',
+  'PRO',
+  14,
+  'active',
+  '2026-12-31T23:59:59.000Z',
+  '{"scopeMode":"product","verificationMode":"shared_code","tokenTtlDays":30,"introVisible":true,"notes":"当前采用共享验证码，同一组验证码可同时访问大五人格与暗面力量测试。"}'
+);
+
+INSERT OR REPLACE INTO codes (
+  code,
+  batch_id,
+  status,
+  expires_at,
+  metadata_json
+) VALUES
+  (
+    'SOUL-PRO-2026',
+    'batch_personality_bundle_launch',
+    'active',
+    '2026-12-31T23:59:59.000Z',
+    '{"channel":"formal-launch","remark":"人格深测双题通用验证码"}'
+  ),
+  (
+    'ST-PRO-BETA',
+    'batch_personality_bundle_launch',
+    'active',
+    '2026-12-31T23:59:59.000Z',
+    '{"channel":"customer-support","remark":"人格深测双题联调验证码"}'
+  ),
+  (
+    'SD3-DARK-TRIAD',
+    'batch_personality_bundle_launch',
+    'active',
+    '2026-12-31T23:59:59.000Z',
+    '{"channel":"compatibility","remark":"兼容保留的暗黑三角验证码"}'
+  ),
+  (
+    'ST-SD3-BETA',
+    'batch_personality_bundle_launch',
+    'active',
+    '2026-12-31T23:59:59.000Z',
+    '{"channel":"compatibility","remark":"兼容保留的暗黑三角联调验证码"}'
+  );
+
+-- HEXACO 60 Personality Test
+INSERT OR REPLACE INTO quizzes (
+  id,
+  slug,
+  title,
+  summary,
+  category,
+  status,
+  price,
+  landing_visible,
+  current_published_version_id
+) VALUES (
+  'quiz_hexaco_personality',
+  'hexaco-60',
+  'HEXACO 六维人格测试',
+  '基于 HEXACO 六维人格模型，通过 60 道题目深度还原你在规则、情绪、社交、冲突、执行与开放性六个维度上的稳定偏好。比大五人格多一维，看见更真实的自己。',
+  '人格 / 性格',
+  'published',
+  39.9,
+  1,
+  'quiz_version_hexaco_v1'
+);
+
+INSERT OR REPLACE INTO quiz_versions (
+  id,
+  quiz_id,
+  version,
+  schema_version,
+  status,
+  config_json,
+  release_note
+) VALUES (
+  'quiz_version_hexaco_v1',
+  'quiz_hexaco_personality',
+  1,
+  '1.0.0',
+  'published',
+  '{"meta":{"slug":"hexaco-60","title":"HEXACO 六维人格测试","summary":"基于 HEXACO 六维人格模型，通过 60 道题目深度还原你在规则、情绪、社交、冲突、执行与开放性六个维度上的稳定偏好。","estimatedMinutes":10,"tags":["HEXACO","六维人格","60 题","深度解析"],"category":"人格 / 性格"},"runtime":{"rendererKey":"generic","resultTemplateKey":"hexaco-profile","scoringKey":"hexaco"},"presentation":{"themeKey":"violet-lab","storyMode":true,"screenCount":6,"shareCardKey":"hexaco-poster"},"questions":[],"results":[],"extensions":{"intro":{"tagline":"60 题专业版，支持结果回看、分享与一键导出六维雷达图海报。","priceLabel":"60 题正式版","accessSummary":"输入购买后获得的验证码开始测试，有效期内可重复进入","valuePoints":["六维人格图谱","H 维度特色解读","关系 / 协作 / 压力全景报告"],"flowSteps":["输入验证码","完成 60 题","查看完整结果"],"detailSections":[]}}}',
+  'HEXACO 六维人格测试正式版运行时占位配置，题目内容由官方静态运行时补全。'
+);
+
+UPDATE quizzes
+SET current_draft_version_id = 'quiz_version_hexaco_v1'
+WHERE id = 'quiz_hexaco_personality';
+
+INSERT OR REPLACE INTO products (
+  id,
+  name,
+  product_type,
+  status,
+  sales_channel,
+  purchase_url,
+  intro_mode,
+  landing_visible,
+  description
+) VALUES (
+  'product_hexaco_single',
+  'HEXACO 六维人格测试 · 正式版单测',
+  'single_product',
+  'active',
+  'xiaohongshu',
+  'https://example.com/hexaco',
+  'code_gate',
+  1,
+  '当前采用共享验证码交付 HEXACO 六维人格测试正式版。'
+);
+
+INSERT OR REPLACE INTO product_quizzes (
+  id,
+  product_id,
+  quiz_id,
+  sort_order,
+  access_json
+) VALUES (
+  'pq_hexaco_single',
+  'product_hexaco_single',
+  'quiz_hexaco_personality',
+  1,
+  '{"mode":"full_access"}'
+);
+
+INSERT OR REPLACE INTO code_batches (
+  id,
+  product_id,
+  name,
+  strategy_type,
+  code_prefix,
+  code_length,
+  status,
+  expires_at,
+  policy_json
+) VALUES (
+  'batch_hexaco_launch',
+  'product_hexaco_single',
+  'HEXACO 六维人格测试首发批次',
+  'single_product',
+  'HEXA',
+  14,
+  'active',
+  '2026-12-31T23:59:59.000Z',
+  '{"scopeMode":"product","verificationMode":"shared_code","tokenTtlDays":30,"introVisible":true,"notes":"正式版首发阶段采用共享验证码，便于投放与客服联调"}'
+);
+
+INSERT OR REPLACE INTO codes (
+  code,
+  batch_id,
+  status,
+  expires_at,
+  metadata_json
+) VALUES
+  (
+    'HEXA-60-PRO',
+    'batch_hexaco_launch',
+    'active',
+    '2026-12-31T23:59:59.000Z',
+    '{"channel":"formal-launch","remark":"HEXACO 六维人格测试正式版随机验证码"}'
+  );
+
+-- Soul Tarot Test
+INSERT OR REPLACE INTO quizzes (
+  id,
+  slug,
+  title,
+  summary,
+  category,
+  status,
+  price,
+  landing_visible,
+  current_published_version_id
+) VALUES (
+  'quiz_soul_tarot',
+  'soul-tarot',
+  '你是哪张塔罗牌？',
+  '22 张大阿尔卡纳，22 种灵魂原型——你的灵魂，对应哪一张牌？基于 5 维向量匹配算法，寻找你的灵魂归宿。',
+  '神秘学 / 心理',
+  'published',
+  9.9,
+  1,
+  'quiz_version_tarot_v1'
+);
+
+INSERT OR REPLACE INTO quiz_versions (
+  id,
+  quiz_id,
+  version,
+  schema_version,
+  status,
+  config_json,
+  release_note
+) VALUES (
+  'quiz_version_tarot_v1',
+  'quiz_soul_tarot',
+  1,
+  '1.0.0',
+  'published',
+  '{"meta":{"slug":"soul-tarot","title":"你是哪张塔罗牌？","summary":"22 张大阿尔卡纳，22 种灵魂原型——你的灵魂，对应哪一张牌？","estimatedMinutes":10,"tags":["塔罗占卜","灵魂原型","30 题","小红书爆款"],"category":"神秘学 / 心理"},"runtime":{"rendererKey":"generic","resultTemplateKey":"tarot-profile","scoringKey":"tarot"},"presentation":{"themeKey":"tarot-mystic","storyMode":true,"screenCount":8,"shareCardKey":"tarot-poster"},"questions":[],"results":[],"extensions":{"intro":{"tagline":"30 题正式版，支持一键导出精美塔罗灵魂海报。","priceLabel":"30 题正式版","accessSummary":"输入购买后获得的验证码开始测试，有效期内可重复进入","valuePoints":["灵魂塔罗匹配","五维灵魂向量","灵魂判词与生活建议"],"flowSteps":["输入验证码","完成 30 题","揭开灵魂牌面"],"detailSections":[]}}}',
+  '灵魂塔罗测试正式版运行时占位配置，题目内容由官方静态运行时补全。'
+);
+
+UPDATE quizzes
+SET current_draft_version_id = 'quiz_version_tarot_v1'
+WHERE id = 'quiz_soul_tarot';
+
+INSERT OR REPLACE INTO products (
+  id,
+  name,
+  product_type,
+  status,
+  sales_channel,
+  purchase_url,
+  intro_mode,
+  landing_visible,
+  description
+) VALUES (
+  'product_soul_tarot_single',
+  '你是哪张塔罗牌？ · 正式版单测',
+  'single_product',
+  'active',
+  'xiaohongshu',
+  'https://example.com/tarot',
+  'code_gate',
+  1,
+  '当前采用共享验证码交付灵魂塔罗测试正式版。'
+);
+
+INSERT OR REPLACE INTO product_quizzes (
+  id,
+  product_id,
+  quiz_id,
+  sort_order,
+  access_json
+) VALUES (
+  'pq_soul_tarot_single',
+  'product_soul_tarot_single',
+  'quiz_soul_tarot',
+  1,
+  '{"mode":"full_access"}'
+);
+
+INSERT OR REPLACE INTO code_batches (
+  id,
+  product_id,
+  name,
+  strategy_type,
+  code_prefix,
+  code_length,
+  status,
+  expires_at,
+  policy_json
+) VALUES (
+  'batch_soul_tarot_launch',
+  'product_soul_tarot_single',
+  '灵魂塔罗测试首发批次',
+  'single_product',
+  'TAROT',
+  14,
+  'active',
+  '2026-12-31T23:59:59.000Z',
+  '{"scopeMode":"product","verificationMode":"shared_code","tokenTtlDays":30,"introVisible":true,"notes":"正式版首发阶段采用共享验证码，便于投放与客服联调"}'
+);
+
+INSERT OR REPLACE INTO codes (
+  code,
+  batch_id,
+  status,
+  expires_at,
+  metadata_json
+) VALUES
+  (
+    'SOUL-TAROT-2026',
+    'batch_soul_tarot_launch',
+    'active',
+    '2026-12-31T23:59:59.000Z',
+    '{"channel":"formal-launch","remark":"灵魂塔罗测试正式版随机验证码"}'
+  ),
+  (
+    'ST-TAROT-BETA',
+    'batch_soul_tarot_launch',
+    'active',
+    '2026-12-31T23:59:59.000Z',
+    '{"channel":"customer-support","remark":"灵魂塔罗测试客服联调验证码"}'
+  );
+
+INSERT OR REPLACE INTO quizzes (
+  id,
+  slug,
+  title,
+  summary,
+  category,
+  status,
+  price,
+  landing_visible,
+  current_published_version_id
+) VALUES (
+  'quiz_enneagram_54',
+  'enneagram',
+  '九型人格测试',
+  '一套更偏向“核心驱动力”视角的九型人格测试。54 道原创中文题，帮你看见自己更接近哪一种内在动机模式，以及关系、工作和压力下的自然反应。',
+  '人格 / 驱动力',
+  'published',
+  39.9,
+  1,
+  'quiz_version_enneagram_v1'
+);
+
+INSERT OR REPLACE INTO quiz_versions (
+  id,
+  quiz_id,
+  version,
+  schema_version,
+  status,
+  config_json,
+  release_note
+) VALUES (
+  'quiz_version_enneagram_v1',
+  'quiz_enneagram_54',
+  1,
+  '1.0.0',
+  'published',
+  '{"meta":{"slug":"enneagram","title":"九型人格测试","summary":"一套更偏向“核心驱动力”视角的九型人格测试。54 道原创中文题，帮你看见自己更接近哪一种内在动机模式，以及关系、工作和压力下的自然反应。","estimatedMinutes":9,"tags":["九型人格","54 题正式版","核心驱动力","适合保存分享长图"],"category":"人格 / 驱动力"},"runtime":{"rendererKey":"generic","resultTemplateKey":"enneagram-profile","scoringKey":"enneagram"},"presentation":{"themeKey":"editorial-mystic","storyMode":true,"screenCount":6,"shareCardKey":"enneagram-drive-poster"},"questions":[],"results":[],"extensions":{"intro":{"tagline":"54 题正式版，结果支持保存驱动力长图与社媒分享。","priceLabel":"54 题正式版","accessSummary":"输入购买后获得的验证码开始测试，有效期内可重复进入","valuePoints":["主型 + 近邻类型判断","关系 / 工作 / 压力方向解析","支持保存与分享"],"flowSteps":["输入验证码","完成 54 题符合度作答","查看完整结果"],"detailSections":[]}}}',
+  '九型人格测试正式版运行时占位配置，题目内容由官方静态运行时补全。'
+);
+
+UPDATE quizzes
+SET current_draft_version_id = 'quiz_version_enneagram_v1'
+WHERE id = 'quiz_enneagram_54';
+
+INSERT OR REPLACE INTO products (
+  id,
+  name,
+  product_type,
+  status,
+  sales_channel,
+  purchase_url,
+  intro_mode,
+  landing_visible,
+  description
+) VALUES (
+  'product_enneagram_single',
+  '九型人格测试 · 正式版单测',
+  'single_product',
+  'active',
+  'xiaohongshu',
+  'https://example.com/enneagram',
+  'code_gate',
+  1,
+  '当前采用共享验证码交付九型人格测试正式版。'
+);
+
+INSERT OR REPLACE INTO product_quizzes (
+  id,
+  product_id,
+  quiz_id,
+  sort_order,
+  access_json
+) VALUES (
+  'pq_enneagram_single',
+  'product_enneagram_single',
+  'quiz_enneagram_54',
+  1,
+  '{"mode":"full_access"}'
+);
+
+INSERT OR REPLACE INTO code_batches (
+  id,
+  product_id,
+  name,
+  strategy_type,
+  code_prefix,
+  code_length,
+  status,
+  expires_at,
+  policy_json
+) VALUES (
+  'batch_enneagram_launch',
+  'product_enneagram_single',
+  '九型人格测试首发批次',
+  'single_product',
+  'ENNEA',
+  14,
+  'active',
+  '2026-12-31T23:59:59.000Z',
+  '{"scopeMode":"product","verificationMode":"shared_code","tokenTtlDays":30,"introVisible":true,"notes":"正式版首发阶段采用共享验证码，便于投放与客服联调"}'
+);
+
+INSERT OR REPLACE INTO codes (
+  code,
+  batch_id,
+  status,
+  expires_at,
+  metadata_json
+) VALUES
+  (
+    'ENNEA-5W4-2026',
+    'batch_enneagram_launch',
+    'active',
+    '2026-12-31T23:59:59.000Z',
+    '{"channel":"formal-launch","remark":"九型人格测试正式版随机验证码"}'
+  ),
+  (
+    'ST-ENNEA-BETA',
+    'batch_enneagram_launch',
+    'active',
+    '2026-12-31T23:59:59.000Z',
+    '{"channel":"customer-support","remark":"九型人格测试客服联调验证码"}'
+  );
+
+-- RIASEC 48
+INSERT OR REPLACE INTO quizzes (
+  id,
+  slug,
+  title,
+  summary,
+  category,
+  status,
+  price,
+  landing_visible,
+  current_published_version_id
+) VALUES (
+  'quiz_riasec_48',
+  'riasec-48',
+  '霍兰德 RIASEC 职业兴趣测试',
+  '基于经典 Holland RIASEC 模型，通过 48 道精选题目，精准还原你在六个核心维度上的兴趣偏好，帮你找到更契合的工作环境与职业方向。',
+  '职业 / 发展',
+  'published',
+  29.9,
+  1,
+  'quiz_version_riasec_v1'
+);
+
+INSERT OR REPLACE INTO quiz_versions (
+  id,
+  quiz_id,
+  version,
+  schema_version,
+  status,
+  config_json,
+  release_note
+) VALUES (
+  'quiz_version_riasec_v1',
+  'quiz_riasec_48',
+  1,
+  '1.0.0',
+  'published',
+  '{"meta":{"slug":"riasec-48","title":"霍兰德 RIASEC 职业兴趣测试","summary":"基于经典 Holland RIASEC 模型，通过 48 道精选题目，精准还原你在六个核心维度上的兴趣偏好，帮你找到更契合的工作环境与职业方向。","estimatedMinutes":8,"tags":["职业兴趣","RIASEC","48 题","深度解析"],"category":"职业 / 发展"},"runtime":{"rendererKey":"generic","resultTemplateKey":"riasec-profile","scoringKey":"riasec"},"presentation":{"themeKey":"professional-blue","storyMode":true,"screenCount":6,"shareCardKey":"riasec-profile-poster"},"questions":[],"results":[],"extensions":{"intro":{"tagline":"48 题正式版，包含 12 组深度三码报告与六维图谱。","priceLabel":"48 题正式版","accessSummary":"输入购买后获得的验证码开始测试，有效期内可重复进入","valuePoints":["六维兴趣图谱","前三码深度报告","适合的任务与环境建议"],"flowSteps":["输入验证码","完成 48 题","查看完整结果"],"detailSections":[]}}}',
+  'RIASEC 职业兴趣测试正式版占位配置，内容由静态 runtime 补全。'
+);
+
+UPDATE quizzes
+SET current_draft_version_id = 'quiz_version_riasec_v1'
+WHERE id = 'quiz_riasec_48';
+
+INSERT OR REPLACE INTO products (
+  id,
+  name,
+  product_type,
+  status,
+  sales_channel,
+  purchase_url,
+  intro_mode,
+  landing_visible,
+  description
+) VALUES (
+  'product_riasec_single',
+  '霍兰德 RIASEC 职业兴趣测试 · 正式版单测',
+  'single_product',
+  'active',
+  'xiaohongshu',
+  'https://example.com/riasec',
+  'code_gate',
+  1,
+  '采用共享验证码交付 RIASEC 正式版。'
+);
+
+INSERT OR REPLACE INTO product_quizzes (
+  id,
+  product_id,
+  quiz_id,
+  sort_order,
+  access_json
+) VALUES (
+  'pq_riasec_single',
+  'product_riasec_single',
+  'quiz_riasec_48',
+  1,
+  '{"mode":"full_access"}'
+);
+
+INSERT OR REPLACE INTO code_batches (
+  id,
+  product_id,
+  name,
+  strategy_type,
+  code_prefix,
+  code_length,
+  status,
+  expires_at,
+  policy_json
+) VALUES (
+  'batch_riasec_launch',
+  'product_riasec_single',
+  'RIASEC 首发批次',
+  'single_product',
+  'RIASEC',
+  14,
+  'active',
+  '2026-12-31T23:59:59.000Z',
+  '{"scopeMode":"product","verificationMode":"shared_code","tokenTtlDays":30,"introVisible":true,"notes":"正式版首发阶段采用共享验证码"}'
+);
+
+INSERT OR REPLACE INTO codes (
+  code,
+  batch_id,
+  status,
+  expires_at,
+  metadata_json
+) VALUES
+  (
+    'RIASEC-7M2P-9Q4X',
+    'batch_riasec_launch',
+    'active',
+    '2026-12-31T23:59:59.000Z',
+    '{"channel":"formal-launch","remark":"RIASEC 正式版验证码"}'
+  ),
+  (
+    'ST-RIASEC-BETA',
+    'batch_riasec_launch',
+    'active',
+    '2026-12-31T23:59:59.000Z',
+    '{"channel":"customer-support","remark":"RIASEC 客服联调验证码"}'
+  );
+
+-- BEGIN FREE QUIZ D1 MIGRATION
+-- 免费测试题元数据已迁入 D1；免费题运行页仍保持前端自定义实现。
+
+INSERT OR REPLACE INTO quizzes (
+  id,
+  slug,
+  title,
+  summary,
+  category,
+  status,
+  price,
+  landing_visible,
+  current_published_version_id
+) VALUES (
+  'free_quiz_aura_color',
+  'free/aura',
+  '你的 Aura 是什么颜色？',
+  '基于双维度四象限模型的免费体验测试，3 分钟快速识别你的灵魂底色。',
+  '免费 / 灵魂气场',
+  'published',
+  0,
+  1,
+  'quiz_version_free_aura_v1'
+);
+
+INSERT OR REPLACE INTO quiz_versions (
+  id,
+  quiz_id,
+  version,
+  schema_version,
+  status,
+  config_json,
+  release_note
+) VALUES (
+  'quiz_version_free_aura_v1',
+  'free_quiz_aura_color',
+  1,
+  '1.0.0',
+  'published',
+  '{"meta":{"slug":"free/aura","title":"你的 Aura 是什么颜色？","summary":"基于双维度四象限模型的免费体验测试，3 分钟快速识别你的灵魂底色。","estimatedMinutes":3,"tags":["免费","Aura","18题","引流款"],"category":"免费 / 灵魂气场"},"runtime":{"rendererKey":"custom-free-page","resultTemplateKey":"custom-free-page","scoringKey":"custom-free-page"},"presentation":{"themeKey":"custom-free-page","storyMode":true,"screenCount":1,"shareCardKey":"custom-free-page"},"questions":[],"results":[],"extensions":{"intro":{"tagline":"免费体验款，用于内容传播和引流。","priceLabel":"免费体验","accessSummary":"无需验证码，直接开始测试","questionCount":18,"valuePoints":["8 种灵魂光谱","专属灵魂画像","结果页可分享"],"flowSteps":["进入页面","完成 18 题","查看结果"],"detailSections":[]}}}',
+  '将免费测试题目录元数据迁入 D1，保留前端自定义题页与结果页实现。'
+);
+
+UPDATE quizzes
+SET current_draft_version_id = 'quiz_version_free_aura_v1'
+WHERE id = 'free_quiz_aura_color';
+
+INSERT OR REPLACE INTO quizzes (
+  id,
+  slug,
+  title,
+  summary,
+  category,
+  status,
+  price,
+  landing_visible,
+  current_published_version_id
+) VALUES (
+  'free_quiz_banwei_density',
+  'free/banwei',
+  '你的班味浓度检测',
+  '面向打工人传播场景的免费检测题，用五维成分分析你的班味浓度。',
+  '免费 / 职场娱乐',
+  'published',
+  0,
+  1,
+  'quiz_version_free_banwei_v1'
+);
+
+INSERT OR REPLACE INTO quiz_versions (
+  id,
+  quiz_id,
+  version,
+  schema_version,
+  status,
+  config_json,
+  release_note
+) VALUES (
+  'quiz_version_free_banwei_v1',
+  'free_quiz_banwei_density',
+  1,
+  '1.0.0',
+  'published',
+  '{"meta":{"slug":"free/banwei","title":"你的班味浓度检测","summary":"面向打工人传播场景的免费检测题，用五维成分分析你的班味浓度。","estimatedMinutes":2,"tags":["免费","班味","15题","传播测试"],"category":"免费 / 职场娱乐"},"runtime":{"rendererKey":"custom-free-page","resultTemplateKey":"custom-free-page","scoringKey":"custom-free-page"},"presentation":{"themeKey":"custom-free-page","storyMode":true,"screenCount":1,"shareCardKey":"custom-free-page"},"questions":[],"results":[],"extensions":{"intro":{"tagline":"免费轻测款，用于社交传播和用户破冰。","priceLabel":"免费体验","accessSummary":"无需验证码，直接开始测试","questionCount":15,"valuePoints":["五维成分分析","社畜形态结论","结果页可分享"],"flowSteps":["进入页面","完成 15 题","查看结果"],"detailSections":[]}}}',
+  '将免费测试题目录元数据迁入 D1，保留前端自定义题页与结果页实现。'
+);
+
+UPDATE quizzes
+SET current_draft_version_id = 'quiz_version_free_banwei_v1'
+WHERE id = 'free_quiz_banwei_density';
+
+INSERT OR REPLACE INTO quizzes (
+  id,
+  slug,
+  title,
+  summary,
+  category,
+  status,
+  price,
+  landing_visible,
+  current_published_version_id
+) VALUES (
+  'free_quiz_painting_soul_map',
+  'free/painting',
+  '你的灵魂是哪幅名画？',
+  '通过 28 道审美与直觉选择题，定位你的艺术人格坐标。',
+  '免费 / 艺术人格',
+  'published',
+  0,
+  1,
+  'quiz_version_free_painting_v1'
+);
+
+INSERT OR REPLACE INTO quiz_versions (
+  id,
+  quiz_id,
+  version,
+  schema_version,
+  status,
+  config_json,
+  release_note
+) VALUES (
+  'quiz_version_free_painting_v1',
+  'free_quiz_painting_soul_map',
+  1,
+  '1.0.0',
+  'published',
+  '{"meta":{"slug":"free/painting","title":"你的灵魂是哪幅名画？","summary":"通过 28 道审美与直觉选择题，定位你的艺术人格坐标。","estimatedMinutes":5,"tags":["免费","名画","28题","艺术人格"],"category":"免费 / 艺术人格"},"runtime":{"rendererKey":"custom-free-page","resultTemplateKey":"custom-free-page","scoringKey":"custom-free-page"},"presentation":{"themeKey":"custom-free-page","storyMode":true,"screenCount":1,"shareCardKey":"custom-free-page"},"questions":[],"results":[],"extensions":{"intro":{"tagline":"免费艺术人格测试，适合做传播和风格种草。","priceLabel":"免费体验","accessSummary":"无需验证码，直接开始测试","questionCount":28,"valuePoints":["艺术风格匹配","人格投射结果","结果页可分享"],"flowSteps":["进入页面","完成 28 题","查看结果"],"detailSections":[]}}}',
+  '将免费测试题目录元数据迁入 D1，保留前端自定义题页与结果页实现。'
+);
+
+UPDATE quizzes
+SET current_draft_version_id = 'quiz_version_free_painting_v1'
+WHERE id = 'free_quiz_painting_soul_map';
+
+INSERT OR REPLACE INTO quizzes (
+  id,
+  slug,
+  title,
+  summary,
+  category,
+  status,
+  price,
+  landing_visible,
+  current_published_version_id
+) VALUES (
+  'free_quiz_hidden_talent',
+  'free/talent',
+  '你的隐藏天赋是什么？',
+  '基于六维天赋模型的轻量测试，帮助用户快速看见自己的核心优势。',
+  '免费 / 天赋探索',
+  'published',
+  0,
+  1,
+  'quiz_version_free_talent_v1'
+);
+
+INSERT OR REPLACE INTO quiz_versions (
+  id,
+  quiz_id,
+  version,
+  schema_version,
+  status,
+  config_json,
+  release_note
+) VALUES (
+  'quiz_version_free_talent_v1',
+  'free_quiz_hidden_talent',
+  1,
+  '1.0.0',
+  'published',
+  '{"meta":{"slug":"free/talent","title":"你的隐藏天赋是什么？","summary":"基于六维天赋模型的轻量测试，帮助用户快速看见自己的核心优势。","estimatedMinutes":3,"tags":["免费","天赋","20题","热门推荐"],"category":"免费 / 天赋探索"},"runtime":{"rendererKey":"custom-free-page","resultTemplateKey":"custom-free-page","scoringKey":"custom-free-page"},"presentation":{"themeKey":"custom-free-page","storyMode":true,"screenCount":1,"shareCardKey":"custom-free-page"},"questions":[],"results":[],"extensions":{"intro":{"tagline":"免费天赋测试，适合首轮破冰和用户分享。","priceLabel":"免费体验","accessSummary":"无需验证码，直接开始测试","questionCount":20,"valuePoints":["六维天赋画像","天赋原型判断","结果页可分享"],"flowSteps":["进入页面","完成 20 题","查看结果"],"detailSections":[]}}}',
+  '将免费测试题目录元数据迁入 D1，保留前端自定义题页与结果页实现。'
+);
+
+UPDATE quizzes
+SET current_draft_version_id = 'quiz_version_free_talent_v1'
+WHERE id = 'free_quiz_hidden_talent';
+
+INSERT OR REPLACE INTO quizzes (
+  id,
+  slug,
+  title,
+  summary,
+  category,
+  status,
+  price,
+  landing_visible,
+  current_published_version_id
+) VALUES (
+  'free_quiz_szondi_shadow',
+  'free/szondi',
+  '索迪测试：潜意识暗影',
+  '基于经典投射法的免费测试，用影像偏好揭示你更容易压抑的那一面。',
+  '免费 / 潜意识投射',
+  'published',
+  0,
+  1,
+  'quiz_version_free_szondi_v1'
+);
+
+INSERT OR REPLACE INTO quiz_versions (
+  id,
+  quiz_id,
+  version,
+  schema_version,
+  status,
+  config_json,
+  release_note
+) VALUES (
+  'quiz_version_free_szondi_v1',
+  'free_quiz_szondi_shadow',
+  1,
+  '1.0.0',
+  'published',
+  '{"meta":{"slug":"free/szondi","title":"索迪测试：潜意识暗影","summary":"基于经典投射法的免费测试，用影像偏好揭示你更容易压抑的那一面。","estimatedMinutes":4,"tags":["免费","索迪","24题","暗影探索"],"category":"免费 / 潜意识投射"},"runtime":{"rendererKey":"custom-free-page","resultTemplateKey":"custom-free-page","scoringKey":"custom-free-page"},"presentation":{"themeKey":"custom-free-page","storyMode":true,"screenCount":1,"shareCardKey":"custom-free-page"},"questions":[],"results":[],"extensions":{"intro":{"tagline":"免费暗影探索，适合作为轻量传播款。","priceLabel":"免费体验","accessSummary":"无需验证码，直接开始测试","questionCount":24,"valuePoints":["潜意识偏好","隐藏冲动提示","结果页可分享"],"flowSteps":["进入页面","完成 24 题","查看结果"],"detailSections":[]}}}',
+  '将免费测试题目录元数据迁入 D1，保留前端自定义题页与结果页实现。'
+);
+
+UPDATE quizzes
+SET current_draft_version_id = 'quiz_version_free_szondi_v1'
+WHERE id = 'free_quiz_szondi_shadow';
+
+INSERT OR REPLACE INTO quizzes (
+  id,
+  slug,
+  title,
+  summary,
+  category,
+  status,
+  price,
+  landing_visible,
+  current_published_version_id
+) VALUES (
+  'free_quiz_soul_city',
+  'free/soul-city',
+  '你的灵魂是哪座城市？',
+  '把大五人格映射到城市气质，用 30 道轻量题找到最像你的世界坐标。',
+  '免费 / 城市人格',
+  'published',
+  0,
+  1,
+  'quiz_version_free_soul_city_v1'
+);
+
+INSERT OR REPLACE INTO quiz_versions (
+  id,
+  quiz_id,
+  version,
+  schema_version,
+  status,
+  config_json,
+  release_note
+) VALUES (
+  'quiz_version_free_soul_city_v1',
+  'free_quiz_soul_city',
+  1,
+  '1.0.0',
+  'published',
+  '{"meta":{"slug":"free/soul-city","title":"你的灵魂是哪座城市？","summary":"把大五人格映射到城市气质，用 30 道轻量题找到最像你的世界坐标。","estimatedMinutes":4,"tags":["免费","城市人格","30题","分享向"],"category":"免费 / 城市人格"},"runtime":{"rendererKey":"custom-free-page","resultTemplateKey":"custom-free-page","scoringKey":"custom-free-page"},"presentation":{"themeKey":"custom-free-page","storyMode":true,"screenCount":1,"shareCardKey":"custom-free-page"},"questions":[],"results":[],"extensions":{"intro":{"tagline":"免费城市人格测试，适合社交分享和世界观种草。","priceLabel":"免费体验","accessSummary":"无需验证码，直接开始测试","questionCount":30,"valuePoints":["五维灵魂匹配","18 座全球城市","结果页可分享"],"flowSteps":["进入页面","完成 30 题","查看结果"],"detailSections":[]}}}',
+  '将免费测试题目录元数据迁入 D1，保留前端自定义题页与结果页实现。'
+);
+
+UPDATE quizzes
+SET current_draft_version_id = 'quiz_version_free_soul_city_v1'
+WHERE id = 'free_quiz_soul_city';
+-- END FREE QUIZ D1 MIGRATION
+
+-- BEGIN PAID QUIZ D1 MIGRATION: STRESS LOAD + DESIRE COMPOSITION
+INSERT OR REPLACE INTO quizzes (
+  id,
+  slug,
+  title,
+  summary,
+  category,
+  status,
+  price,
+  landing_visible,
+  current_published_version_id
+) VALUES (
+  'quiz_stress_load_test',
+  'stress-load-test',
+  '压力负荷测试',
+  '测测最近 30 天，你的心理系统到底承受了多少重量。',
+  '心理状态 / 压力',
+  'published',
+  29.9,
+  1,
+  'quiz_version_stress_load_v1'
+);
+
+INSERT OR REPLACE INTO quiz_versions (
+  id,
+  quiz_id,
+  version,
+  schema_version,
+  status,
+  config_json,
+  release_note
+) VALUES (
+  'quiz_version_stress_load_v1',
+  'quiz_stress_load_test',
+  1,
+  '1.0.0',
+  'published',
+  '{"meta":{"slug":"stress-load-test","title":"压力负荷测试","summary":"测测最近 30 天，你的心理系统到底承受了多少重量","estimatedMinutes":5,"tags":["压力负荷","25 题","心理状态","深度报告"],"category":"心理状态 / 压力"},"runtime":{"rendererKey":"custom","resultTemplateKey":"custom","scoringKey":"radar"},"presentation":{"themeKey":"midnight-stress","storyMode":true,"screenCount":5,"shareCardKey":"stress-load-poster"},"questions":[{"id":"q1","title":"我经常觉得要处理的事情明显多于我的时间和精力。","axisKey":"D1","type":"single_choice","options":[{"id":"q1_1","label":"几乎没有","value":{"D1":1}},{"id":"q1_2","label":"偶尔如此","value":{"D1":2}},{"id":"q1_3","label":"有时如此","value":{"D1":3}},{"id":"q1_4","label":"经常如此","value":{"D1":4}},{"id":"q1_5","label":"几乎总是","value":{"D1":5}}]},{"id":"q2","title":"一件事刚做完，下一件事就立刻顶上来，让我很难真正喘口气。","axisKey":"D1","type":"single_choice","options":[{"id":"q2_1","label":"几乎没有","value":{"D1":1}},{"id":"q2_2","label":"偶尔如此","value":{"D1":2}},{"id":"q2_3","label":"有时如此","value":{"D1":3}},{"id":"q2_4","label":"经常如此","value":{"D1":4}},{"id":"q2_5","label":"几乎总是","value":{"D1":5}}]},{"id":"q3","title":"即使在休息时，我脑子里也常挂着“还有很多没做完”。","axisKey":"D1","type":"single_choice","options":[{"id":"q3_1","label":"几乎没有","value":{"D1":1}},{"id":"q3_2","label":"偶尔如此","value":{"D1":2}},{"id":"q3_3","label":"有时如此","value":{"D1":3}},{"id":"q3_4","label":"经常如此","value":{"D1":4}},{"id":"q3_5","label":"几乎总是","value":{"D1":5}}]},{"id":"q4","title":"我经常同时记着很多待办，以至于很难彻底放松。","axisKey":"D1","type":"single_choice","options":[{"id":"q4_1","label":"几乎没有","value":{"D1":1}},{"id":"q4_2","label":"偶尔如此","value":{"D1":2}},{"id":"q4_3","label":"有时如此","value":{"D1":3}},{"id":"q4_4","label":"经常如此","value":{"D1":4}},{"id":"q4_5","label":"几乎总是","value":{"D1":5}}]},{"id":"q5","title":"一天结束后，我常有一种“忙了很久但还是没消化完事情”的感觉。","axisKey":"D1","type":"single_choice","options":[{"id":"q5_1","label":"几乎没有","value":{"D1":1}},{"id":"q5_2","label":"偶尔如此","value":{"D1":2}},{"id":"q5_3","label":"有时如此","value":{"D1":3}},{"id":"q5_4","label":"经常如此","value":{"D1":4}},{"id":"q5_5","label":"几乎总是","value":{"D1":5}}]},{"id":"q6","title":"最近我经常觉得生活节奏不是我在安排，而是我在被推着走。","axisKey":"D2","type":"single_choice","options":[{"id":"q6_1","label":"几乎没有","value":{"D2":1}},{"id":"q6_2","label":"偶尔如此","value":{"D2":2}},{"id":"q6_3","label":"有时如此","value":{"D2":3}},{"id":"q6_4","label":"经常如此","value":{"D2":4}},{"id":"q6_5","label":"几乎总是","value":{"D2":5}}]},{"id":"q7","title":"一点临时变化，就很容易打乱我整天的状态。","axisKey":"D2","type":"single_choice","options":[{"id":"q7_1","label":"几乎没有","value":{"D2":1}},{"id":"q7_2","label":"偶尔如此","value":{"D2":2}},{"id":"q7_3","label":"有时如此","value":{"D2":3}},{"id":"q7_4","label":"经常如此","value":{"D2":4}},{"id":"q7_5","label":"几乎总是","value":{"D2":5}}]},{"id":"q8","title":"我时常觉得重要的事情并不在我的掌控范围内。","axisKey":"D2","type":"single_choice","options":[{"id":"q8_1","label":"几乎没有","value":{"D2":1}},{"id":"q8_2","label":"偶尔如此","value":{"D2":2}},{"id":"q8_3","label":"有时如此","value":{"D2":3}},{"id":"q8_4","label":"经常如此","value":{"D2":4}},{"id":"q8_5","label":"几乎总是","value":{"D2":5}}]},{"id":"q9","title":"面对问题时，我第一反应更像是“我又要被压住了”，而不是“我能处理”。","axisKey":"D2","type":"single_choice","options":[{"id":"q9_1","label":"几乎没有","value":{"D2":1}},{"id":"q9_2","label":"偶尔如此","value":{"D2":2}},{"id":"q9_3","label":"有时如此","value":{"D2":3}},{"id":"q9_4","label":"经常如此","value":{"D2":4}},{"id":"q9_5","label":"几乎总是","value":{"D2":5}}]},{"id":"q10","title":"我最近常有一种“再怎么努力，也追不上变化”的无力感。","axisKey":"D2","type":"single_choice","options":[{"id":"q10_1","label":"几乎没有","value":{"D2":1}},{"id":"q10_2","label":"偶尔如此","value":{"D2":2}},{"id":"q10_3","label":"有时如此","value":{"D2":3}},{"id":"q10_4","label":"经常如此","value":{"D2":4}},{"id":"q10_5","label":"几乎总是","value":{"D2":5}}]},{"id":"q11","title":"明明事情还没发生，我却会提前在脑子里反复预演最坏情况。","axisKey":"D3","type":"single_choice","options":[{"id":"q11_1","label":"几乎没有","value":{"D3":1}},{"id":"q11_2","label":"偶尔如此","value":{"D3":2}},{"id":"q11_3","label":"有时如此","value":{"D3":3}},{"id":"q11_4","label":"经常如此","value":{"D3":4}},{"id":"q11_5","label":"几乎总是","value":{"D3":5}}]},{"id":"q12","title":"听到消息提示音、电话或临时通知时，我身体会下意识紧一下。","axisKey":"D3","type":"single_choice","options":[{"id":"q12_1","label":"几乎没有","value":{"D3":1}},{"id":"q12_2","label":"偶尔如此","value":{"D3":2}},{"id":"q12_3","label":"有时如此","value":{"D3":3}},{"id":"q12_4","label":"经常如此","value":{"D3":4}},{"id":"q12_5","label":"几乎总是","value":{"D3":5}}]},{"id":"q13","title":"到了晚上、周末或假期，我也很难完全停止对接下来事情的担心。","axisKey":"D3","type":"single_choice","options":[{"id":"q13_1","label":"几乎没有","value":{"D3":1}},{"id":"q13_2","label":"偶尔如此","value":{"D3":2}},{"id":"q13_3","label":"有时如此","value":{"D3":3}},{"id":"q13_4","label":"经常如此","value":{"D3":4}},{"id":"q13_5","label":"几乎总是","value":{"D3":5}}]},{"id":"q14","title":"有些事还没开始，我已经先被它耗掉很多心理能量。","axisKey":"D3","type":"single_choice","options":[{"id":"q14_1","label":"几乎没有","value":{"D3":1}},{"id":"q14_2","label":"偶尔如此","value":{"D3":2}},{"id":"q14_3","label":"有时如此","value":{"D3":3}},{"id":"q14_4","label":"经常如此","value":{"D3":4}},{"id":"q14_5","label":"几乎总是","value":{"D3":5}}]},{"id":"q15","title":"我最近很少有“真的放心了”的状态，总像还有什么在后面等着我。","axisKey":"D3","type":"single_choice","options":[{"id":"q15_1","label":"几乎没有","value":{"D3":1}},{"id":"q15_2","label":"偶尔如此","value":{"D3":2}},{"id":"q15_3","label":"有时如此","value":{"D3":3}},{"id":"q15_4","label":"经常如此","value":{"D3":4}},{"id":"q15_5","label":"几乎总是","value":{"D3":5}}]},{"id":"q16","title":"即使睡了一觉，我也不太觉得自己真正恢复过来。","axisKey":"D4","type":"single_choice","options":[{"id":"q16_1","label":"几乎没有","value":{"D4":1}},{"id":"q16_2","label":"偶尔如此","value":{"D4":2}},{"id":"q16_3","label":"有时如此","value":{"D4":3}},{"id":"q16_4","label":"经常如此","value":{"D4":4}},{"id":"q16_5","label":"几乎总是","value":{"D4":5}}]},{"id":"q17","title":"做以前喜欢的事，也不一定能让我明显放松。","axisKey":"D4","type":"single_choice","options":[{"id":"q17_1","label":"几乎没有","value":{"D4":1}},{"id":"q17_2","label":"偶尔如此","value":{"D4":2}},{"id":"q17_3","label":"有时如此","value":{"D4":3}},{"id":"q17_4","label":"经常如此","value":{"D4":4}},{"id":"q17_5","label":"几乎总是","value":{"D4":5}}]},{"id":"q18","title":"我明明在休息，但大脑并没有一起停下来。","axisKey":"D4","type":"single_choice","options":[{"id":"q18_1","label":"几乎没有","value":{"D4":1}},{"id":"q18_2","label":"偶尔如此","value":{"D4":2}},{"id":"q18_3","label":"有时如此","value":{"D4":3}},{"id":"q18_4","label":"经常如此","value":{"D4":4}},{"id":"q18_5","label":"几乎总是","value":{"D4":5}}]},{"id":"q19","title":"即便当天没有特别忙，我也常像一直处于“工作模式”里。","axisKey":"D4","type":"single_choice","options":[{"id":"q19_1","label":"几乎没有","value":{"D4":1}},{"id":"q19_2","label":"偶尔如此","value":{"D4":2}},{"id":"q19_3","label":"有时如此","value":{"D4":3}},{"id":"q19_4","label":"经常如此","value":{"D4":4}},{"id":"q19_5","label":"几乎总是","value":{"D4":5}}]},{"id":"q20","title":"最近让我感到“完全轻松”的时刻，比以前少了很多。","axisKey":"D4","type":"single_choice","options":[{"id":"q20_1","label":"几乎没有","value":{"D4":1}},{"id":"q20_2","label":"偶尔如此","value":{"D4":2}},{"id":"q20_3","label":"有时如此","value":{"D4":3}},{"id":"q20_4","label":"经常如此","value":{"D4":4}},{"id":"q20_5","label":"几乎总是","value":{"D4":5}}]},{"id":"q21","title":"我比以前更容易烦躁、没耐心，或者突然很想躲开所有人。","axisKey":"D5","type":"single_choice","options":[{"id":"q21_1","label":"几乎没有","value":{"D5":1}},{"id":"q21_2","label":"偶尔如此","value":{"D5":2}},{"id":"q21_3","label":"有时如此","value":{"D5":3}},{"id":"q21_4","label":"经常如此","value":{"D5":4}},{"id":"q21_5","label":"几乎总是","value":{"D5":5}}]},{"id":"q22","title":"一些不算大的事，也会让我觉得格外心累。","axisKey":"D5","type":"single_choice","options":[{"id":"q22_1","label":"几乎没有","value":{"D5":1}},{"id":"q22_2","label":"偶尔如此","value":{"D5":2}},{"id":"q22_3","label":"有时如此","value":{"D5":3}},{"id":"q22_4","label":"经常如此","value":{"D5":4}},{"id":"q22_5","label":"几乎总是","value":{"D5":5}}]},{"id":"q23","title":"我最近更懒得解释、社交或回应外界。","axisKey":"D5","type":"single_choice","options":[{"id":"q23_1","label":"几乎没有","value":{"D5":1}},{"id":"q23_2","label":"偶尔如此","value":{"D5":2}},{"id":"q23_3","label":"有时如此","value":{"D5":3}},{"id":"q23_4","label":"经常如此","value":{"D5":4}},{"id":"q23_5","label":"几乎总是","value":{"D5":5}}]},{"id":"q24","title":"我知道自己应该调整状态，但常常提不起真正行动的力气。","axisKey":"D5","type":"single_choice","options":[{"id":"q24_1","label":"几乎没有","value":{"D5":1}},{"id":"q24_2","label":"偶尔如此","value":{"D5":2}},{"id":"q24_3","label":"有时如此","value":{"D5":3}},{"id":"q24_4","label":"经常如此","value":{"D5":4}},{"id":"q24_5","label":"几乎总是","value":{"D5":5}}]},{"id":"q25","title":"我经常觉得自己像被慢慢磨薄了一层，不是突然崩掉，而是持续被耗着。","axisKey":"D5","type":"single_choice","options":[{"id":"q25_1","label":"几乎没有","value":{"D5":1}},{"id":"q25_2","label":"偶尔如此","value":{"D5":2}},{"id":"q25_3","label":"有时如此","value":{"D5":3}},{"id":"q25_4","label":"经常如此","value":{"D5":4}},{"id":"q25_5","label":"几乎总是","value":{"D5":5}}]}],"results":[{"key":"P1","title":"任务洪流型","summary":"事太多，脑内待办永不清零","dimensionKey":"D1"},{"key":"P2","title":"失控悬挂型","summary":"最耗你的，不一定是忙，而是失控感。","dimensionKey":"D2"},{"key":"P3","title":"预警常开型","summary":"系统长期处于提前戒备状态。","dimensionKey":"D3"},{"key":"P4","title":"恢复断电型","summary":"你不是真的没休息，而是休息已经恢复不了你。","dimensionKey":"D4"},{"key":"P5","title":"情绪磨损型","summary":"压力已经开始慢慢磨损你的情绪弹性。","dimensionKey":"D5"}],"extensions":{"scoring":{"dimensions":[{"key":"D1","label":"任务超载"},{"key":"D2","label":"掌控流失"},{"key":"D3","label":"预警常开"},{"key":"D4","label":"恢复断电"},{"key":"D5","label":"情绪磨损"}]},"stressLoad":{"levels":[{"key":"L1","min":0,"max":19,"name":"轻压巡航","summary":"有压力，但系统整体仍在可恢复区间"},{"key":"L2","min":20,"max":39,"name":"持续拉紧","summary":"已经开始长时间绷着，放松效率下降"},{"key":"L3","min":40,"max":59,"name":"高压积载","summary":"压力正在累积，多个维度出现明显超载"},{"key":"L4","min":60,"max":79,"name":"过载边缘","summary":"系统持续高压运转，恢复明显跟不上消耗"},{"key":"L5","min":80,"max":100,"name":"超载警报","summary":"你的心理系统已接近或进入严重超负荷区间"}],"profiles":[{"key":"P1","dimensionKey":"D1","name":"任务洪流型","issue":"事太多，脑内待办永不清零"},{"key":"P2","dimensionKey":"D2","name":"失控悬挂型","issue":"最耗你的，不一定是忙，而是失控感。"},{"key":"P3","dimensionKey":"D3","name":"预警常开型","issue":"系统长期处于提前戒备状态。"},{"key":"P4","dimensionKey":"D4","name":"恢复断电型","issue":"你不是真的没休息，而是休息已经恢复不了你。"},{"key":"P5","dimensionKey":"D5","name":"情绪磨损型","issue":"压力已经开始慢慢磨损你的情绪弹性。"}]},"intro":{"tagline":"25 ?????????????????????","priceLabel":"25 ????","accessSummary":"?????????????????????????","questionCount":25,"valuePoints":["????????","????????","72 ????????"],"flowSteps":["?????","?? 25 ?","??????"],"detailSections":[{"title":"?????????","description":"?????????????????????????????????????????????????????????????????? 30 ???????"},{"title":"??????","description":"?????????????????????????????????? 72 ?????????????????????????"}]}}}',
+  '压力负荷测试正式版元数据迁入 D1，运行时内容暂由静态 runtime 兼容补全。'
+);
+
+UPDATE quizzes
+SET current_draft_version_id = 'quiz_version_stress_load_v1'
+WHERE id = 'quiz_stress_load_test';
+
+INSERT OR REPLACE INTO products (
+  id,
+  name,
+  product_type,
+  status,
+  sales_channel,
+  purchase_url,
+  intro_mode,
+  landing_visible,
+  description
+) VALUES (
+  'product_stress_load_shared',
+  '压力负荷测试 · 正式版单测',
+  'single_product',
+  'active',
+  'xiaohongshu',
+  'https://example.com/stress-load',
+  'code_gate',
+  1,
+  '压力负荷测试正式版，面向高压人群的深度自评与报告。'
+);
+
+INSERT OR REPLACE INTO product_quizzes (
+  id,
+  product_id,
+  quiz_id,
+  sort_order,
+  access_json
+) VALUES (
+  'pq_stress_load_shared',
+  'product_stress_load_shared',
+  'quiz_stress_load_test',
+  1,
+  '{"mode":"full_access"}'
+);
+
+INSERT OR REPLACE INTO code_batches (
+  id,
+  product_id,
+  name,
+  strategy_type,
+  code_prefix,
+  code_length,
+  status,
+  expires_at,
+  policy_json
+) VALUES (
+  'batch_stress_load_shared',
+  'product_stress_load_shared',
+  '压力负荷测试首发批次',
+  'single_product',
+  'STRESS',
+  16,
+  'active',
+  '2026-12-31T23:59:59.000Z',
+  '{"scopeMode":"product","verificationMode":"shared_code","tokenTtlDays":30,"introVisible":true,"notes":"压力负荷测试首发阶段采用共享验证码，便于内容投放与客服联调。"}'
+);
+
+INSERT OR REPLACE INTO codes (
+  code,
+  batch_id,
+  status,
+  expires_at,
+  metadata_json
+) VALUES
+  (
+    'STRESS-LOAD-2026',
+    'batch_stress_load_shared',
+    'active',
+    '2026-12-31T23:59:59.000Z',
+    '{"channel":"formal-launch","remark":"压力负荷测试正式版验证码"}'
+  ),
+  (
+    'ST-STRESS-BETA',
+    'batch_stress_load_shared',
+    'active',
+    '2026-12-31T23:59:59.000Z',
+    '{"channel":"customer-support","remark":"压力负荷测试客服联调验证码"}'
+  );
+
+INSERT OR REPLACE INTO quizzes (
+  id,
+  slug,
+  title,
+  summary,
+  category,
+  status,
+  price,
+  landing_visible,
+  current_published_version_id
+) VALUES (
+  'quiz_desire_composition',
+  'desire-composition',
+  '你的欲望组成图',
+  '每个人心中都藏着一份欲望配方，测测你的灵魂最渴望什么。',
+  '性格探索 / 欲望',
+  'published',
+  19.9,
+  1,
+  'quiz_version_desire_composition_v1'
+);
+
+INSERT OR REPLACE INTO quiz_versions (
+  id,
+  quiz_id,
+  version,
+  schema_version,
+  status,
+  config_json,
+  release_note
+) VALUES (
+  'quiz_version_desire_composition_v1',
+  'quiz_desire_composition',
+  1,
+  '1.0.0',
+  'published',
+  '{"meta":{"slug":"desire-composition","title":"你的欲望组成图","summary":"每个人心中都藏着一份欲望配方，测测你的灵魂最渴望什么","estimatedMinutes":2,"tags":["欲望组成","12题","饼图","人格标签"],"category":"性格探索 / 欲望"},"runtime":{"rendererKey":"custom","resultTemplateKey":"custom","scoringKey":"dimension"},"presentation":{"themeKey":"midnight-desire","storyMode":true,"screenCount":3,"shareCardKey":"desire-composition-poster"},"questions":[{"id":"q1","type":"single_choice","title":"你意外获得了一笔100万现金，第一反应是？","options":[{"id":"q1_a","label":"先存起来/投资理财，让钱生钱","value":{"M":3}},{"id":"q1_b","label":"买一张头等舱机票，带最爱的人去蜜月旅行","value":{"L":3,"S":1}},{"id":"q1_c","label":"全身改造！医美/置装/健身私教安排上","value":{"B":3}},{"id":"q1_d","label":"辞职！用这笔钱给自己一年自由时间","value":{"S":3,"K":1}},{"id":"q1_e","label":"拿来创业/做一个自己的品牌","value":{"P":3,"M":1}}]},{"id":"q2","type":"single_choice","title":"周末一个人的完美晚餐是？","options":[{"id":"q2_a","label":"订一家米其林/网红餐厅，认真吃一顿好的","value":{"F":3,"B":1}},{"id":"q2_b","label":"叫外卖+追剧/刷手机，窝在沙发上发呆","value":{"S":3}},{"id":"q2_c","label":"约上暧昧对象/伴侣，烛光晚餐走起","value":{"L":3,"F":1}},{"id":"q2_d","label":"自己下厨做一道没试过的菜，享受研究的过程","value":{"K":3,"F":1}},{"id":"q2_e","label":"去参加一个高端社交晚宴，拓展人脉","value":{"P":3,"M":1}}]},{"id":"q3","type":"single_choice","title":"你最常在深夜打开的App是？","options":[{"id":"q3_a","label":"淘宝/小红书——看看有什么好看的衣服和美妆","value":{"B":3,"M":1}},{"id":"q3_b","label":"探探/微信——和喜欢的人聊天或翻聊天记录","value":{"L":3}},{"id":"q3_c","label":"基金/股票App——看看今天赚了还是亏了","value":{"M":3}},{"id":"q3_d","label":"B站/播客/知乎——学点新东西或看纪录片","value":{"K":3}},{"id":"q3_e","label":"大众点评/美食博主视频——研究明天吃什么","value":{"F":3}}]},{"id":"q4","type":"single_choice","title":"如果可以拥有一种超能力，你选？","options":[{"id":"q4_a","label":"时间暂停——想休息多久就多久，永远不赶deadline","value":{"S":3}},{"id":"q4_b","label":"读心术——知道别人在想什么，永远占据主动","value":{"P":3,"K":1}},{"id":"q4_c","label":"永葆青春——永远保持最好看的状态","value":{"B":3}},{"id":"q4_d","label":"点石成金——碰什么都能变成钱","value":{"M":3,"P":1}},{"id":"q4_e","label":"让喜欢的人也喜欢自己——100%的爱情回应率","value":{"L":3}}]},{"id":"q5","type":"single_choice","title":"你理想中的家是什么样的？","options":[{"id":"q5_a","label":"市中心豪华公寓，落地窗俯瞰城市，彰显身份","value":{"P":3,"M":1}},{"id":"q5_b","label":"有超大衣帽间和浴室，每天精致出门","value":{"B":3,"S":1}},{"id":"q5_c","label":"开放式大厨房是核心，冰箱永远是满的","value":{"F":3,"S":1}},{"id":"q5_d","label":"有一面墙的书+安静的书房，像自己的小世界","value":{"K":3,"S":1}},{"id":"q5_e","label":"温馨的两人/家庭空间，最重要的是和爱的人在一起","value":{"L":3,"S":1}}]},{"id":"q6","type":"single_choice","title":"在一个陌生的聚会上，你最希望别人怎么形容你？","options":[{"id":"q6_a","label":"\"TA看起来好有钱\"/\"气场好强，一看就很成功\"","value":{"M":3,"P":1}},{"id":"q6_b","label":"\"TA也太好看了吧\"/\"好有品味\"","value":{"B":3}},{"id":"q6_c","label":"\"TA说话好有深度\"/\"懂好多东西\"","value":{"K":3,"P":1}},{"id":"q6_d","label":"\"TA身边那个人好幸福\"/\"好甜的一对\"","value":{"L":3}},{"id":"q6_e","label":"\"TA看起来好chill\"/\"好松弛好舒服\"","value":{"S":3}}]},{"id":"q7","type":"single_choice","title":"如果重新选择职业，你最心动的是？","options":[{"id":"q7_a","label":"投资人/企业家——赚大钱，实现财务自由","value":{"M":3,"P":1}},{"id":"q7_b","label":"美妆博主/时尚编辑——每天研究美丽这件事","value":{"B":3,"K":1}},{"id":"q7_c","label":"米其林厨师/美食旅行家——尝遍世界美味","value":{"F":3,"K":1}},{"id":"q7_d","label":"学者/作家/纪录片导演——探索真相和知识","value":{"K":3}},{"id":"q7_e","label":"自由职业/数字游民——在哪都能工作，自由最重要","value":{"S":3,"M":1}}]},{"id":"q8","type":"single_choice","title":"什么最容易让你嫉妒？","options":[{"id":"q8_a","label":"看到同龄人买了豪车/豪宅","value":{"M":3}},{"id":"q8_b","label":"看到别人秀恩爱/被偏爱","value":{"L":3}},{"id":"q8_c","label":"看到别人天生丽质/身材超好","value":{"B":3}},{"id":"q8_d","label":"看到别人升职加薪/成了领导","value":{"P":3,"M":1}},{"id":"q8_e","label":"看到别人躺平不上班还过得很好","value":{"S":3}}]},{"id":"q9","type":"single_choice","title":"你做过最多的白日梦是？","options":[{"id":"q9_a","label":"中了彩票，从此只做想做的事","value":{"M":3,"S":1}},{"id":"q9_b","label":"遇到了灵魂伴侣，从此被一个人深深爱着","value":{"L":3}},{"id":"q9_c","label":"一觉醒来变成了超级大帅哥/大美女","value":{"B":3}},{"id":"q9_d","label":"环游世界，吃遍每个国家的招牌美食","value":{"F":3,"K":1}},{"id":"q9_e","label":"成为某个领域的大佬，所有人都尊敬你","value":{"P":3,"K":1}}]},{"id":"q10","type":"single_choice","title":"选一部你最想\"活进去\"的电影/剧集：","options":[{"id":"q10_a","label":"《华尔街之狼》/《继承之战》——纸醉金迷的上流世界","value":{"M":3,"P":1}},{"id":"q10_b","label":"《怦然心动》/《花束般的恋爱》——心动到窒息的爱情","value":{"L":3}},{"id":"q10_c","label":"《小森林》/《向往的生活》——日出而作日落而息的田园","value":{"S":3,"F":1}},{"id":"q10_d","label":"《穿普拉达的女王》/《艾米丽在巴黎》——时尚光鲜的生活","value":{"B":3,"P":1}},{"id":"q10_e","label":"《星际穿越》/《三体》——探索宇宙终极奥秘","value":{"K":3}}]},{"id":"q11","type":"single_choice","title":"朋友圈发什么内容，你会获得最大满足感？","options":[{"id":"q11_a","label":"九宫格自拍/穿搭照，评论区全是\"好好看！\"","value":{"B":3,"L":1}},{"id":"q11_b","label":"和另一半的甜蜜合照/恋爱日常","value":{"L":3}},{"id":"q11_c","label":"打卡高端餐厅/精致美食摆盘","value":{"F":3,"B":1}},{"id":"q11_d","label":"新车/新房/旅行头等舱——\"不经意\"的凡尔赛","value":{"M":3,"P":1}},{"id":"q11_e","label":"读完一本书/学完一门课/参加了一个有趣的讲座","value":{"K":3}}]},{"id":"q12","type":"single_choice","title":"最后一题——如果有一个神灯，你许的第一个愿望是？","options":[{"id":"q12_a","label":"一辈子花不完的钱","value":{"M":3}},{"id":"q12_b","label":"遇到一个一辈子深爱彼此的人","value":{"L":3}},{"id":"q12_c","label":"永远年轻漂亮","value":{"B":3}},{"id":"q12_d","label":"能自由地做任何想做的事，没有任何束缚","value":{"S":3,"P":1}},{"id":"q12_e","label":"知道宇宙所有的答案","value":{"K":3}}]}],"results":[{"key":"M","title":"黄金猎手","summary":"你的灵魂里住着一个华尔街之狼"},{"key":"P","title":"王座收藏家","summary":"你不想被世界选择，你要选择世界"},{"key":"L","title":"浪漫至死","summary":"你的灵魂是用爱做的"},{"key":"B","title":"颜值至上主义者","summary":"这个世界对好看的人永远有优待"},{"key":"F","title":"灵魂干饭人","summary":"没有什么是一顿好吃的解决不了的"},{"key":"K","title":"灵魂学霸","summary":"你的大脑永远在hunger mode"},{"key":"S","title":"人间躺赢家","summary":"你的终极欲望，是不被任何欲望绑架"}],"extensions":{"scoring":{"dimensions":[{"key":"M","label":"财富欲"},{"key":"P","label":"权力欲"},{"key":"L","label":"爱情欲"},{"key":"B","label":"美貌欲"},{"key":"F","label":"美食欲"},{"key":"K","label":"求知欲"},{"key":"S","label":"安逸欲"}]},"desireComposition":{"dimensions":[{"key":"M","name":"财富欲","emoji":"💰","color":"#FFD700","label":"黄金猎手","description":"对金钱、物质安全感和财务自由的渴望"},{"key":"P","name":"权力欲","emoji":"👑","color":"#FF4444","label":"王座收藏家","description":"对掌控力、影响力和社会地位的渴望"},{"key":"L","name":"爱情欲","emoji":"💕","color":"#FF69B4","label":"浪漫至死","description":"对浪漫关系、亲密连接和被爱的渴望"},{"key":"B","name":"美貌欲","emoji":"✨","color":"#BF55EC","label":"颜值至上主义者","description":"对外在美、个人形象和魅力值的渴望"},{"key":"F","name":"美食欲","emoji":"🍽️","color":"#FF9A56","label":"灵魂干饭人","description":"对美食、味觉享受和感官愉悦的渴望"},{"key":"K","name":"求知欲","emoji":"🧠","color":"#4A90D9","label":"灵魂学霸","description":"对知识、探索未知和精神成长的渴望"},{"key":"S","name":"安逸欲","emoji":"🌿","color":"#2ECC71","label":"人间躺赢家","description":"对舒适、自由和内心平静的渴望"}],"personalities":{"M":{"key":"M","title":"黄金猎手","tagline":"你的灵魂里住着一个华尔街之狼","description":["你对金钱有一种天然的敏锐嗅觉——不是贪婪，而是一种对安全感和自由的深层渴望。","你相信\"钱不是万能的，但没有钱是万万不能的\"。你不会为了面子花钱，但你会为了\"让自己的人生有更多选择权\"而努力赚钱。","别人可能觉得你\"太现实\"，但你知道：真正的浪漫，是有底气的浪漫。"],"quote":"先实现财务自由，再谈诗和远方。","celebrities":["巴菲特","董明珠","马斯克"],"tags":["现实主义者","财务敏锐","追求自由"]},"P":{"key":"P","title":"王座收藏家","tagline":"你不想被世界选择，你要选择世界","description":["你渴望的不是\"权力\"本身，而是\"掌控感\"——对自己人生的掌控，对局面的掌控，对未来的掌控。","你讨厌\"被安排\"的感觉，天生就想做那个\"做决定的人\"。你有天然的领导气质，在人群中不自觉地就会站到C位。","有人说你\"好强\"，但你知道：弱者才需要妥协，强者创造规则。"],"quote":"这个世界是我的，也是你们的，但归根结底是我的。","celebrities":["武则天","奥普拉","拿破仑"],"tags":["掌控欲强","领导气质","创造规则"]},"L":{"key":"L","title":"浪漫至死","tagline":"你的灵魂是用爱做的","description":["你这辈子最大的欲望，就是好好爱一个人，也被一个人好好爱着。你相信爱情，相信灵魂伴侣的存在。","你可能在物质上不那么在意，但在感情上，你极度\"贪心\"——你想要100分的心动、100分的陪伴、100分的理解。","有人说你\"恋爱脑\"，但你知道：在爱里全力以赴的人，才是最勇敢的人。"],"quote":"给我一个人，我可以放弃全世界。（但最好那个人也很有钱。开玩笑的。）","celebrities":["泰勒·斯威夫特","莎士比亚","张爱玲"],"tags":["情感丰富","相信爱情","勇敢追爱"]},"B":{"key":"B","title":"颜值至上主义者","tagline":"这个世界对好看的人永远有优待","description":["你对\"美\"有一种近乎执着的追求——不只是外表，还有品味、气质和整体呈现。","你相信\"好看\"是一种核心竞争力，也是一种自我尊重。你的衣柜可能比书柜大，你的护肤步骤可能比工作流程还复杂。","有人说你\"肤浅\"，但你知道：对美的追求，本身就是人类最高级的本能之一。"],"quote":"好看就是正义。（不接受反驳。）","celebrities":["Jennie","范冰冰","贝克汉姆"],"tags":["追求美感","注重形象","品味独特"]},"F":{"key":"F","title":"灵魂干饭人","tagline":"没有什么是一顿好吃的解决不了的","description":["你是一个用味蕾感知世界的人。对你来说，美食不只是填饱肚子，而是一种生活哲学。","你可能为了一碗面跨城，为了一家餐厅订好机票，为了一道菜学了三天。你的快乐很简单——吃到好吃的，就是人生巅峰。","有人说你\"贪吃\"，但你知道：认真对待每一餐的人，也在认真对待人生。"],"quote":"人生苦短，先吃为敬。","celebrities":["蔡澜","谢霆锋","Anthony Bourdain"],"tags":["美食至上","生活哲学家","味觉敏锐"]},"K":{"key":"K","title":"灵魂学霸","tagline":"你的大脑永远在hunger mode","description":["你最上瘾的事，是\"搞懂一个新东西\"的那一刻。你的好奇心像一个永远填不满的黑洞。","今天研究量子力学，明天研究中世纪历史，后天研究咖啡豆的烘焙工艺。你相信\"无知\"才是最可怕的事。","有人说你\"书呆子\"，但你知道：真正有趣的灵魂，来自永不停止的探索。"],"quote":"这个世界上最性感的器官是大脑。","celebrities":["爱因斯坦","埃隆·马斯克","何同学"],"tags":["求知欲强","好奇心旺","探索精神"]},"S":{"key":"S","title":"人间躺赢家","tagline":"你的终极欲望，是不被任何欲望绑架","description":["你活得通透，看得明白。你不想卷，不想争，不想被社会时钟推着走。","你最大的欲望，就是没有欲望——或者说，你的欲望就是\"自由地做自己\"。你相信人生的意义不在于\"获得更多\"，而在于\"需要更少\"。","有人说你\"佛系\"，但你知道：真正的自由，是不需要向任何人证明自己。"],"quote":"世界那么大，我只想躺平。（但要躺在马尔代夫。）","celebrities":["李子柒","梭罗","五条悟"],"tags":["追求自由","通透豁达","反内卷"]}},"nationalAverage":{"M":22,"P":10,"L":20,"B":15,"F":13,"K":8,"S":12}},"intro":{"tagline":"12 ?????????????????????","priceLabel":"12 ????","accessSummary":"?????????????????????????","questionCount":12,"valuePoints":["??????","??????","??????"],"flowSteps":["?????","?? 12 ?","??????"],"detailSections":[{"title":"??????????","description":"?????????????????????? 12 ????????????????????????????????????????????"},{"title":"?????????","description":"????????????????????????????????????????????????????????????????????"},{"title":"??????","description":"??????????????????6 ??????????????????????????????????????????????????"}]}}}',
+  '欲望组成图正式版元数据迁入 D1，运行时内容暂由静态 runtime 兼容补全。'
+);
+
+UPDATE quizzes
+SET current_draft_version_id = 'quiz_version_desire_composition_v1'
+WHERE id = 'quiz_desire_composition';
+
+INSERT OR REPLACE INTO products (
+  id,
+  name,
+  product_type,
+  status,
+  sales_channel,
+  purchase_url,
+  intro_mode,
+  landing_visible,
+  description
+) VALUES (
+  'product_desire_composition_shared',
+  '你的欲望组成图 · 正式版单测',
+  'single_product',
+  'active',
+  'xiaohongshu',
+  'https://example.com/desire-composition',
+  'code_gate',
+  1,
+  '欲望组成图正式版，适合传播与分享的轻量深测产品。'
+);
+
+INSERT OR REPLACE INTO product_quizzes (
+  id,
+  product_id,
+  quiz_id,
+  sort_order,
+  access_json
+) VALUES (
+  'pq_desire_composition_shared',
+  'product_desire_composition_shared',
+  'quiz_desire_composition',
+  1,
+  '{"mode":"full_access"}'
+);
+
+INSERT OR REPLACE INTO code_batches (
+  id,
+  product_id,
+  name,
+  strategy_type,
+  code_prefix,
+  code_length,
+  status,
+  expires_at,
+  policy_json
+) VALUES (
+  'batch_desire_composition_shared',
+  'product_desire_composition_shared',
+  '欲望组成图首发批次',
+  'single_product',
+  'DESIRE',
+  16,
+  'active',
+  '2026-12-31T23:59:59.000Z',
+  '{"scopeMode":"product","verificationMode":"shared_code","tokenTtlDays":30,"introVisible":true,"notes":"欲望组成图首发阶段采用共享验证码，便于传播投放与客服联调。"}'
+);
+
+INSERT OR REPLACE INTO codes (
+  code,
+  batch_id,
+  status,
+  expires_at,
+  metadata_json
+) VALUES
+  (
+    'DESIRE-COMP-2026',
+    'batch_desire_composition_shared',
+    'active',
+    '2026-12-31T23:59:59.000Z',
+    '{"channel":"formal-launch","remark":"欲望组成图正式版验证码"}'
+  ),
+  (
+    'ST-DESIRE-BETA',
+    'batch_desire_composition_shared',
+    'active',
+    '2026-12-31T23:59:59.000Z',
+    '{"channel":"customer-support","remark":"欲望组成图客服联调验证码"}'
+  );
+-- END PAID QUIZ D1 MIGRATION: STRESS LOAD + DESIRE COMPOSITION
 INSERT OR REPLACE INTO admins (
   id,
   username,
   password_hash
 ) VALUES (
   'admin_local_dev',
-  'admin',
-  'pbkdf2_sha256$210000$rR0FTbSpX5GsLUuQnCi2aA==$pKrsBCATXXP/XJk9dlJLacwZwEcVl7P4LmS+JwbFepE='
+  'NanProduced',
+  'pbkdf2_sha256$210000$sMEqIZOBWkjr7JucC4OiQg==$yJNRabI/roVcUc6Mv7aJiN7eB7lEMCdo3sgwoUiPEYI='
 );
+
+
+
 
 

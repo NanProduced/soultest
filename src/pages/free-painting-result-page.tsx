@@ -1,4 +1,4 @@
-import { useMemo, useRef } from "react"
+import { useMemo, useRef, useState } from "react"
 import { useSearchParams, useNavigate } from "react-router"
 import { motion } from "framer-motion"
 import { 
@@ -21,26 +21,37 @@ import {
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { 
-  paintingResults, 
-  calculatePaintingResult, 
-  DIMENSION_LABELS,
-  PAINTING_RELATIONS
-} from "@/features/free-quizzes/painting-data"
-import { cn } from "@/lib/utils"
+import { FreeQuizRuntimeLoadingScreen, FreeQuizRuntimeUnavailableScreen, useFreeQuizRuntime } from "@/features/free-quizzes/runtime"
+import { calculatePaintingResult } from "@/features/free-quizzes/runtime-calculators"
+import { exportNodeAsPng } from "@/lib/export-node-as-image"
 
 export function FreePaintingResultPage() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const resultRef = useRef<HTMLDivElement>(null)
+  const [isExporting, setIsExporting] = useState(false)
 
   const answersStr = searchParams.get("answers") || ""
   const answers = useMemo(() => answersStr.split(",").map(Number), [answersStr])
+  const { freeRuntime, isLoading, error } = useFreeQuizRuntime("free/painting")
+  const paintingQuestions = (freeRuntime?.questionSet ?? []) as Array<{ options: Array<{ scores: Record<string, number> }> }>
+  const paintingResults = (freeRuntime?.resultMap ?? {}) as Record<string, any>
+  const DIMENSION_LABELS = (freeRuntime?.dimensionLabels ?? {}) as Record<string, { low: string; high: string }>
+  const PAINTING_RELATIONS = (freeRuntime?.paintingRelations ?? {}) as Record<string, string>
+  const dimensionRanges = (freeRuntime?.dimensionRanges ?? {}) as Record<string, { min: number; max: number }>
 
   const result = useMemo(() => {
-    if (answers.length < 28) return null
-    return calculatePaintingResult(answers)
-  }, [answers])
+    if (answers.length < 28 || paintingQuestions.length === 0) return null
+    return calculatePaintingResult(answers, paintingQuestions, paintingResults, dimensionRanges)
+  }, [answers, dimensionRanges, paintingQuestions, paintingResults])
+
+  if (isLoading) {
+    return <FreeQuizRuntimeLoadingScreen className="bg-[#060010] text-white" />
+  }
+
+  if (error || paintingQuestions.length === 0 || Object.keys(paintingResults).length === 0) {
+    return <FreeQuizRuntimeUnavailableScreen className="bg-[#060010] text-white" backTo="/free/painting" />
+  }
 
   if (!result) {
     return (
@@ -52,6 +63,27 @@ export function FreePaintingResultPage() {
   }
 
   const { primary, similar, userVector } = result
+
+  const handleExport = async () => {
+    if (!resultRef.current || isExporting) return
+    setIsExporting(true)
+    try {
+      await exportNodeAsPng(resultRef.current, {
+        filename: `SoulTest-Painting-${primary.name}.png`,
+        backgroundColor: '#060010',
+        pixelRatio: 2,
+        style: {
+          transform: 'scale(1)',
+          transformOrigin: 'top left',
+        }
+      })
+    } catch (err) {
+      console.error("Export failed", err)
+      alert("保存海报失败，请重试")
+    } finally {
+      setIsExporting(false)
+    }
+  }
 
   // Simple SVG Radar Chart
   const RadarChart = ({ user, target }: { user: number[], target: number[] }) => {
@@ -210,7 +242,7 @@ export function FreePaintingResultPage() {
             {primary.portrait}
           </p>
           <div className="flex flex-wrap gap-2">
-            {primary.keywords.map(tag => (
+            {primary.keywords.map((tag: string) => (
               <span key={tag} className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[11px] font-medium text-white/60">
                 #{tag}
               </span>
@@ -351,7 +383,7 @@ export function FreePaintingResultPage() {
             <div className="h-px w-4 bg-white/20" /> 与你灵魂共振的名画
           </h3>
           <div className="grid grid-cols-1 gap-4">
-            {similar.map((p, i) => {
+            {similar.map((p: any) => {
               const relationKey = `${primary.id}-${p.id}`
               const relationKeyAlt = `${p.id}-${primary.id}`
               const relation = PAINTING_RELATIONS[relationKey] || PAINTING_RELATIONS[relationKeyAlt] || '你们在灵魂的某个维度上产生了共振'
@@ -447,11 +479,10 @@ export function FreePaintingResultPage() {
             <Button 
               variant="outline" 
               className="h-14 rounded-2xl border-white/10 bg-white/5 text-white hover:bg-white/10"
-              onClick={() => {
-                alert('长图生成中...（演示功能）')
-              }}
+              onClick={handleExport}
+              disabled={isExporting}
             >
-              <Download className="mr-2 size-4" /> 保存长图
+              <Download className="mr-2 size-4" /> {isExporting ? "生成中..." : "保存长图"}
             </Button>
           </div>
         </div>
@@ -464,3 +495,4 @@ export function FreePaintingResultPage() {
     </div>
   )
 }
+

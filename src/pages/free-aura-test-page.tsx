@@ -3,7 +3,8 @@ import { useNavigate } from "react-router"
 import { motion, AnimatePresence } from "framer-motion"
 import { ArrowLeft } from "lucide-react"
 
-import { auraQuestions, calculateAuraResult } from "@/features/free-quizzes/aura-data"
+import { FreeQuizRuntimeLoadingScreen, FreeQuizRuntimeUnavailableScreen, useFreeQuizRuntime } from "@/features/free-quizzes/runtime"
+import { calculateAuraResult } from "@/features/free-quizzes/runtime-calculators"
 
 export function FreeAuraTestPage() {
   const navigate = useNavigate()
@@ -11,9 +12,23 @@ export function FreeAuraTestPage() {
   const [scoreA, setScoreA] = useState(0)
   const [scoreB, setScoreB] = useState(0)
   const [isTransitioning, setIsTransitioning] = useState(false)
+  const { freeRuntime, isLoading, error } = useFreeQuizRuntime("free/aura")
 
+  const auraQuestions = (freeRuntime?.questionSet ?? []) as Array<{
+    id: string
+    title: string
+    options: Array<{ label: string; a: number; b: number }>
+  }>
   const currentQuestion = auraQuestions[currentIndex]
-  const progress = ((currentIndex) / auraQuestions.length) * 100
+  const progress = auraQuestions.length > 0 ? (currentIndex / auraQuestions.length) * 100 : 0
+
+  if (isLoading) {
+    return <FreeQuizRuntimeLoadingScreen className="bg-[#060010] text-white" />
+  }
+
+  if (error || !currentQuestion) {
+    return <FreeQuizRuntimeUnavailableScreen className="bg-[#060010] text-white" backTo="/free/aura" />
+  }
 
   const handleOptionClick = (a: number, b: number) => {
     if (isTransitioning) return
@@ -116,3 +131,4 @@ export function FreeAuraTestPage() {
     </div>
   )
 }
+

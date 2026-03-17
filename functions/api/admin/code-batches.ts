@@ -1,9 +1,16 @@
-﻿import { getAdminSession } from "../../_lib/admin-auth"
+import { getAdminSession } from "../../_lib/admin-auth"
 import { errorResponse, json, readJson } from "../../_lib/http"
-import { listAdminCodeBatches, updateAdminCodeBatchPolicy } from "../../_lib/repository"
-import type { AccessPolicy, CloudflareEnv } from "../../_lib/types"
+import {
+  createAdminCodeBatch,
+  listAdminCodeBatches,
+  listAdminProducts,
+  updateAdminCodeBatchPolicy,
+  updateAdminCodeBatchStatus,
+} from "../../_lib/repository"
+import type { AccessPolicy, AdminCodeBatchAction, CloudflareEnv, CreateAdminCodeBatchInput } from "../../_lib/types"
 
-interface UpdateCodeBatchPolicyPayload {
+interface UpdateCodeBatchPayload {
+  action?: AdminCodeBatchAction
   batchId?: string
   policy?: AccessPolicy
 }
@@ -85,6 +92,67 @@ export const onRequestGet: PagesFunction<CloudflareEnv> = async ({ request, env 
   })
 }
 
+export const onRequestPost: PagesFunction<CloudflareEnv> = async ({ request, env }) => {
+  const session = await getAdminSession(request, env)
+
+  if (!session) {
+    return errorResponse(401, "ADMIN_UNAUTHORIZED", "请先登录管理后台")
+  }
+
+  if (env.API_STUB_MODE === "mock") {
+    return errorResponse(501, "ADMIN_BATCH_READ_ONLY", "当前环境只支持浏览，不支持创建批次")
+  }
+
+  let payload: CreateAdminCodeBatchInput
+
+  try {
+    payload = await readJson<CreateAdminCodeBatchInput>(request)
+  } catch {
+    return errorResponse(400, "INVALID_JSON", "批次创建请求格式不正确")
+  }
+
+  const productId = payload.productId?.trim() ?? ""
+
+  if (!productId) {
+    return errorResponse(400, "MISSING_PRODUCT_ID", "请选择要发码的商品")
+  }
+
+  try {
+    const products = await listAdminProducts(env)
+    const product = products.find((item) => item.id === productId)
+
+    if (!product) {
+      return errorResponse(404, "PRODUCT_NOT_FOUND", "未找到对应商品")
+    }
+
+    const policy = normalizePolicyInput(payload.policy, product.linkedQuizzes.map((quiz) => quiz.slug))
+    const item = await createAdminCodeBatch(
+      {
+        ...payload,
+        productId,
+        name: payload.name?.trim() ?? "",
+        policy,
+      },
+      env,
+    )
+
+    return json({
+      item,
+      authMode: "session",
+      admin: {
+        username: session.username,
+      },
+      source: env.API_STUB_MODE,
+    })
+  } catch (error) {
+    if (error instanceof PolicyValidationError) {
+      return errorResponse(error.status, error.code, error.message)
+    }
+
+    return errorResponse(500, "BATCH_CREATE_FAILED", error instanceof Error ? error.message : "批次创建失败，请稍后重试")
+  }
+}
+
 export const onRequestPatch: PagesFunction<CloudflareEnv> = async ({ request, env }) => {
   const session = await getAdminSession(request, env)
 
@@ -93,15 +161,15 @@ export const onRequestPatch: PagesFunction<CloudflareEnv> = async ({ request, en
   }
 
   if (env.API_STUB_MODE === "mock") {
-    return errorResponse(501, "ADMIN_STRATEGY_READ_ONLY", "当前环境只支持浏览，不支持保存验证码策略")
+    return errorResponse(501, "ADMIN_STRATEGY_READ_ONLY", "当前环境只支持浏览，不支持修改批次")
   }
 
-  let payload: UpdateCodeBatchPolicyPayload
+  let payload: UpdateCodeBatchPayload
 
   try {
-    payload = await readJson<UpdateCodeBatchPolicyPayload>(request)
+    payload = await readJson<UpdateCodeBatchPayload>(request)
   } catch {
-    return errorResponse(400, "INVALID_JSON", "策略保存请求格式不正确")
+    return errorResponse(400, "INVALID_JSON", "批次更新请求格式不正确")
   }
 
   const batchId = payload.batchId?.trim() ?? ""
@@ -118,6 +186,19 @@ export const onRequestPatch: PagesFunction<CloudflareEnv> = async ({ request, en
   }
 
   try {
+    if (payload.action) {
+      const item = await updateAdminCodeBatchStatus(batchId, payload.action, env)
+
+      return json({
+        item,
+        authMode: "session",
+        admin: {
+          username: session.username,
+        },
+        source: env.API_STUB_MODE,
+      })
+    }
+
     const nextPolicy = normalizePolicyInput(
       payload.policy,
       currentItem.linkedQuizzes.map((quiz) => quiz.slug),
@@ -145,6 +226,6 @@ export const onRequestPatch: PagesFunction<CloudflareEnv> = async ({ request, en
       return errorResponse(error.status, error.code, error.message)
     }
 
-    return errorResponse(500, "BATCH_POLICY_UPDATE_FAILED", "验证码策略保存失败，请稍后重试")
+    return errorResponse(500, "BATCH_UPDATE_FAILED", error instanceof Error ? error.message : "批次更新失败，请稍后重试")
   }
 }

@@ -1,4 +1,4 @@
-﻿import type {
+import type {
   QuizResultDefinition,
   QuizRuntimeConfig,
   ScoreBreakdownItem,
@@ -26,6 +26,10 @@ function resolveScoringModel(runtime: QuizRuntimeConfig): ScoringModelKey {
     case "branch":
     case "radar":
     case "oejts":
+    case "hexaco":
+    case "riasec":
+    case "enneagram":
+    case "tarot":
       return candidate
     default:
       return "dimension"
@@ -148,9 +152,13 @@ function calculateRadarScores(runtime: QuizRuntimeConfig, answers: Record<string
     return scoreMap
   }
 
-  return Array.from(labels.entries()).map(([key, label]) => {
+  // Create array with all dimensions and sort by score descending
+  const results = Array.from(labels.entries()).map(([key, label]) => {
     return scoreMap.find((item) => item.key === key) ?? { key, label, score: 0 }
   })
+  
+  // Sort by score descending for dominant dimension detection
+  return results.sort((a, b) => b.score - a.score)
 }
 
 function calculateTotalScore(runtime: QuizRuntimeConfig, answers: Record<string, unknown>) {
@@ -205,6 +213,210 @@ function calculateOejtsScores(runtime: QuizRuntimeConfig, answers: Record<string
     label,
     score: scoreMap.get(key) ?? 0,
   }))
+}
+
+function calculateHexacoScores(runtime: QuizRuntimeConfig, answers: Record<string, unknown>) {
+  const labels = getDimensionLabels(runtime)
+  const scoreMap = new Map<string, number>()
+  const countMap = new Map<string, number>()
+
+  for (const question of runtime.questions) {
+    if (typeof question.trait !== "string") {
+      continue
+    }
+
+    const rawScore = getQuestionScore(question, answers)
+
+    if (rawScore === undefined) {
+      continue
+    }
+
+    const normalized = question.reverse ? 6 - rawScore : rawScore
+    const trait = question.trait
+    scoreMap.set(trait, (scoreMap.get(trait) ?? 0) + normalized)
+    countMap.set(trait, (countMap.get(trait) ?? 0) + 1)
+  }
+
+  return Array.from(labels.entries()).map(([key, label]) => {
+    const raw = scoreMap.get(key) ?? 0
+    const count = countMap.get(key) ?? 1
+    const avg = raw / count
+    const display = Math.round(((avg - 1) / 4) * 100)
+    
+    let band = "mid"
+    if (avg < 2.5) band = "low"
+    else if (avg > 3.5) band = "high"
+
+    return {
+      key,
+      label,
+      score: raw,
+      avg,
+      display,
+      band
+    }
+  })
+}
+
+function calculateTarotScores(runtime: QuizRuntimeConfig, answers: Record<string, unknown>) {
+  const dimensions = runtime.extensions?.scoring?.dimensions ?? []
+  const scoreMap = new Map<string, number>()
+  
+  // Initial scores
+  dimensions.forEach(d => scoreMap.set(d.key, 0))
+
+  for (const question of runtime.questions) {
+    const selectedId = getSelectedOptionIds(answers[String(question.id)])[0]
+    if (!selectedId) continue
+
+    const option = (question.options as any[])?.find(o => String(o.id) === selectedId)
+    if (!option?.value) continue
+
+    for (const [dimKey, weight] of Object.entries(option.value)) {
+      if (typeof weight === "number") {
+        scoreMap.set(dimKey, (scoreMap.get(dimKey) ?? 0) + weight)
+      }
+    }
+  }
+
+  // Normalization to [1, 5]
+  // Based on doc: D1-D3: [-15, 15], D4-D5: [-14, 14]
+  return dimensions.map(d => {
+    const raw = scoreMap.get(d.key) ?? 0
+    const range = (d.key === "D4" || d.key === "D5") ? 14 : 15
+    const normalized = ((raw - (-range)) / (range - (-range))) * 4 + 1
+    const clamped = Math.max(1, Math.min(5, normalized))
+    
+    return {
+      key: d.key,
+      label: d.label,
+      score: raw,
+      avg: clamped,
+      display: Math.round(((clamped - 1) / 4) * 100)
+    }
+  })
+}
+
+function cosineSimilarity(vecA: number[], vecB: number[]) {
+  let dotProduct = 0
+  let normA = 0
+  let normB = 0
+  for (let i = 0; i < vecA.length; i++) {
+    dotProduct += vecA[i] * vecB[i]
+    normA += vecA[i] * vecA[i]
+    normB += vecB[i] * vecB[i]
+  }
+  return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB))
+}
+
+function findTarotMatchingResult(runtime: QuizRuntimeConfig, scoreBreakdown: ScoreBreakdownItem[], answers: Record<string, unknown>) {
+  const userVector = ["D1", "D2", "D3", "D4", "D5"].map(key => 
+    scoreBreakdown.find(s => s.key === key)?.avg ?? 3
+  )
+
+  const resultsWithSim = runtime.results.map(result => {
+    const cardVector = (result as any).vector as number[]
+    if (!cardVector) return { result, similarity: 0 }
+    
+    let similarity = cosineSimilarity(userVector, cardVector)
+    
+    // Tie-breaker with zodiac
+    const userZodiac = String(answers["zodiac"] ?? "")
+    const cardZodiac = (result as any).zodiac as string
+    if (userZodiac && cardZodiac && userZodiac === cardZodiac) {
+      similarity += 0.015
+    }
+
+    return { result, similarity }
+  })
+
+  resultsWithSim.sort((a, b) => b.similarity - a.similarity)
+  
+  const topMatch = resultsWithSim[0].result
+  const echoes = resultsWithSim.slice(1, 5).map(r => r.result.key)
+
+  return {
+    ...topMatch,
+    matchSimilarity: resultsWithSim[0].similarity,
+    echoes
+  }
+}
+
+function calculateRiasecScores(runtime: QuizRuntimeConfig, answers: Record<string, unknown>) {
+  const labels = getDimensionLabels(runtime)
+  const scoreMap = new Map<string, number>()
+  const countMap = new Map<string, number>()
+
+  for (const question of runtime.questions) {
+    const trait = question.trait as string
+    if (!trait) continue
+
+    const rawScore = getQuestionScore(question, answers)
+    if (rawScore === undefined) continue
+
+    scoreMap.set(trait, (scoreMap.get(trait) ?? 0) + rawScore)
+    countMap.set(trait, (countMap.get(trait) ?? 0) + 1)
+  }
+
+  return Array.from(labels.entries()).map(([key, label]) => {
+    const raw = scoreMap.get(key) ?? 0
+    const count = countMap.get(key) ?? 1
+    const avg = raw / count
+    const display = Math.round(((avg - 1) / 4) * 100)
+    
+    let band = "mid"
+    if (avg < 2.6) band = "low"
+    else if (avg >= 3.6) band = "high"
+
+    return {
+      key,
+      label,
+      score: raw,
+      avg,
+      display,
+      band
+    }
+  })
+}
+
+function calculateEnneagramScores(runtime: QuizRuntimeConfig, answers: Record<string, unknown>) {
+  const labels = getDimensionLabels(runtime)
+  const baseScores = calculateDimensionScores(runtime, answers)
+  const byKey = new Map(baseScores.map((item) => [item.key, item.score]))
+  const enneagramConfig = (runtime.extensions?.enneagram ?? {}) as { questionsPerType?: number }
+  const questionsPerType =
+    typeof enneagramConfig.questionsPerType === "number" && enneagramConfig.questionsPerType > 0
+      ? enneagramConfig.questionsPerType
+      : 6
+
+  const items = Array.from(labels.entries()).map(([key, label]) => {
+    const raw = byKey.get(key) ?? 0
+    const avg = raw / questionsPerType
+
+    let band = "mid"
+    if (avg < 2.4) band = "low"
+    else if (avg >= 3.6) band = "high"
+
+    return {
+      key,
+      label,
+      score: raw,
+      avg,
+      band,
+    }
+  })
+
+  const avgValues = items.map((item) => item.avg)
+  const maxAvg = avgValues.length > 0 ? Math.max(...avgValues) : 0
+  const minAvg = avgValues.length > 0 ? Math.min(...avgValues) : 0
+  const spread = maxAvg - minAvg
+
+  return items
+    .map((item) => ({
+      ...item,
+      display: spread < 0.01 ? 50 : Math.round(((item.avg - minAvg) / spread) * 100),
+    }))
+    .sort((left, right) => right.score - left.score)
 }
 
 function getRangeRules(runtime: QuizRuntimeConfig) {
@@ -300,6 +512,14 @@ export function calculateScoreBreakdown(
       return calculateRadarScores(runtime, answers)
     case "oejts":
       return calculateOejtsScores(runtime, answers)
+    case "hexaco":
+      return calculateHexacoScores(runtime, answers)
+    case "riasec":
+      return calculateRiasecScores(runtime, answers)
+    case "enneagram":
+      return calculateEnneagramScores(runtime, answers)
+    case "tarot":
+      return calculateTarotScores(runtime, answers)
     case "dimension":
     default:
       return calculateDimensionScores(runtime, answers)
@@ -332,6 +552,22 @@ export function scoreSubmission(runtime: QuizRuntimeConfig, answers: Record<stri
       result = findResultByKey(runtime, getOejtsType(scoreBreakdown))
       break
     }
+    case "hexaco": {
+      result = findDominantDimensionResult(runtime, scoreBreakdown)
+      break
+    }
+    case "riasec": {
+      result = findDominantDimensionResult(runtime, scoreBreakdown)
+      break
+    }
+    case "enneagram": {
+      result = findDominantDimensionResult(runtime, scoreBreakdown)
+      break
+    }
+    case "tarot": {
+      result = findTarotMatchingResult(runtime, scoreBreakdown, answers)
+      break
+    }
     case "radar":
     case "dimension":
     default:
@@ -344,3 +580,5 @@ export function scoreSubmission(runtime: QuizRuntimeConfig, answers: Record<stri
     result: result ?? fallbackResult(runtime, answers),
   }
 }
+
+

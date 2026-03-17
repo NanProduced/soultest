@@ -1,5 +1,5 @@
 ﻿export type QuizRendererKey = "generic" | "custom"
-export type ScoringModelKey = "accumulate" | "dimension" | "range" | "branch" | "radar" | "oejts"
+export type ScoringModelKey = "accumulate" | "dimension" | "range" | "branch" | "radar" | "oejts" | "hexaco" | "enneagram" | "tarot"
 export type ResultTemplateKey =
   | "story-card"
   | "relationship-story"
@@ -8,7 +8,11 @@ export type ResultTemplateKey =
   | "match-meter"
   | "classification-tag"
   | "oejts-profile"
+  | "hexaco-profile"
+  | "enneagram-profile"
   | (string & {})
+
+export type QuizAccessType = "free" | "paid"
 
 export interface QuizCatalogItem {
   id: string
@@ -24,6 +28,7 @@ export interface QuizCatalogItem {
   tags: string[]
   valuePoints: string[]
   flowSteps: string[]
+  accessType: QuizAccessType
 }
 
 export interface QuizIntro extends QuizCatalogItem {
@@ -80,6 +85,13 @@ export interface QuizResultDefinition {
   workNotes?: string[]
   stressNotes?: string[]
   growthNotes?: string[]
+  heroTitle?: string
+  coreMotivation?: string
+  coreFear?: string
+  centerLabel?: string
+  stressDirection?: string
+  growthDirection?: string
+  posterQuote?: string
   shareCopy?: string
 }
 
@@ -87,6 +99,9 @@ export interface ScoreBreakdownItem {
   key: string
   label: string
   score: number
+  avg?: number
+  display?: number
+  band?: string
 }
 
 export interface QuizRuntimeConfig {
@@ -188,6 +203,29 @@ export interface SubmissionDetailResponse {
   result: QuizResultDefinition
 }
 
+export interface AdminOverviewTrendPoint {
+  date: string
+  submissions: number
+}
+
+export interface AdminOverviewTopQuiz {
+  quizId: string
+  slug: string
+  title: string
+  submissions: number
+}
+
+export interface AdminOverviewAnalytics {
+  submissions24h: number
+  submissions7d: number
+  submissions30d: number
+  avgDurationSec: number | null
+  shareCount: number
+  shareRate: number
+  recentDailySubmissions: AdminOverviewTrendPoint[]
+  topQuizzes: AdminOverviewTopQuiz[]
+}
+
 export interface AdminOverview {
   quizzes: number
   products: number
@@ -195,6 +233,12 @@ export interface AdminOverview {
   activeCodes: number
   submissions: number
   lastSeedAt: string
+  analytics: AdminOverviewAnalytics
+}
+
+export interface AdminProductLinkedQuiz {
+  slug: string
+  title: string
 }
 
 export interface AdminProduct {
@@ -204,6 +248,7 @@ export interface AdminProduct {
   status: string
   quizCount: number
   description: string
+  linkedQuizzes: AdminProductLinkedQuiz[]
 }
 
 export interface AdminCodeBatchPolicy {
@@ -236,7 +281,19 @@ export interface AdminCodeBatch {
   sampleCodes: AdminQuizVerificationCode[]
 }
 
-export type AdminQuizAccessType = "free" | "paid"
+export interface CreateAdminCodeBatchInput {
+  productId: string
+  name: string
+  codeCount: number
+  codePrefix?: string
+  codeLength?: number
+  expiresAt?: string | null
+  policy: AdminCodeBatchPolicy
+}
+
+export type AdminCodeBatchAction = "activate" | "pause" | "revoke"
+
+export type AdminQuizAccessType = QuizAccessType
 
 export interface AdminQuizVerificationCode {
   code: string
@@ -247,9 +304,11 @@ export interface AdminQuizVerificationCode {
 export interface AdminQuizVerificationSummary {
   verificationMode: "none" | "shared_code" | "unique_code" | "unknown"
   scopeMode?: string
+  batchId?: string
   batchStrategyType?: string
   tokenTtlDays: number | null
   notes?: string
+  productName?: string
   batchName?: string
   batchStatus?: string
   activeCodeCount: number
@@ -262,6 +321,8 @@ export interface AdminQuizItem extends QuizCatalogItem {
   source: "d1" | "mock" | "static"
   introPath: string
   testPath: string
+  landingVisible?: boolean
+  liveOnLanding?: boolean
   verification?: AdminQuizVerificationSummary
 }
 
@@ -270,3 +331,7 @@ export interface AdminSessionSummary {
   issuedAt: string
   expiresAt: string
 }
+
+
+
+

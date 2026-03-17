@@ -5,6 +5,9 @@ const ADMIN_SESSION_TTL_SECONDS = 12 * 60 * 60
 const ADMIN_LOGIN_WINDOW_SECONDS_DEFAULT = 10 * 60
 const ADMIN_LOGIN_MAX_ATTEMPTS_DEFAULT = 5
 const PBKDF2_PREFIX = "pbkdf2_sha256"
+const DEVELOPMENT_ADMIN_ID = "admin_local_dev_bypass"
+const DEVELOPMENT_ADMIN_USERNAME = "local-dev"
+const DEVELOPMENT_APP_ENVS = new Set(["local", "development", "dev"])
 
 interface AdminRow {
   id: string
@@ -124,6 +127,27 @@ function buildFailedLoginCacheKey(clientId: string) {
 function getAdminAccessKeyHash(env: CloudflareEnv) {
   const value = env.ADMIN_ACCESS_KEY_HASH?.trim()
   return value ? value : undefined
+}
+
+function createDevelopmentAdminSession(): StoredAdminSession {
+  const issuedAt = new Date().toISOString()
+  const expiresAt = new Date(Date.now() + ADMIN_SESSION_TTL_SECONDS * 1000).toISOString()
+
+  return {
+    token: "dev_bypass_session",
+    adminId: DEVELOPMENT_ADMIN_ID,
+    username: DEVELOPMENT_ADMIN_USERNAME,
+    issuedAt,
+    expiresAt,
+  }
+}
+
+export function isDevelopmentAdminBypassEnabled(env: CloudflareEnv) {
+  return DEVELOPMENT_APP_ENVS.has(env.APP_ENV)
+}
+
+export function getDevelopmentAdminSession() {
+  return createDevelopmentAdminSession()
 }
 
 function getClientIdentifier(request: Request) {
@@ -335,16 +359,20 @@ export async function getAdminSession(request: Request, env: CloudflareEnv) {
   const token = getCookieToken(request)
 
   if (!token) {
-    return undefined
+    return isDevelopmentAdminBypassEnabled(env) ? getDevelopmentAdminSession() : undefined
   }
 
   const raw = await env.SOULTEST_CACHE.get(buildSessionCacheKey(token))
 
   if (!raw) {
-    return undefined
+    return isDevelopmentAdminBypassEnabled(env) ? getDevelopmentAdminSession() : undefined
   }
 
-  return JSON.parse(raw) as StoredAdminSession
+  try {
+    return JSON.parse(raw) as StoredAdminSession
+  } catch {
+    return isDevelopmentAdminBypassEnabled(env) ? getDevelopmentAdminSession() : undefined
+  }
 }
 
 export async function destroyAdminSession(request: Request, env: CloudflareEnv) {

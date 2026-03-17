@@ -1,1 +1,1 @@
-﻿export { onRequestGet, onRequestPatch } from "../admin/code-batches"
+export { onRequestGet, onRequestPatch, onRequestPost } from "../admin/code-batches"

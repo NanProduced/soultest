@@ -2,7 +2,8 @@ import { useRef, useState } from "react"
 import { Navigate, useSearchParams, Link } from "react-router"
 import { ArrowLeft, ArrowRight, Download, Sparkles, Compass, Beaker, Pill, AlertTriangle, ScanLine, Activity, FlaskConical } from "lucide-react"
 
-import { banweiResults, calculateDimensionPercent, DIMENSION_NAMES } from "@/features/free-quizzes/banwei-data"
+import { FreeQuizRuntimeLoadingScreen, FreeQuizRuntimeUnavailableScreen, useFreeQuizRuntime } from "@/features/free-quizzes/runtime"
+import { calculateDimensionPercent } from "@/features/free-quizzes/runtime-calculators"
 import { exportNodeAsPng } from "@/lib/export-node-as-image"
 
 export function FreeBanweiResultPage() {
@@ -10,10 +11,21 @@ export function FreeBanweiResultPage() {
   const resultKey = searchParams.get("key")
   const totalScoreStr = searchParams.get("score")
   const dimsStr = searchParams.get("dims")
-  
+  const { freeRuntime, isLoading, error } = useFreeQuizRuntime("free/banwei")
+  const banweiResults = (freeRuntime?.resultMap ?? {}) as Record<string, any>
+  const DIMENSION_NAMES = (freeRuntime?.dimensionNames ?? {}) as Record<string, any>
+
   const result = resultKey ? banweiResults[resultKey] : null
   const posterRef = useRef<HTMLDivElement>(null)
   const [isExporting, setIsExporting] = useState(false)
+
+  if (isLoading) {
+    return <FreeQuizRuntimeLoadingScreen className="bg-slate-100 text-slate-900" />
+  }
+
+  if (error || Object.keys(banweiResults).length === 0 || Object.keys(DIMENSION_NAMES).length === 0) {
+    return <FreeQuizRuntimeUnavailableScreen className="bg-slate-950 text-white" backTo="/free/banwei" />
+  }
 
   if (!result || !totalScoreStr || !dimsStr) {
     return <Navigate replace to="/free/banwei" />
@@ -142,7 +154,7 @@ export function FreeBanweiResultPage() {
 
                 {/* Tags */}
                 <div className="flex flex-wrap gap-2 mb-8">
-                  {result.keywords.map((kw, i) => (
+                  {result.keywords.map((kw: string, i: number) => (
                     <span 
                       key={i} 
                       className={`px-3 py-1 rounded-md text-xs font-bold border ${result.bgColor} ${result.textColor} border-current/20`}
@@ -231,7 +243,7 @@ export function FreeBanweiResultPage() {
                       <AlertTriangle className="size-3" /> 解药配方
                     </div>
                     <ul className="space-y-1.5">
-                      {result.antidote.map((item, i) => (
+                      {result.antidote.map((item: string, i: number) => (
                         <li key={i} className="text-xs text-amber-900/70 flex gap-2">
                           <span className="text-amber-500 font-bold">·</span> {item}
                         </li>
@@ -334,3 +346,4 @@ export function FreeBanweiResultPage() {
     </div>
   )
 }
+

@@ -1,13 +1,17 @@
 ﻿import { ADMIN_API_BASE } from "@/features/admin/constants"
 import type {
   AdminCodeBatch,
+  AdminCodeBatchAction,
   AdminCodeBatchPolicy,
   AdminOverview,
   AdminProduct,
   AdminQuizItem,
   AdminSessionSummary,
+  CreateAdminCodeBatchInput,
+  QuizAccessType,
   QuizCatalogItem,
   QuizIntro,
+  QuizRuntimeConfig,
   QuizRuntimeResponse,
   SubmissionDetailResponse,
   SubmitQuizResponse,
@@ -50,7 +54,7 @@ async function requestJson<T>(input: string, init?: RequestInit) {
     const payload = (await response.json().catch(() => ({}))) as ApiErrorPayload
     throw new ApiError(
       response.status,
-      payload.error?.message ?? "请求失败，请稍后重试",
+      payload.error?.message ?? "璇锋眰澶辫触锛岃绋嶅悗閲嶈瘯",
       payload.error?.code,
     )
   }
@@ -58,12 +62,30 @@ async function requestJson<T>(input: string, init?: RequestInit) {
   return (await response.json()) as T
 }
 
-export async function fetchPublicQuizzes() {
-  const response = await requestJson<{ items: QuizCatalogItem[]; source: string }>("/api/quizzes/public", {
+function getPublicCatalogEndpoint(accessType?: QuizAccessType, limit?: number) {
+  const endpoint = accessType ? "/api/quizzes/public/" + accessType : "/api/quizzes/public"
+
+  if (!limit || limit <= 0) {
+    return endpoint
+  }
+
+  return `${endpoint}?limit=${limit}`
+}
+
+export async function fetchPublicQuizzes(accessType?: QuizAccessType, limit?: number) {
+  const response = await requestJson<{ items: QuizCatalogItem[]; source: string }>(getPublicCatalogEndpoint(accessType, limit), {
     method: "GET",
   })
 
   return response.items
+}
+
+export function fetchFreePublicQuizzes(limit?: number) {
+  return fetchPublicQuizzes("free", limit)
+}
+
+export function fetchPaidPublicQuizzes(limit?: number) {
+  return fetchPublicQuizzes("paid", limit)
 }
 
 export async function fetchQuizIntro(slug: string) {
@@ -87,6 +109,12 @@ export function fetchQuizRuntime(slug: string, accessToken: string) {
     headers: {
       authorization: `Bearer ${accessToken}`,
     },
+  })
+}
+
+export function fetchFreeQuizRuntime(slug: string) {
+  return requestJson<{ runtime: QuizRuntimeConfig; source: string }>(`/api/free-quizzes/runtime?slug=${encodeURIComponent(slug)}`, {
+    method: "GET",
   })
 }
 
@@ -181,3 +209,25 @@ export async function updateAdminCodeBatchPolicy(batchId: string, policy: AdminC
 
   return response.item
 }
+
+export async function createAdminCodeBatch(input: CreateAdminCodeBatchInput) {
+  const response = await requestJson<{ item: AdminCodeBatch; source: string }>(`${ADMIN_API_BASE}/code-batches`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  })
+
+  return response.item
+}
+
+export async function updateAdminCodeBatchStatus(batchId: string, action: AdminCodeBatchAction) {
+  const response = await requestJson<{ item: AdminCodeBatch; source: string }>(`${ADMIN_API_BASE}/code-batches`, {
+    method: "PATCH",
+    body: JSON.stringify({ batchId, action }),
+  })
+
+  return response.item
+}
+
+
+
+

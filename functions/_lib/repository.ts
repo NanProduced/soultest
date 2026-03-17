@@ -3,20 +3,22 @@
   getMockCatalogItems,
   getMockCodeBatches,
   getMockProducts,
-  getMockQuizIntro,
-  getMockRuntimeConfig,
 } from "./mock-data"
-import { getMockAdminQuizzes } from "./admin-mock-data"
+import { getMockAdminQuizzes, getStaticAdminQuizzes } from "./admin-mock-data"
+import { getStaticQuizIntro, getStaticRuntimeConfig } from "./official-quiz-content"
 import type {
   AccessGrant,
   AccessPolicy,
   AccessSession,
   AdminCodeBatch,
+  AdminCodeBatchAction,
   AdminOverview,
   AdminProduct,
+  AdminQuizAccessType,
   AdminQuizItem,
   AllowedQuiz,
   CloudflareEnv,
+  CreateAdminCodeBatchInput,
   QuizCatalogItem,
   QuizIntro,
   QuizRuntimeConfig,
@@ -38,6 +40,7 @@ interface QuizRow {
   sales_channel?: string | null
   purchase_url?: string | null
   status?: string | null
+  landing_visible?: number | null
 }
 
 interface ProductRow {
@@ -137,6 +140,7 @@ interface RuntimeIntroConfig {
   tagline?: string
   priceLabel?: string
   accessSummary?: string
+  questionCount?: number
   valuePoints?: string[]
   flowSteps?: string[]
   detailSections?: Array<{ title: string; description: string }>
@@ -159,6 +163,7 @@ function getRuntimeIntroConfig(runtime: QuizRuntimeConfig | null | undefined): R
     tagline: typeof intro.tagline === "string" ? intro.tagline : undefined,
     priceLabel: typeof intro.priceLabel === "string" ? intro.priceLabel : undefined,
     accessSummary: typeof intro.accessSummary === "string" ? intro.accessSummary : undefined,
+    questionCount: typeof intro.questionCount === "number" ? Math.max(0, Math.trunc(intro.questionCount)) : undefined,
     valuePoints: Array.isArray(intro.valuePoints)
       ? intro.valuePoints.filter((item): item is string => typeof item === "string")
       : undefined,
@@ -239,6 +244,9 @@ function validateSubmissionAnswers(runtime: QuizRuntimeConfig, answers: Record<s
 function normalizeCatalogItem(row: QuizRow): QuizCatalogItem {
   const runtime = parseJson<QuizRuntimeConfig | null>(row.config_json, null)
   const intro = getRuntimeIntroConfig(runtime)
+  const accessType: QuizCatalogItem["accessType"] = (row.price ?? 0) <= 0 ? "free" : "paid"
+  const runtimeQuestionCount = Array.isArray(runtime?.questions) ? runtime.questions.length : 0
+  const questionCount = intro.questionCount ?? runtimeQuestionCount
 
   return {
     id: row.id,
@@ -247,14 +255,250 @@ function normalizeCatalogItem(row: QuizRow): QuizCatalogItem {
     category: row.category ?? runtime?.meta.category ?? "未分类",
     summary: row.summary ?? runtime?.meta.summary ?? "",
     tagline: intro.tagline ?? runtime?.meta.summary ?? row.summary ?? "",
-    priceLabel: intro.priceLabel ?? ((row.price ?? 0) <= 0 ? "免费体验" : "单测体验"),
-    durationMinutes: runtime?.meta.estimatedMinutes ?? runtime?.questions.length ?? 0,
-    questionCount: runtime?.questions.length ?? 0,
+    priceLabel: intro.priceLabel ?? (accessType === "free" ? "免费体验" : "单测体验"),
+    durationMinutes: runtime?.meta.estimatedMinutes ?? questionCount,
+    questionCount,
     accessSummary: intro.accessSummary ?? "输入测试口令后开始",
     tags: runtime?.meta.tags ?? [],
     valuePoints: intro.valuePoints ?? ["完整结果报告", "支持保存与分享", "口令有效期内可重复进入"],
     flowSteps: intro.flowSteps ?? ["输入测试口令", "完成测试", "查看结果"],
+    accessType,
   }
+}
+
+function toPublicCatalogItem(item: AdminQuizItem): QuizCatalogItem {
+  return {
+    id: item.id,
+    slug: item.slug,
+    title: item.title,
+    category: item.category,
+    summary: item.summary,
+    tagline: item.tagline,
+    priceLabel: item.priceLabel,
+    durationMinutes: item.durationMinutes,
+    questionCount: item.questionCount,
+    accessSummary: item.accessSummary,
+    tags: [...item.tags],
+    valuePoints: [...item.valuePoints],
+    flowSteps: [...item.flowSteps],
+    accessType: item.accessType,
+  }
+}
+
+const D1_METADATA_MANAGED_QUIZ_SLUGS = new Set([
+  "free/aura",
+  "free/banwei",
+  "free/painting",
+  "free/talent",
+  "free/szondi",
+  "free/soul-city",
+  "oejts-personality-map",
+  "relationship-preference-test",
+  "enneagram",
+  "bigfive",
+  "dark-triad",
+  "hexaco-60",
+  "riasec-48",
+  "soul-tarot",
+  "stress-load-test",
+  "desire-composition",
+])
+
+function filterStaticCompatibilityQuizzes<T extends { slug: string }>(items: T[]) {
+  return items.filter((item) => !D1_METADATA_MANAGED_QUIZ_SLUGS.has(item.slug))
+}
+
+function listStaticPublicQuizzes(accessType?: AdminQuizAccessType) {
+  return getStaticAdminQuizzes()
+    .filter((item) => {
+      const liveOnLanding = item.liveOnLanding ?? (item.status === "published" && item.landingVisible === true)
+      return liveOnLanding && (!accessType || item.accessType === accessType)
+    })
+    .map(toPublicCatalogItem)
+}
+
+function mergePublicQuizCollections(staticItems: QuizCatalogItem[], d1Items: QuizCatalogItem[]) {
+  const mergedItems = new Map<string, QuizCatalogItem>()
+
+  for (const item of staticItems) {
+    mergedItems.set(item.slug, item)
+  }
+
+  for (const item of d1Items) {
+    const existingItem = mergedItems.get(item.slug)
+
+    if (!existingItem) {
+      mergedItems.set(item.slug, item)
+      continue
+    }
+
+    mergedItems.set(item.slug, {
+      ...existingItem,
+      ...item,
+      tags: item.tags.length > 0 ? item.tags : existingItem.tags,
+      valuePoints: item.valuePoints.length > 0 ? item.valuePoints : existingItem.valuePoints,
+      flowSteps: item.flowSteps.length > 0 ? item.flowSteps : existingItem.flowSteps,
+    })
+  }
+
+  return [...mergedItems.values()]
+}
+
+function hasCompleteRuntimeConfig(runtime?: QuizRuntimeConfig) {
+  return Boolean(runtime && runtime.questions.length > 0 && runtime.results.length > 0)
+}
+
+const bigFiveDimensionMeta = [
+  { key: "E", label: "外向性" },
+  { key: "A", label: "宜人性" },
+  { key: "C", label: "尽责性" },
+  { key: "N", label: "神经质" },
+  { key: "O", label: "开放性" },
+] as const
+
+const bigFiveScaleLabels = ["非常不像我", "不太像我", "一般", "比较像我", "非常像我"] as const
+
+function normalizeRuntimeConfig(runtime?: QuizRuntimeConfig) {
+  if (!runtime || runtime.meta.slug !== "bigfive") {
+    return runtime
+  }
+
+  const rawQuestions = Array.isArray(runtime.questions) ? runtime.questions : []
+  const questions = rawQuestions.map((question, index) => {
+    const existingOptions = Array.isArray(question.options) ? question.options : []
+    if (existingOptions.length > 0) {
+      return question
+    }
+
+    const id = typeof question.id === "string" ? question.id : `Q${index + 1}`
+    const title = typeof question.title === "string"
+      ? question.title
+      : typeof question.text === "string"
+        ? question.text
+        : `第 ${index + 1} 题`
+    const trait = typeof question.trait === "string" ? question.trait : undefined
+    const reverse = question.reverse === true
+
+    if (!trait) {
+      return {
+        ...question,
+        id,
+        type: "single_choice",
+        title,
+        leftLabel: "非常不像我",
+        rightLabel: "非常像我",
+        options: bigFiveScaleLabels.map((label, optionIndex) => ({
+          id: `${id}_option_${optionIndex + 1}`,
+          label,
+          value: { score: optionIndex + 1 },
+        })),
+      }
+    }
+
+    return {
+      ...question,
+      id,
+      type: "single_choice",
+      title,
+      leftLabel: "非常不像我",
+      rightLabel: "非常像我",
+      options: bigFiveScaleLabels.map((label, optionIndex) => ({
+        id: `${id}_option_${optionIndex + 1}`,
+        label,
+        value: {
+          [trait]: reverse ? bigFiveScaleLabels.length - optionIndex : optionIndex + 1,
+        },
+      })),
+    }
+  })
+
+  const primaryResult = runtime.results[0] ?? {
+    key: "bigfive-result",
+    title: "你的大五人格画像",
+    summary: "这份结果会展示你在外向性、宜人性、尽责性、神经质与开放性五个维度上的相对分布。",
+  }
+
+  return {
+    ...runtime,
+    runtime: {
+      ...runtime.runtime,
+      rendererKey: "generic",
+      scoringKey: "radar",
+      resultTemplateKey: runtime.runtime.resultTemplateKey ?? "story-card",
+    },
+    questions,
+    results: [
+      {
+        ...primaryResult,
+        key: primaryResult.key ?? "bigfive-result",
+        title: primaryResult.title ?? "你的大五人格画像",
+        summary:
+          primaryResult.summary ??
+          "这份结果会展示你在外向性、宜人性、尽责性、神经质与开放性五个维度上的相对分布。",
+        highlights:
+          primaryResult.highlights ??
+          [
+            "不是把你归进单一类型，而是看见五个维度上的稳定偏好。",
+            "适合结合关系、工作与压力情境一起理解自己。",
+            "更适合作为长期自我观察的坐标，而不是一次性的标签结论。",
+          ],
+        strengths:
+          primaryResult.strengths ??
+          [
+            "高分维度往往是你最自然、最省力的行为方式。",
+            "五维分布能帮助你看见自己在关系与协作中的舒适区。",
+            "结果可作为后续职业、沟通与自我管理的参考基线。",
+          ],
+        blindSpots:
+          primaryResult.blindSpots ??
+          [
+            "低分维度不代表缺点，而是提醒你哪些场景更容易消耗自己。",
+            "高分维度如果过度使用，也可能在压力下变成固执或失衡。",
+            "结合具体生活情境理解分数，通常比单看结论更有帮助。",
+          ],
+        relationshipNotes:
+          primaryResult.relationshipNotes ?? ["你在关系中的互动节奏、表达方式与安全感来源，往往会和高分维度保持一致。"],
+        workNotes:
+          primaryResult.workNotes ?? ["你更自然的协作方式、推进节奏与决策偏好，会在工作场景里更明显地呈现出来。"],
+        stressNotes:
+          primaryResult.stressNotes ?? ["当压力上来时，低分维度往往更容易成为卡点，也更值得被提前照顾。"],
+        growthNotes:
+          primaryResult.growthNotes ?? ["把高分维度当作优势，把低分维度当作提醒区，通常比追求“完美人格”更有效。"],
+      },
+    ],
+    extensions: {
+      ...runtime.extensions,
+      scoring: {
+        ...runtime.extensions?.scoring,
+        dimensions: bigFiveDimensionMeta.map((item) => ({ ...item })),
+      },
+      share: {
+        ...runtime.extensions?.share,
+        captionTone: runtime.extensions?.share?.captionTone ?? "insightful",
+      },
+    },
+  } satisfies QuizRuntimeConfig
+}
+
+function mergeQuizIntro(d1Intro: QuizIntro | undefined, staticIntro: QuizIntro | undefined) {
+  if (!d1Intro) {
+    return staticIntro
+  }
+
+  if (!staticIntro) {
+    return d1Intro
+  }
+
+  return {
+    ...staticIntro,
+    ...d1Intro,
+    tags: d1Intro.tags.length > 0 ? d1Intro.tags : staticIntro.tags,
+    valuePoints: d1Intro.valuePoints.length > 0 ? d1Intro.valuePoints : staticIntro.valuePoints,
+    flowSteps: d1Intro.flowSteps.length > 0 ? d1Intro.flowSteps : staticIntro.flowSteps,
+    detailSections: d1Intro.detailSections.length > 0 ? d1Intro.detailSections : staticIntro.detailSections,
+    salesChannel: d1Intro.salesChannel ?? staticIntro.salesChannel,
+    purchaseUrl: d1Intro.purchaseUrl ?? staticIntro.purchaseUrl,
+  } satisfies QuizIntro
 }
 
 async function listPublicQuizzesFromD1(env: CloudflareEnv) {
@@ -360,14 +604,34 @@ async function listAdminProductsFromD1(env: CloudflareEnv) {
     `,
   ).all<ProductRow>()
 
-  return result.results.map((row) => ({
-    id: row.id,
-    name: row.name,
-    productType: row.product_type,
-    status: row.status,
-    quizCount: row.quiz_count ?? 0,
-    description: row.description ?? "",
-  })) satisfies AdminProduct[]
+  return await Promise.all(
+    result.results.map(async (row) => {
+      const linkedQuizResult = await env.SOULTEST_DB.prepare(
+        `
+          SELECT q.slug, q.title
+          FROM product_quizzes pq
+          JOIN quizzes q ON q.id = pq.quiz_id
+          WHERE pq.product_id = ?1
+          ORDER BY pq.sort_order ASC, q.created_at DESC
+        `,
+      )
+        .bind(row.id)
+        .all<CodeBatchLinkedQuizRow>()
+
+      return {
+        id: row.id,
+        name: row.name,
+        productType: row.product_type,
+        status: row.status,
+        quizCount: row.quiz_count ?? 0,
+        description: row.description ?? "",
+        linkedQuizzes: linkedQuizResult.results.map((quiz) => ({
+          slug: quiz.slug,
+          title: quiz.title,
+        })),
+      } satisfies AdminProduct
+    }),
+  )
 }
 
 function normalizeEditableAccessPolicy(policy?: AccessPolicy): AccessPolicy {
@@ -379,6 +643,76 @@ function normalizeEditableAccessPolicy(policy?: AccessPolicy): AccessPolicy {
     introVisible: policy?.introVisible ?? true,
     notes: policy?.notes ?? "",
   }
+}
+
+function normalizeCodePrefix(prefix?: string) {
+  if (!prefix) {
+    return null
+  }
+
+  const normalized = prefix.trim().toUpperCase().replace(/[^A-Z0-9]/g, "")
+  return normalized ? normalized.slice(0, 10) : null
+}
+
+function normalizeExpiryDate(expiresAt?: string | null) {
+  if (!expiresAt) {
+    return null
+  }
+
+  const parsed = new Date(expiresAt)
+
+  if (Number.isNaN(parsed.getTime())) {
+    throw new Error("批次有效期格式不正确")
+  }
+
+  if (parsed.getTime() <= Date.now()) {
+    throw new Error("批次有效期必须晚于当前时间")
+  }
+
+  return parsed.toISOString()
+}
+
+function buildBatchStrategyType(productType: string, policy: AccessPolicy) {
+  if (policy.scopeMode === "custom_scope") {
+    return "custom_scope"
+  }
+
+  if (productType === "bundle" || productType === "promo") {
+    return productType
+  }
+
+  return "single_product"
+}
+
+function createRandomToken(length: number) {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+  let value = ""
+
+  for (let index = 0; index < length; index += 1) {
+    const randomIndex = Math.floor(Math.random() * alphabet.length)
+    value += alphabet[randomIndex]
+  }
+
+  return value
+}
+
+function createVerificationCode(prefix: string | null, length: number, seen: Set<string>) {
+  for (let attempts = 0; attempts < 20; attempts += 1) {
+    const token = createRandomToken(length)
+    const candidate = prefix ? `${prefix}-${token}` : token
+
+    if (!seen.has(candidate)) {
+      seen.add(candidate)
+      return candidate
+    }
+  }
+
+  throw new Error("验证码生成失败，请稍后重试")
+}
+
+async function getAdminProductForBatch(productId: string, env: CloudflareEnv) {
+  const products = await listAdminProductsFromD1(env)
+  return products.find((item) => item.id === productId)
 }
 
 async function listAdminCodeBatchesFromD1(env: CloudflareEnv) {
@@ -460,14 +794,18 @@ async function listAdminCodeBatchesFromD1(env: CloudflareEnv) {
 function normalizeAdminQuizItem(row: QuizRow, source: AdminQuizItem["source"] = "d1"): AdminQuizItem {
   const base = normalizeCatalogItem(row)
   const accessType = (row.price ?? 0) <= 0 ? "free" : "paid"
+  const status = row.status ?? "published"
+  const landingVisible = row.landing_visible === 1
 
   return {
     ...base,
-    status: row.status ?? "published",
+    status,
     accessType,
     source,
     introPath: `/${row.slug}`,
     testPath: `/${row.slug}/test`,
+    landingVisible,
+    liveOnLanding: status === "published" && landingVisible,
   }
 }
 
@@ -532,9 +870,11 @@ async function getAdminQuizVerificationSummary(quizId: string, env: CloudflareEn
     return {
       verificationMode,
       scopeMode: policy?.scopeMode,
+      batchId: bindingRow.batch_id ?? undefined,
       batchStrategyType: bindingRow.strategy_type ?? undefined,
       tokenTtlDays: policy?.tokenTtlDays ?? null,
       notes: policy?.notes ?? "当前产品已绑定题集，但尚未配置可用验证码批次。",
+      productName: bindingRow.product_name,
       batchName: bindingRow.batch_name ?? undefined,
       batchStatus: bindingRow.batch_status ?? undefined,
       activeCodeCount: 0,
@@ -562,9 +902,11 @@ async function getAdminQuizVerificationSummary(quizId: string, env: CloudflareEn
   return {
     verificationMode,
     scopeMode: policy?.scopeMode,
+    batchId: bindingRow.batch_id ?? undefined,
     batchStrategyType: bindingRow.strategy_type ?? undefined,
     tokenTtlDays: policy?.tokenTtlDays ?? null,
     notes: policy?.notes ?? undefined,
+    productName: bindingRow.product_name,
     batchName: bindingRow.batch_name ?? undefined,
     batchStatus: bindingRow.batch_status ?? undefined,
     activeCodeCount: activeCountRow?.value ?? 0,
@@ -574,13 +916,6 @@ async function getAdminQuizVerificationSummary(quizId: string, env: CloudflareEn
       expiresAt: row.expires_at,
     })),
   }
-}
-
-function mergeAdminQuizItemsWithFallback(items: AdminQuizItem[]) {
-  const existingSlugs = new Set(items.map((item) => item.slug))
-  const fallbackItems = getMockAdminQuizzes().filter((item) => !existingSlugs.has(item.slug))
-
-  return [...items, ...fallbackItems]
 }
 
 async function listAdminQuizzesFromD1(env: CloudflareEnv) {
@@ -594,6 +929,7 @@ async function listAdminQuizzesFromD1(env: CloudflareEnv) {
         q.category,
         q.price,
         q.status,
+        q.landing_visible,
         COALESCE(published.config_json, draft.config_json) AS config_json
       FROM quizzes q
       LEFT JOIN quiz_versions published ON published.id = q.current_published_version_id
@@ -615,6 +951,34 @@ async function listAdminQuizzesFromD1(env: CloudflareEnv) {
   )
 
   return items
+}
+
+function mergeAdminQuizCollections(staticItems: AdminQuizItem[], d1Items: AdminQuizItem[]) {
+  const mergedItems = new Map<string, AdminQuizItem>()
+
+  for (const item of staticItems) {
+    mergedItems.set(item.slug, item)
+  }
+
+  for (const item of d1Items) {
+    const existingItem = mergedItems.get(item.slug)
+
+    if (!existingItem) {
+      mergedItems.set(item.slug, item)
+      continue
+    }
+
+    mergedItems.set(item.slug, {
+      ...existingItem,
+      ...item,
+      tags: item.tags.length > 0 ? item.tags : existingItem.tags,
+      valuePoints: item.valuePoints.length > 0 ? item.valuePoints : existingItem.valuePoints,
+      flowSteps: item.flowSteps.length > 0 ? item.flowSteps : existingItem.flowSteps,
+      verification: item.verification ?? existingItem.verification,
+    })
+  }
+
+  return [...mergedItems.values()]
 }
 
 async function lookupCodeInD1(code: string, env: CloudflareEnv): Promise<AccessGrant | undefined> {
@@ -687,47 +1051,72 @@ async function lookupCodeInD1(code: string, env: CloudflareEnv): Promise<AccessG
   }
 }
 
-function mergeCatalogItemsWithMock(items: QuizCatalogItem[]) {
-  const existingSlugs = new Set(items.map((item) => item.slug))
-  const fallbackItems = getMockCatalogItems().filter((item) => !existingSlugs.has(item.slug))
-
-  return [...items, ...fallbackItems]
-}
-
-export async function listPublicQuizzes(env: CloudflareEnv) {
+export async function listPublicQuizzes(env: CloudflareEnv, accessType?: AdminQuizAccessType) {
   if (isMockMode(env)) {
-    return getMockCatalogItems()
+    return getMockCatalogItems().filter((item) => !accessType || item.accessType === accessType)
   }
 
+  const staticItems = listStaticPublicQuizzes(accessType)
+  const compatibilityItems = filterStaticCompatibilityQuizzes(staticItems)
+
   try {
-    const d1Items = await listPublicQuizzesFromD1(env)
-    return mergeCatalogItemsWithMock(d1Items)
+    const d1Items = (await listPublicQuizzesFromD1(env)).filter((item) => !accessType || item.accessType === accessType)
+    return mergePublicQuizCollections(compatibilityItems, d1Items)
   } catch {
-    return getMockCatalogItems()
+    return compatibilityItems
   }
 }
 
 export async function getQuizIntro(slug: string, env: CloudflareEnv) {
+  const staticIntro = getStaticQuizIntro(slug)
+
   if (isMockMode(env)) {
-    return getMockQuizIntro(slug)
+    return staticIntro
   }
 
   try {
-    return (await getQuizIntroFromD1(slug, env)) ?? getMockQuizIntro(slug)
+    return mergeQuizIntro(await getQuizIntroFromD1(slug, env), staticIntro)
   } catch {
-    return getMockQuizIntro(slug)
+    return D1_METADATA_MANAGED_QUIZ_SLUGS.has(slug) ? undefined : staticIntro
   }
 }
 
 export async function getRuntimeConfig(slug: string, env: CloudflareEnv) {
+  const staticRuntime = normalizeRuntimeConfig(getStaticRuntimeConfig(slug))
+
   if (isMockMode(env)) {
-    return getMockRuntimeConfig(slug)
+    return staticRuntime
   }
 
   try {
-    return (await getRuntimeConfigFromD1(slug, env)) ?? getMockRuntimeConfig(slug)
+    const runtime = normalizeRuntimeConfig(await getRuntimeConfigFromD1(slug, env))
+    return hasCompleteRuntimeConfig(runtime) ? runtime : staticRuntime
   } catch {
-    return getMockRuntimeConfig(slug)
+    return D1_METADATA_MANAGED_QUIZ_SLUGS.has(slug) ? undefined : staticRuntime
+  }
+}
+
+export async function getPrimaryQuizIntro(slug: string, env: CloudflareEnv) {
+  if (isMockMode(env)) {
+    return getStaticQuizIntro(slug)
+  }
+
+  try {
+    return await getQuizIntroFromD1(slug, env)
+  } catch {
+    return undefined
+  }
+}
+
+export async function getPrimaryRuntimeConfig(slug: string, env: CloudflareEnv) {
+  if (isMockMode(env)) {
+    return normalizeRuntimeConfig(getStaticRuntimeConfig(slug))
+  }
+
+  try {
+    return normalizeRuntimeConfig(await getRuntimeConfigFromD1(slug, env))
+  } catch {
+    return undefined
   }
 }
 
@@ -739,10 +1128,22 @@ export async function lookupAccessGrant(code: string, env: CloudflareEnv) {
   }
 
   try {
-    return (await lookupCodeInD1(normalizedCode, env)) ?? getMockAccessGrant(normalizedCode)
+    const grant = await lookupCodeInD1(normalizedCode, env)
+
+    if (grant) {
+      return grant
+    }
   } catch {
+    if (!shouldUseLocalStaticAccessGrantFallback(env)) {
+      return undefined
+    }
+  }
+
+  if (shouldUseLocalStaticAccessGrantFallback(env)) {
     return getMockAccessGrant(normalizedCode)
   }
+
+  return undefined
 }
 
 export async function getAdminOverview(env: CloudflareEnv) {
@@ -754,6 +1155,39 @@ export async function getAdminOverview(env: CloudflareEnv) {
 
   const fallbackActiveCodes = quizItems.reduce((count, item) => count + (item.verification?.activeCodeCount ?? 0), 0)
 
+  const buildRecentDailySubmissions = (dailyRows: Array<{ date: string; value: number }>) => {
+    const rowMap = new Map(dailyRows.map((row) => [row.date, row.value]))
+    const formatter = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "UTC",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    })
+
+    return Array.from({ length: 7 }, (_, index) => {
+      const date = new Date()
+      date.setUTCHours(0, 0, 0, 0)
+      date.setUTCDate(date.getUTCDate() - (6 - index))
+      const dateKey = formatter.format(date)
+
+      return {
+        date: dateKey,
+        submissions: rowMap.get(dateKey) ?? 0,
+      }
+    })
+  }
+
+  const emptyAnalytics = {
+    submissions24h: 0,
+    submissions7d: 0,
+    submissions30d: 0,
+    avgDurationSec: null,
+    shareCount: 0,
+    shareRate: 0,
+    recentDailySubmissions: buildRecentDailySubmissions([]),
+    topQuizzes: [] as AdminOverview["analytics"]["topQuizzes"],
+  }
+
   if (isMockMode(env)) {
     return {
       quizzes: quizItems.length,
@@ -762,22 +1196,82 @@ export async function getAdminOverview(env: CloudflareEnv) {
       activeCodes: fallbackActiveCodes,
       submissions: 0,
       lastSeedAt: new Date().toISOString(),
+      analytics: emptyAnalytics,
     } satisfies AdminOverview
   }
 
   try {
-    const [activeCodes, submissions] = await Promise.all([
+    const [
+      activeCodes,
+      submissions,
+      submissions24h,
+      submissions7d,
+      submissions30d,
+      durationStats,
+      shareStats,
+      topQuizRows,
+      dailyRows,
+    ] = await Promise.all([
       env.SOULTEST_DB.prepare("SELECT COUNT(*) AS value FROM codes WHERE status = 'active'").first<{ value: number }>(),
       env.SOULTEST_DB.prepare("SELECT COUNT(*) AS value FROM submissions").first<{ value: number }>(),
+      env.SOULTEST_DB.prepare("SELECT COUNT(*) AS value FROM submissions WHERE datetime(created_at) >= datetime('now', '-1 day')").first<{ value: number }>(),
+      env.SOULTEST_DB.prepare("SELECT COUNT(*) AS value FROM submissions WHERE datetime(created_at) >= datetime('now', '-7 day')").first<{ value: number }>(),
+      env.SOULTEST_DB.prepare("SELECT COUNT(*) AS value FROM submissions WHERE datetime(created_at) >= datetime('now', '-30 day')").first<{ value: number }>(),
+      env.SOULTEST_DB.prepare("SELECT ROUND(AVG(duration_sec)) AS avgDurationSec FROM submissions WHERE duration_sec IS NOT NULL").first<{ avgDurationSec: number | null }>(),
+      env.SOULTEST_DB.prepare("SELECT COUNT(*) AS shareCount FROM submissions WHERE shared = 1").first<{ shareCount: number }>(),
+      env.SOULTEST_DB.prepare(
+        `
+          SELECT
+            q.id AS quizId,
+            q.slug AS slug,
+            q.title AS title,
+            COUNT(*) AS submissions
+          FROM submissions s
+          JOIN quizzes q ON q.id = s.quiz_id
+          GROUP BY q.id, q.slug, q.title
+          ORDER BY submissions DESC, MAX(s.created_at) DESC
+          LIMIT 5
+        `,
+      ).all<{ quizId: string; slug: string; title: string; submissions: number }>(),
+      env.SOULTEST_DB.prepare(
+        `
+          SELECT
+            substr(created_at, 1, 10) AS date,
+            COUNT(*) AS value
+          FROM submissions
+          WHERE datetime(created_at) >= datetime('now', '-6 day')
+          GROUP BY substr(created_at, 1, 10)
+          ORDER BY date ASC
+        `,
+      ).all<{ date: string; value: number }>(),
     ])
+
+    const totalSubmissions = submissions?.value ?? 0
+    const shareCount = shareStats?.shareCount ?? 0
+    const topQuizzes = (topQuizRows.results ?? []).map((row) => ({
+      quizId: row.quizId,
+      slug: row.slug,
+      title: row.title,
+      submissions: row.submissions,
+    }))
 
     return {
       quizzes: quizItems.length,
       products: products.length,
       codeBatches: codeBatches.length,
       activeCodes: activeCodes?.value ?? fallbackActiveCodes,
-      submissions: submissions?.value ?? 0,
+      submissions: totalSubmissions,
       lastSeedAt: new Date().toISOString(),
+      analytics: {
+        submissions24h: submissions24h?.value ?? 0,
+        submissions7d: submissions7d?.value ?? 0,
+        submissions30d: submissions30d?.value ?? 0,
+        avgDurationSec: durationStats?.avgDurationSec ?? null,
+        shareCount,
+        shareRate: totalSubmissions > 0 ? Number(((shareCount / totalSubmissions) * 100).toFixed(1)) : 0,
+        recentDailySubmissions: buildRecentDailySubmissions(dailyRows.results ?? []),
+        topQuizzes,
+      },
     } satisfies AdminOverview
   } catch {
     return {
@@ -787,6 +1281,7 @@ export async function getAdminOverview(env: CloudflareEnv) {
       activeCodes: fallbackActiveCodes,
       submissions: 0,
       lastSeedAt: new Date().toISOString(),
+      analytics: emptyAnalytics,
     } satisfies AdminOverview
   }
 }
@@ -796,17 +1291,15 @@ export async function listAdminQuizzes(env: CloudflareEnv) {
     return getMockAdminQuizzes()
   }
 
+  const staticItems = getStaticAdminQuizzes()
+  const compatibilityItems = filterStaticCompatibilityQuizzes(staticItems)
+
   try {
-    const quizItems = await listAdminQuizzesFromD1(env)
-
-    if (quizItems.length > 0) {
-      return mergeAdminQuizItemsWithFallback(quizItems)
-    }
+    const d1Items = await listAdminQuizzesFromD1(env)
+    return mergeAdminQuizCollections(compatibilityItems, d1Items)
   } catch {
-    // fall through to mock data
+    return compatibilityItems
   }
-
-  return getMockAdminQuizzes()
 }
 
 export async function listAdminProducts(env: CloudflareEnv) {
@@ -815,16 +1308,124 @@ export async function listAdminProducts(env: CloudflareEnv) {
   }
 
   try {
-    const products = await listAdminProductsFromD1(env)
-
-    if (products.length > 0) {
-      return products
-    }
+    return await listAdminProductsFromD1(env)
   } catch {
-    // fall through to mock data
+    return []
+  }
+}
+
+export async function createAdminCodeBatch(input: CreateAdminCodeBatchInput, env: CloudflareEnv) {
+  const productId = input.productId.trim()
+  const batchName = input.name.trim()
+  const codeCount = Math.trunc(input.codeCount)
+  const codeLength = Math.trunc(input.codeLength ?? 8)
+  const codePrefix = normalizeCodePrefix(input.codePrefix)
+  const expiresAt = normalizeExpiryDate(input.expiresAt)
+
+  if (!productId) {
+    throw new Error("请选择要发码的商品")
   }
 
-  return getMockProducts()
+  if (!batchName) {
+    throw new Error("请填写批次名称")
+  }
+
+  if (codeCount < 1 || codeCount > 500) {
+    throw new Error("批次码量需在 1 到 500 之间")
+  }
+
+  if (codeLength < 6 || codeLength > 24) {
+    throw new Error("验证码长度需在 6 到 24 之间")
+  }
+
+  const product = await getAdminProductForBatch(productId, env)
+
+  if (!product) {
+    throw new Error("未找到对应商品")
+  }
+
+  if (product.linkedQuizzes.length === 0) {
+    throw new Error("该商品还没有绑定题集，暂时不能发码")
+  }
+
+  const policy = normalizeEditableAccessPolicy(input.policy)
+  const availableQuizSlugs = new Set(product.linkedQuizzes.map((quiz) => quiz.slug))
+
+  if (policy.scopeMode === "custom_scope") {
+    const nextAllowQuizSlugs = (policy.allowQuizSlugs ?? []).filter((slug) => availableQuizSlugs.has(slug))
+
+    if (nextAllowQuizSlugs.length === 0) {
+      throw new Error("指定范围模式下至少要选择一个题集")
+    }
+
+    policy.allowQuizSlugs = nextAllowQuizSlugs
+  } else {
+    policy.allowQuizSlugs = undefined
+  }
+
+  const batchId = `batch_${crypto.randomUUID().replaceAll("-", "").slice(0, 16)}`
+  const strategyType = buildBatchStrategyType(product.productType, policy)
+  const codeSet = new Set<string>()
+
+  await env.SOULTEST_DB.prepare(
+    `
+      INSERT INTO code_batches (
+        id,
+        product_id,
+        name,
+        strategy_type,
+        code_prefix,
+        code_length,
+        status,
+        expires_at,
+        policy_json
+      ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, 'active', ?7, ?8)
+    `,
+  )
+    .bind(batchId, product.id, batchName, strategyType, codePrefix, codeLength, expiresAt, JSON.stringify(policy))
+    .run()
+
+  try {
+    for (let index = 0; index < codeCount; index += 1) {
+      const code = createVerificationCode(codePrefix, codeLength, codeSet)
+
+      await env.SOULTEST_DB.prepare(
+        `
+          INSERT INTO codes (code, batch_id, status, expires_at, metadata_json)
+          VALUES (?1, ?2, 'active', ?3, ?4)
+        `,
+      )
+        .bind(code, batchId, expiresAt, JSON.stringify({ createdBy: "admin_batch_create" }))
+        .run()
+    }
+
+    const verification = await env.SOULTEST_DB.prepare(
+      `
+        SELECT COUNT(*) AS count
+        FROM codes
+        WHERE batch_id = ?1
+      `,
+    )
+      .bind(batchId)
+      .first<{ count: number }>()
+
+    if ((verification?.count ?? 0) !== codeCount) {
+      throw new Error("验证码生成不完整，已终止本次创建")
+    }
+  } catch (error) {
+    await env.SOULTEST_DB.prepare(`DELETE FROM codes WHERE batch_id = ?1`).bind(batchId).run()
+    await env.SOULTEST_DB.prepare(`DELETE FROM code_batches WHERE id = ?1`).bind(batchId).run()
+    throw error
+  }
+
+  const items = await listAdminCodeBatchesFromD1(env)
+  const createdBatch = items.find((item) => item.id === batchId)
+
+  if (!createdBatch) {
+    throw new Error("批次已创建，但刷新最新数据失败")
+  }
+
+  return createdBatch
 }
 
 export async function updateAdminCodeBatchPolicy(batchId: string, policy: AccessPolicy, env: CloudflareEnv) {
@@ -839,22 +1440,71 @@ export async function updateAdminCodeBatchPolicy(batchId: string, policy: Access
     .run()
 }
 
+export async function updateAdminCodeBatchStatus(batchId: string, action: AdminCodeBatchAction, env: CloudflareEnv) {
+  const currentBatch = await env.SOULTEST_DB.prepare(
+    `
+      SELECT id, status
+      FROM code_batches
+      WHERE id = ?1
+      LIMIT 1
+    `,
+  )
+    .bind(batchId)
+    .first<{ id: string; status: string }>()
+
+  if (!currentBatch) {
+    throw new Error("未找到对应批次")
+  }
+
+  if (action === "activate" && ["revoked", "expired"].includes(currentBatch.status)) {
+    throw new Error("已作废或已过期的批次不能重新启用")
+  }
+
+  const nextStatus = action === "pause" ? "paused" : action === "activate" ? "active" : "revoked"
+
+  await env.SOULTEST_DB.prepare(
+    `
+      UPDATE code_batches
+      SET status = ?2
+      WHERE id = ?1
+    `,
+  )
+    .bind(batchId, nextStatus)
+    .run()
+
+  if (action === "revoke") {
+    await env.SOULTEST_DB.prepare(
+      `
+        UPDATE codes
+        SET status = 'revoked'
+        WHERE batch_id = ?1
+          AND status != 'revoked'
+      `,
+    )
+      .bind(batchId)
+      .run()
+  }
+
+  const items = await listAdminCodeBatchesFromD1(env)
+  const updatedBatch = items.find((item) => item.id === batchId)
+
+  if (!updatedBatch || updatedBatch.status !== nextStatus) {
+    throw new Error("批次状态更新后校验失败，请刷新后重试")
+  }
+
+  return updatedBatch
+}
+
 export async function listAdminCodeBatches(env: CloudflareEnv) {
   if (isMockMode(env)) {
     return getMockCodeBatches()
   }
 
   try {
-    const batches = await listAdminCodeBatchesFromD1(env)
-
-    if (batches.length > 0) {
-      return batches
-    }
+    return await listAdminCodeBatchesFromD1(env)
   } catch {
-    // fall through to mock data
+    return []
   }
-
-  return getMockCodeBatches()
 }
 
 export async function issueAccessSession(grant: AccessGrant, env: CloudflareEnv) {
@@ -921,6 +1571,11 @@ function selectResult(runtime: QuizRuntimeConfig, answers: Record<string, unknow
 
 function isMockMode(env: CloudflareEnv) {
   return env.API_STUB_MODE === "mock"
+}
+
+function shouldUseLocalStaticAccessGrantFallback(env: CloudflareEnv) {
+  return ["local", "development", "dev"].includes(env.APP_ENV)
+    && env.ALLOW_STATIC_ACCESS_GRANT_FALLBACK === "true"
 }
 
 function getSubmissionCacheKey(submissionId: string) {
@@ -1096,7 +1751,15 @@ export async function getSubmissionDetail(submissionId: string, env: CloudflareE
     return undefined
   }
 
-  const runtime = parseJson<QuizRuntimeConfig | undefined>(row.config_json, undefined)
+  const parsedRuntime = parseJson<QuizRuntimeConfig | undefined>(row.config_json, undefined)
+
+  if (!parsedRuntime) {
+    return undefined
+  }
+
+  const runtime = hasCompleteRuntimeConfig(parsedRuntime)
+    ? normalizeRuntimeConfig(parsedRuntime)
+    : normalizeRuntimeConfig(await getRuntimeConfig(row.slug, env)) ?? normalizeRuntimeConfig(parsedRuntime)
 
   if (!runtime) {
     return undefined
@@ -1128,6 +1791,21 @@ export async function getSubmissionDetail(submissionId: string, env: CloudflareE
     result,
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

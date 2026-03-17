@@ -1,0 +1,95 @@
+import type { QuizRuntimeConfig } from "./types"
+
+export const riasecRuntime: QuizRuntimeConfig = {
+  meta: {
+    slug: "riasec-48",
+    title: "霍兰德 RIASEC 职业兴趣测试",
+    summary: "基于 Holland RIASEC 职业兴趣模型，通过 48 道精选题目，精准还原你在六个核心维度上的兴趣偏好，帮你找到更契合的工作环境与职业方向。",
+    estimatedMinutes: 8,
+    tags: ["职业兴趣", "48 题", "六维图谱", "付费精选"],
+    category: "职业 / 发展",
+  },
+  runtime: {
+    rendererKey: "generic",
+    resultTemplateKey: "riasec-profile",
+    scoringKey: "riasec",
+  },
+  presentation: {
+    themeKey: "professional-blue",
+    storyMode: true,
+    screenCount: 6,
+    shareCardKey: "riasec-profile-poster",
+  },
+  questions: [
+    { id: 1, title: "如果有机会，我愿意拆装或修理一件真实可用的物品。", trait: "R" },
+    { id: 2, title: "我会想研究一件事背后的原因，而不只是知道结果。", trait: "I" },
+    { id: 3, title: "我愿意花时间把一个想法做成海报、视频、图文或其他作品。", trait: "A" },
+    { id: 4, title: "当别人遇到困惑时，我通常愿意耐心听完并帮他梳理。", trait: "S" },
+    { id: 5, title: "如果要把一个项目往前推进，我愿意主动站出来协调与推动。", trait: "E" },
+    { id: 6, title: "我不排斥整理表格、归档资料或把信息分门别类地放好。", trait: "C" },
+    { id: 7, title: "如果周末有机会，我愿意去接触木工、园艺、烘焙设备或工具类活动。", trait: "R" },
+    { id: 8, title: "我喜欢分析数据、现象或案例，看看规律到底是什么。", trait: "I" },
+    { id: 9, title: "我愿意尝试写文案、做内容选题或构思一个有表达感的主题。", trait: "A" },
+    { id: 10, title: "看到别人学不会某件事时，我愿意换个方式再解释一次。", trait: "S" },
+    { id: 11, title: "遇到需要谈判、争取资源或说服别人的场面，我不会太排斥。", trait: "E" },
+    { id: 12, title: "我对“按规则一步步把事情处理清楚”这件事并不反感。", trait: "C" },
+    { id: 13, title: "比起一直坐着想，我有时更想直接上手做、试、装、改。", trait: "R" },
+    { id: 14, title: "我对实验、测评、推理或找证据类的事情更容易产生兴趣。", trait: "I" },
+    { id: 15, title: "我会被好看的视觉风格、音乐氛围或有创意的表达吸引。", trait: "A" },
+    { id: 16, title: "如果朋友情绪低落，我通常愿意花时间陪他聊聊。", trait: "S" },
+    { id: 17, title: "我不介意承担带队、主导或对外表达的角色。", trait: "E" },
+    { id: 18, title: "对账、核对、排期、清单管理这类事对我来说不算太折磨。", trait: "C" },
+    { id: 19, title: "我愿意学习如何使用设备、仪器、软件工具或半专业器材。", trait: "R" },
+    { id: 20, title: "我喜欢把复杂问题拆开，一层层找出关键点。", trait: "I" },
+    { id: 21, title: "我会想设计一个更有趣、更有风格或更有个人表达感的版本。", trait: "A" },
+    { id: 22, title: "看到别人因为不懂而焦虑，我会想帮他搞明白。", trait: "S" },
+    { id: 23, title: "如果一个机会值得争取，我愿意主动去提案、表达和推进。", trait: "E" },
+    { id: 24, title: "我对标准流程、规范填写和细节检查有基本耐心。", trait: "C" },
+    { id: 25, title: "与其空谈，我更愿意做出一个看得见、摸得着的成果。", trait: "R" },
+    { id: 26, title: "我愿意读一些分析性内容，弄懂一件事到底是怎么运作的。", trait: "I" },
+    { id: 27, title: "我会想把自己的感受、观点或故事做成能被别人看见的作品。", trait: "A" },
+    { id: 28, title: "在团队里，我不介意承担支持者、协调者或带新人的角色。", trait: "S" },
+    { id: 29, title: "我喜欢那种“自己把局面带起来”的感觉。", trait: "E" },
+    { id: 30, title: "如果一个系统混乱，我会想把结构重新整理清楚。", trait: "C" },
+    { id: 31, title: "户外、器材、空间搭建、实体操作类任务对我有一定吸引力。", trait: "R" },
+    { id: 32, title: "我对假设、模型、逻辑和“为什么会这样”这类问题更感兴趣。", trait: "I" },
+    { id: 33, title: "我愿意尝试摄影、插画、脚本、审美排版或内容创作。", trait: "A" },
+    { id: 34, title: "我会在意一群人是不是都被照顾到了、有没有人被落下。", trait: "S" },
+    { id: 35, title: "我不排斥销售、运营、商业策划或把事情做成交易。", trait: "E" },
+    { id: 36, title: "我能接受长期重复但必要的整理、录入、校验或执行工作。", trait: "C" },
+    { id: 37, title: "机器、结构、施工、维修、操作流程这类主题会让我想进一步了解。", trait: "R" },
+    { id: 38, title: "比起凭感觉，我更想先看证据、案例或数据再下结论。", trait: "I" },
+    { id: 39, title: "我喜欢没有唯一标准答案、可以自由发挥的任务。", trait: "A" },
+    { id: 40, title: "如果要做培训、辅导、陪练或答疑，我愿意投入精力。", trait: "S" },
+    { id: 41, title: "我会被“把一个主意做成结果”这种过程激起斗志。", trait: "E" },
+    { id: 42, title: "我偏好清楚的计划、明确的标准和可追踪的进度。", trait: "C" },
+    { id: 43, title: "我愿意在真实环境里动手解决一个具体问题。", trait: "R" },
+    { id: 44, title: "我对观察行为、分析现象和理解人或世界的规律有兴趣。", trait: "I" },
+    { id: 45, title: "我希望自己的工作里保留一定的表达空间和个人风格。", trait: "A" },
+    { id: 46, title: "当别人需要支持时，我通常愿意提供实际帮助或情绪陪伴。", trait: "S" },
+    { id: 47, title: "在竞争、博弈或目标导向明显的情境里，我往往能进入状态。", trait: "E" },
+    { id: 48, title: "我会因为一个流程更顺、资料更整齐、系统更清楚而感到满足。", trait: "C" },
+  ].map(q => ({
+    ...q,
+    options: [
+      { id: "1", label: "完全不想做", value: { [q.trait]: 1 } },
+      { id: "2", label: "不太想做", value: { [q.trait]: 2 } },
+      { id: "3", label: "一般", value: { [q.trait]: 3 } },
+      { id: "4", label: "有点想做", value: { [q.trait]: 4 } },
+      { id: "5", label: "非常想做", value: { [q.trait]: 5 } },
+    ]
+  })),
+  results: [], // We'll handle result generation dynamically in the template or via scoring
+  extensions: {
+    scoring: {
+      dimensions: [
+        { key: "R", label: "现实型 (Realistic)" },
+        { key: "I", label: "研究型 (Investigative)" },
+        { key: "A", label: "艺术型 (Artistic)" },
+        { key: "S", label: "社会型 (Social)" },
+        { key: "E", label: "企业型 (Enterprising)" },
+        { key: "C", label: "常规型 (Conventional)" },
+      ]
+    }
+  }
+}

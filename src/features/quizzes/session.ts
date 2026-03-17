@@ -77,12 +77,8 @@ function getDraftKey(slug: string) {
   return `soultest.draft.${slug}`
 }
 
-export function readQuizDraft(slug: string) {
-  if (!isBrowser()) {
-    return undefined
-  }
-
-  const raw = window.localStorage.getItem(getDraftKey(slug))
+function readDraftFromStorage(storage: Storage, slug: string) {
+  const raw = storage.getItem(getDraftKey(slug))
 
   if (!raw) {
     return undefined
@@ -95,18 +91,44 @@ export function readQuizDraft(slug: string) {
   }
 }
 
+export function readQuizDraft(slug: string) {
+  if (!isBrowser()) {
+    return undefined
+  }
+
+  const sessionDraft = readDraftFromStorage(window.sessionStorage, slug)
+
+  if (sessionDraft) {
+    return sessionDraft
+  }
+
+  const localDraft = readDraftFromStorage(window.localStorage, slug)
+
+  if (!localDraft) {
+    return undefined
+  }
+
+  window.sessionStorage.setItem(getDraftKey(slug), JSON.stringify(localDraft))
+
+  return localDraft
+}
+
 export function writeQuizDraft(draft: Omit<QuizDraft, "updatedAt">) {
   if (!isBrowser()) {
     return
   }
 
-  window.localStorage.setItem(
+  const serializedDraft = JSON.stringify({
+    ...draft,
+    updatedAt: new Date().toISOString(),
+  } satisfies QuizDraft)
+
+  window.sessionStorage.setItem(
     getDraftKey(draft.slug),
-    JSON.stringify({
-      ...draft,
-      updatedAt: new Date().toISOString(),
-    } satisfies QuizDraft),
+    serializedDraft,
   )
+
+  window.localStorage.removeItem(getDraftKey(draft.slug))
 }
 
 export function clearQuizDraft(slug: string) {
@@ -114,5 +136,6 @@ export function clearQuizDraft(slug: string) {
     return
   }
 
+  window.sessionStorage.removeItem(getDraftKey(slug))
   window.localStorage.removeItem(getDraftKey(slug))
 }
