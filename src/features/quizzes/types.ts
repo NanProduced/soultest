@@ -254,7 +254,7 @@ export interface AdminProduct {
 export interface AdminCodeBatchPolicy {
   scopeMode: string
   allowQuizSlugs?: string[]
-  verificationMode?: "shared_code" | "unique_code" | "none"
+  verificationMode?: "shared_code" | "unique_code"
   tokenTtlDays?: number
   introVisible?: boolean
   notes?: string
@@ -302,7 +302,7 @@ export interface AdminQuizVerificationCode {
 }
 
 export interface AdminQuizVerificationSummary {
-  verificationMode: "none" | "shared_code" | "unique_code" | "unknown"
+  verificationMode: "shared_code" | "unique_code" | "unknown"
   scopeMode?: string
   batchId?: string
   batchStrategyType?: string

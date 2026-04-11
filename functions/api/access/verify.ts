@@ -24,14 +24,22 @@ export const onRequestPost: PagesFunction<CloudflareEnv> = async ({ env, request
     return errorResponse(403, "empty_scope", "当前验证码未绑定可访问题集")
   }
 
-  const session = await issueAccessSession(grant, env)
+  try {
+    const session = await issueAccessSession(grant, env)
 
-  return json({
-    accessToken: session.token,
-    expiresAt: session.expiresAt,
-    product: session.product,
-    allowedQuizzes: session.allowedQuizzes,
-    code: grant.code,
-    source: env.API_STUB_MODE,
-  })
+    return json({
+      accessToken: session.token,
+      expiresAt: session.expiresAt,
+      product: session.product,
+      allowedQuizzes: session.allowedQuizzes,
+      code: grant.code,
+      source: env.API_STUB_MODE,
+    })
+  } catch (error) {
+    if (error instanceof Error && error.message === "unique_code_unavailable") {
+      return errorResponse(409, "code_already_used", "该验证码已被使用，不能重复兑换")
+    }
+
+    throw error
+  }
 }

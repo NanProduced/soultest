@@ -93,11 +93,12 @@ export function DesireCompositionTestPage({ accessSession, runtime }: CustomQuiz
     if (isSubmitting) return
     setIsSubmitting(true)
     try {
-      const result = await submitQuizAnswers(slug, answers, accessSession.code)
+      const result = await submitQuizAnswers(slug, answers, accessSession.accessToken)
       clearQuizDraft(slug)
       navigate(`/${slug}/result/${result.submissionId}`)
     } catch (error) {
       console.error("Failed to submit answers:", error)
+      alert("提交失败: " + (error instanceof Error ? error.message : "未知错误"))
       setIsSubmitting(false)
     }
   }

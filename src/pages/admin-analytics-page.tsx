@@ -140,9 +140,7 @@ export function AdminAnalyticsPage() {
   const verificationDistribution = useMemo(
     () => [
       { label: "通用口令", value: batches.filter((batch) => (batch.policy.verificationMode ?? "shared_code") === "shared_code").length, tone: "rounded-full bg-primary" },
-      { label: "一单一码", value: batches.filter((batch) => batch.policy.verificationMode === "unique_code").length, tone: "rounded-full bg-info" },
-      { label: "免验证码", value: batches.filter((batch) => batch.policy.verificationMode === "none").length, tone: "rounded-full bg-warning" },
-    ],
+      { label: "一单一码", value: batches.filter((batch) => batch.policy.verificationMode === "unique_code").length, tone: "rounded-full bg-info" },    ],
     [batches],
   )
 

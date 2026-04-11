@@ -84,10 +84,6 @@ function getProductTypeLabel(productType: string) {
 }
 
 function getVerificationVariant(mode: string) {
-  if (mode === "none") {
-    return "warning" as const
-  }
-
   if (mode === "unique_code") {
     return "info" as const
   }

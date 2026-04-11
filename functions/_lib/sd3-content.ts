@@ -30,8 +30,8 @@ export const sd3Runtime: QuizRuntimeConfig = {
     category: "专业量表"
   },
   runtime: {
-    renderer: "custom",
-    resultTemplate: "custom"
+    rendererKey: "custom",
+    resultTemplateKey: "custom"
   },
   questions: [
     // Machiavellianism

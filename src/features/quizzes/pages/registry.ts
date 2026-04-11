@@ -22,9 +22,9 @@ export interface CustomResultPageProps {
   slug: string
   submissionId: string
   /** 兼容性 Props：由通用容器预加载的数据 */
-  runtime?: QuizRuntimeConfig
-  result?: QuizResultDefinition
-  submission?: StoredQuizResult
+  runtime: QuizRuntimeConfig
+  result: QuizResultDefinition
+  submission: StoredQuizResult
 }
 
 /**

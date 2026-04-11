@@ -1,11 +1,9 @@
 ﻿import {
   getMockAccessGrant,
   getMockCatalogItems,
-  getMockCodeBatches,
-  getMockProducts,
+  getMockQuizIntro,
+  getMockRuntimeConfig,
 } from "./mock-data"
-import { getMockAdminQuizzes, getStaticAdminQuizzes } from "./admin-mock-data"
-import { getStaticQuizIntro, getStaticRuntimeConfig } from "./official-quiz-content"
 import type {
   AccessGrant,
   AccessPolicy,
@@ -266,84 +264,6 @@ function normalizeCatalogItem(row: QuizRow): QuizCatalogItem {
   }
 }
 
-function toPublicCatalogItem(item: AdminQuizItem): QuizCatalogItem {
-  return {
-    id: item.id,
-    slug: item.slug,
-    title: item.title,
-    category: item.category,
-    summary: item.summary,
-    tagline: item.tagline,
-    priceLabel: item.priceLabel,
-    durationMinutes: item.durationMinutes,
-    questionCount: item.questionCount,
-    accessSummary: item.accessSummary,
-    tags: [...item.tags],
-    valuePoints: [...item.valuePoints],
-    flowSteps: [...item.flowSteps],
-    accessType: item.accessType,
-  }
-}
-
-const D1_METADATA_MANAGED_QUIZ_SLUGS = new Set([
-  "free/aura",
-  "free/banwei",
-  "free/painting",
-  "free/talent",
-  "free/szondi",
-  "free/soul-city",
-  "oejts-personality-map",
-  "relationship-preference-test",
-  "enneagram",
-  "bigfive",
-  "dark-triad",
-  "hexaco-60",
-  "riasec-48",
-  "soul-tarot",
-  "stress-load-test",
-  "desire-composition",
-])
-
-function filterStaticCompatibilityQuizzes<T extends { slug: string }>(items: T[]) {
-  return items.filter((item) => !D1_METADATA_MANAGED_QUIZ_SLUGS.has(item.slug))
-}
-
-function listStaticPublicQuizzes(accessType?: AdminQuizAccessType) {
-  return getStaticAdminQuizzes()
-    .filter((item) => {
-      const liveOnLanding = item.liveOnLanding ?? (item.status === "published" && item.landingVisible === true)
-      return liveOnLanding && (!accessType || item.accessType === accessType)
-    })
-    .map(toPublicCatalogItem)
-}
-
-function mergePublicQuizCollections(staticItems: QuizCatalogItem[], d1Items: QuizCatalogItem[]) {
-  const mergedItems = new Map<string, QuizCatalogItem>()
-
-  for (const item of staticItems) {
-    mergedItems.set(item.slug, item)
-  }
-
-  for (const item of d1Items) {
-    const existingItem = mergedItems.get(item.slug)
-
-    if (!existingItem) {
-      mergedItems.set(item.slug, item)
-      continue
-    }
-
-    mergedItems.set(item.slug, {
-      ...existingItem,
-      ...item,
-      tags: item.tags.length > 0 ? item.tags : existingItem.tags,
-      valuePoints: item.valuePoints.length > 0 ? item.valuePoints : existingItem.valuePoints,
-      flowSteps: item.flowSteps.length > 0 ? item.flowSteps : existingItem.flowSteps,
-    })
-  }
-
-  return [...mergedItems.values()]
-}
-
 function hasCompleteRuntimeConfig(runtime?: QuizRuntimeConfig) {
   return Boolean(runtime && runtime.questions.length > 0 && runtime.results.length > 0)
 }
@@ -478,27 +398,6 @@ function normalizeRuntimeConfig(runtime?: QuizRuntimeConfig) {
       },
     },
   } satisfies QuizRuntimeConfig
-}
-
-function mergeQuizIntro(d1Intro: QuizIntro | undefined, staticIntro: QuizIntro | undefined) {
-  if (!d1Intro) {
-    return staticIntro
-  }
-
-  if (!staticIntro) {
-    return d1Intro
-  }
-
-  return {
-    ...staticIntro,
-    ...d1Intro,
-    tags: d1Intro.tags.length > 0 ? d1Intro.tags : staticIntro.tags,
-    valuePoints: d1Intro.valuePoints.length > 0 ? d1Intro.valuePoints : staticIntro.valuePoints,
-    flowSteps: d1Intro.flowSteps.length > 0 ? d1Intro.flowSteps : staticIntro.flowSteps,
-    detailSections: d1Intro.detailSections.length > 0 ? d1Intro.detailSections : staticIntro.detailSections,
-    salesChannel: d1Intro.salesChannel ?? staticIntro.salesChannel,
-    purchaseUrl: d1Intro.purchaseUrl ?? staticIntro.purchaseUrl,
-  } satisfies QuizIntro
 }
 
 async function listPublicQuizzesFromD1(env: CloudflareEnv) {
@@ -864,7 +763,7 @@ async function getAdminQuizVerificationSummary(quizId: string, env: CloudflareEn
   }
 
   const policy = parseJson<AccessPolicy | undefined>(bindingRow.policy_json, undefined)
-  const verificationMode = (policy?.verificationMode ?? "unknown") as "none" | "shared_code" | "unique_code" | "unknown"
+  const verificationMode = (policy?.verificationMode ?? "unknown") as "shared_code" | "unique_code" | "unknown"
 
   if (!bindingRow.batch_id) {
     return {
@@ -953,34 +852,6 @@ async function listAdminQuizzesFromD1(env: CloudflareEnv) {
   return items
 }
 
-function mergeAdminQuizCollections(staticItems: AdminQuizItem[], d1Items: AdminQuizItem[]) {
-  const mergedItems = new Map<string, AdminQuizItem>()
-
-  for (const item of staticItems) {
-    mergedItems.set(item.slug, item)
-  }
-
-  for (const item of d1Items) {
-    const existingItem = mergedItems.get(item.slug)
-
-    if (!existingItem) {
-      mergedItems.set(item.slug, item)
-      continue
-    }
-
-    mergedItems.set(item.slug, {
-      ...existingItem,
-      ...item,
-      tags: item.tags.length > 0 ? item.tags : existingItem.tags,
-      valuePoints: item.valuePoints.length > 0 ? item.valuePoints : existingItem.valuePoints,
-      flowSteps: item.flowSteps.length > 0 ? item.flowSteps : existingItem.flowSteps,
-      verification: item.verification ?? existingItem.verification,
-    })
-  }
-
-  return [...mergedItems.values()]
-}
-
 async function lookupCodeInD1(code: string, env: CloudflareEnv): Promise<AccessGrant | undefined> {
   const grantRow = await env.SOULTEST_DB.prepare(
     `
@@ -1056,49 +927,41 @@ export async function listPublicQuizzes(env: CloudflareEnv, accessType?: AdminQu
     return getMockCatalogItems().filter((item) => !accessType || item.accessType === accessType)
   }
 
-  const staticItems = listStaticPublicQuizzes(accessType)
-  const compatibilityItems = filterStaticCompatibilityQuizzes(staticItems)
-
   try {
-    const d1Items = (await listPublicQuizzesFromD1(env)).filter((item) => !accessType || item.accessType === accessType)
-    return mergePublicQuizCollections(compatibilityItems, d1Items)
+    return (await listPublicQuizzesFromD1(env)).filter((item) => !accessType || item.accessType === accessType)
   } catch {
-    return compatibilityItems
+    return []
   }
 }
 
 export async function getQuizIntro(slug: string, env: CloudflareEnv) {
-  const staticIntro = getStaticQuizIntro(slug)
-
   if (isMockMode(env)) {
-    return staticIntro
+    return getMockQuizIntro(slug)
   }
 
   try {
-    return mergeQuizIntro(await getQuizIntroFromD1(slug, env), staticIntro)
+    return await getQuizIntroFromD1(slug, env)
   } catch {
-    return D1_METADATA_MANAGED_QUIZ_SLUGS.has(slug) ? undefined : staticIntro
+    return undefined
   }
 }
 
 export async function getRuntimeConfig(slug: string, env: CloudflareEnv) {
-  const staticRuntime = normalizeRuntimeConfig(getStaticRuntimeConfig(slug))
-
   if (isMockMode(env)) {
-    return staticRuntime
+    return normalizeRuntimeConfig(getMockRuntimeConfig(slug))
   }
 
   try {
     const runtime = normalizeRuntimeConfig(await getRuntimeConfigFromD1(slug, env))
-    return hasCompleteRuntimeConfig(runtime) ? runtime : staticRuntime
+    return hasCompleteRuntimeConfig(runtime) ? runtime : undefined
   } catch {
-    return D1_METADATA_MANAGED_QUIZ_SLUGS.has(slug) ? undefined : staticRuntime
+    return undefined
   }
 }
 
 export async function getPrimaryQuizIntro(slug: string, env: CloudflareEnv) {
   if (isMockMode(env)) {
-    return getStaticQuizIntro(slug)
+    return getMockQuizIntro(slug)
   }
 
   try {
@@ -1110,7 +973,7 @@ export async function getPrimaryQuizIntro(slug: string, env: CloudflareEnv) {
 
 export async function getPrimaryRuntimeConfig(slug: string, env: CloudflareEnv) {
   if (isMockMode(env)) {
-    return normalizeRuntimeConfig(getStaticRuntimeConfig(slug))
+    return normalizeRuntimeConfig(getMockRuntimeConfig(slug))
   }
 
   try {
@@ -1144,6 +1007,29 @@ export async function lookupAccessGrant(code: string, env: CloudflareEnv) {
   }
 
   return undefined
+}
+
+async function consumeUniqueCodeGrant(grant: AccessGrant, env: CloudflareEnv) {
+  if (grant.policy.verificationMode !== "unique_code") {
+    return
+  }
+
+  const result = await env.SOULTEST_DB.prepare(
+    `
+      UPDATE codes
+      SET status = 'revoked'
+      WHERE code = ?1
+        AND status = 'active'
+    `,
+  )
+    .bind(grant.code)
+    .run()
+
+  const changes = Number((result as { meta?: { changes?: number } }).meta?.changes ?? 0)
+
+  if (changes < 1) {
+    throw new Error("unique_code_unavailable")
+  }
 }
 
 export async function getAdminOverview(env: CloudflareEnv) {
@@ -1287,26 +1173,14 @@ export async function getAdminOverview(env: CloudflareEnv) {
 }
 
 export async function listAdminQuizzes(env: CloudflareEnv) {
-  if (isMockMode(env)) {
-    return getMockAdminQuizzes()
-  }
-
-  const staticItems = getStaticAdminQuizzes()
-  const compatibilityItems = filterStaticCompatibilityQuizzes(staticItems)
-
   try {
-    const d1Items = await listAdminQuizzesFromD1(env)
-    return mergeAdminQuizCollections(compatibilityItems, d1Items)
+    return await listAdminQuizzesFromD1(env)
   } catch {
-    return compatibilityItems
+    return []
   }
 }
 
 export async function listAdminProducts(env: CloudflareEnv) {
-  if (isMockMode(env)) {
-    return getMockProducts()
-  }
-
   try {
     return await listAdminProductsFromD1(env)
   } catch {
@@ -1496,10 +1370,6 @@ export async function updateAdminCodeBatchStatus(batchId: string, action: AdminC
 }
 
 export async function listAdminCodeBatches(env: CloudflareEnv) {
-  if (isMockMode(env)) {
-    return getMockCodeBatches()
-  }
-
   try {
     return await listAdminCodeBatchesFromD1(env)
   } catch {
@@ -1513,6 +1383,8 @@ export async function issueAccessSession(grant: AccessGrant, env: CloudflareEnv)
   const issuedAt = new Date().toISOString()
   const expiresAt = new Date(Date.now() + ttlSeconds * 1000).toISOString()
   const token = `st_${crypto.randomUUID().replaceAll("-", "")}`
+
+  await consumeUniqueCodeGrant(grant, env)
 
   const session: AccessSession = {
     token,
@@ -1791,6 +1663,9 @@ export async function getSubmissionDetail(submissionId: string, env: CloudflareE
     result,
   }
 }
+
+
+
 
 
 

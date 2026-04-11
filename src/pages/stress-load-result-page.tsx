@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { getQuizPosterExportId, getQuizTheme } from "@/features/quizzes/engine"
 import { exportNodeAsPng } from "@/lib/export-node-as-image"
-import type { CustomQuizResultPageProps } from "@/features/quizzes/custom-pages"
+import type { CustomResultPageProps } from "@/features/quizzes/pages/registry"
 import type { ScoreBreakdownItem } from "@/features/quizzes/types"
 
 // --- Components ---
@@ -156,7 +156,7 @@ function GaugeChart({ value, label }: { value: number; label: string }) {
 
 // --- Main Component ---
 
-export function StressLoadResultPage({ runtime, submission }: CustomQuizResultPageProps) {
+export function StressLoadResultPage({ runtime, submission }: CustomResultPageProps) {
   const [isExporting, setIsExporting] = useState(false)
   const theme = getQuizTheme(runtime)
   const scoreBreakdown = submission.scoreBreakdown || []

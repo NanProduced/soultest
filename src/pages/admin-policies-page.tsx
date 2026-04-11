@@ -1,4 +1,4 @@
-﻿import { Check, Layers3, Save, Search, ShieldCheck, Ticket } from "lucide-react"
+import { Check, Layers3, Save, Search, ShieldCheck, Ticket } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import type { FormEvent } from "react"
 import { useSearchParams } from "react-router"
@@ -287,7 +287,7 @@ export function AdminPoliciesPage() {
                       </div>
                       <div className="flex flex-wrap gap-2">
                         <AdminBadge variant={batch.status === "active" ? "success" : "warning"}>{batch.status}</AdminBadge>
-                        <AdminBadge variant={verificationMode === "none" ? "warning" : "info"}>{verificationModeLabels[verificationMode]}</AdminBadge>
+                        <AdminBadge variant={verificationMode === "unique_code" ? "info" : "neutral"}>{verificationModeLabels[verificationMode]}</AdminBadge>
                         {isExpiringSoon ? <AdminBadge variant="warning">14 天内到期</AdminBadge> : null}
                       </div>
                     </div>
@@ -341,7 +341,7 @@ export function AdminPoliciesPage() {
                   >
                     <option value="shared_code">通用口令</option>
                     <option value="unique_code">一单一码</option>
-                    <option value="none">免验证码</option>
+                    
                   </select>
                 </label>
 

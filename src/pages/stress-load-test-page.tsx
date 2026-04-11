@@ -48,7 +48,7 @@ export function StressLoadTestPage({ accessSession, runtime }: CustomQuizPagePro
     if (isSubmitting) return
     setIsSubmitting(true)
     try {
-      const result = await submitQuizAnswers(slug, answers, accessSession.code)
+      const result = await submitQuizAnswers(slug, answers, accessSession.accessToken)
       clearQuizDraft(slug)
       navigate(`/${slug}/result/${result.submissionId}`)
     } catch (error) {

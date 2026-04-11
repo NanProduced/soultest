@@ -39,8 +39,8 @@ function normalizePolicyInput(input: AccessPolicy | undefined, availableQuizSlug
     ),
   )
 
-  if (!verificationMode || !["shared_code", "unique_code", "none"].includes(verificationMode)) {
-    throw new PolicyValidationError("INVALID_VERIFICATION_MODE", "请选择有效的验证码验证方式")
+  if (!verificationMode || !["shared_code", "unique_code"].includes(verificationMode)) {
+    throw new PolicyValidationError("INVALID_VERIFICATION_MODE", "请先选择有效的发码策略")
   }
 
   if (!scopeMode || !["product", "custom_scope"].includes(scopeMode)) {

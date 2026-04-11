@@ -3,7 +3,7 @@ import { motion } from "framer-motion"
 import { Link } from "react-router"
 import { ArrowRight, Download, Sparkles } from "lucide-react"
 
-import type { CustomQuizResultPageProps } from "@/features/quizzes/custom-pages"
+import type { CustomResultPageProps } from "@/features/quizzes/pages/registry"
 import { sd3Archetypes } from "@/features/quizzes/sd3-content"
 
 function RadarChart({ scores }: { scores: { mach: number, narc: number, psych: number } }) {
@@ -35,7 +35,7 @@ function RadarChart({ scores }: { scores: { mach: number, narc: number, psych: n
   )
 }
 
-export function DarkTriadResultPage({ submission }: CustomQuizResultPageProps) {
+export function DarkTriadResultPage({ submission }: CustomResultPageProps) {
   const [exporting, setExporting] = useState(false)
   const clientInfo = submission.clientInfo as any
   const { archetypeCode, avgs } = clientInfo || { archetypeCode: "A8", avgs: { mach: 3, narc: 3, psych: 3 } }

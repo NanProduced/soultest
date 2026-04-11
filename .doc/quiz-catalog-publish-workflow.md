@@ -92,7 +92,7 @@ pnpm run db:seed:local
 当前作用：
 
 - 在 `mock` 模式下提供公开题集目录、题集 intro、runtime、商品、批次、验证码等模拟数据
-- 在部分非 `mock` 场景下，经由 `official-quiz-content.ts` 提供静态兜底内容
+- 当前仅在 `mock` 模式下承载完整模拟题集数据；非 `mock` 主路径已不再经由该文件提供题集 intro / runtime 兜底
 - 为本地极少数“尚未迁移完成”的题目提供临时兼容数据
 
 这同样**不是正式数据源**。
@@ -107,9 +107,9 @@ pnpm run db:seed:local
 
 在迁移全部完成前，仓库可以暂时保留这些兼容能力：
 
-- 非 `mock` 模式下，详情页 / runtime 对静态内容的兜底
-- 本地开发环境下，极少数历史题目的静态访问兜底
-- 旧题尚未迁移完成时，管理台与公开目录的静态补位
+- 本地开发环境下，显式开启时的静态验证码 fallback
+- `mock` 模式下的完整题集 / 商品 / 批次 / 验证码模拟数据
+- 本地开发环境中，显式开启的静态 access grant fallback
 
 但这些都应视为：
 
@@ -250,10 +250,9 @@ pnpm run db:seed:local
 截至当前阶段，静态兼容仍主要保留在以下场景：
 
 - `mock` 模式下的完整题集 / 商品 / 批次 / 验证码模拟数据
-- 非 `mock` 模式下的 `official-quiz-content.ts` 静态 intro / runtime 兜底
-- 本地开发环境中，验证码校验失败时的少量静态 fallback
+- 本地开发环境中，显式开启的静态 access grant fallback
 
-这意味着当前的主任务不是继续往 mock 文件追加条目，而是逐步缩小这些边界，直到非 `mock` 模式完全不再依赖它们。
+这意味着当前的主任务不是继续往 mock 文件追加条目，而是继续把剩余的本地显式 fallback 收缩到最小，并最终删除 mock 文件。
 
 ### 3. 免费题当前状态
 
@@ -281,7 +280,7 @@ pnpm run db:seed:local
 - `src/features/free-quizzes/*-data.ts` 仍作为 free-runtime seed 生成源与过渡兼容存在，不是线上正式主读取路径
 - `mock-data.ts` / `admin-mock-data.ts` 里的免费题静态数据仍作为 `mock` 模式与少量历史兼容存在
 
-下一步目标不是再次“补免费题入库”，而是继续收缩非 `mock` 模式下对这些静态兼容条目的依赖，最终撤掉 `official-quiz-content.ts` 的静态 runtime 兜底并删除 `mock` 文件。
+下一步目标不是再次“补免费题入库”，而是继续收缩剩余的本地显式 fallback，并在确认无回归后删除 `mock` 文件。
 
 ## 五、mock 文件的废弃与删除策略
 
@@ -311,11 +310,10 @@ pnpm run db:seed:local
 
 满足迁移条件后，再做代码切换：
 
-1. 让非 `mock` 模式下的仓库读取逻辑完全 D1-first，且不再合并静态题集列表
-2. 清除 `official-quiz-content.ts` 对 `mock-data.ts` 的依赖
-3. 删除 `functions/_lib/admin-mock-data.ts`
-4. 删除 `functions/_lib/mock-data.ts`
-5. 删除与之对应的历史兼容调用与测试夹具
+1. 让非 `mock` 模式下的仓库读取逻辑完全 D1-first，且不再读取任何静态题集 intro / runtime
+2. 删除 `functions/_lib/admin-mock-data.ts`
+3. 删除 `functions/_lib/mock-data.ts`
+4. 删除与之对应的历史兼容调用与测试夹具
 
 注意：
 
@@ -368,9 +366,3 @@ pnpm run db:seed:local
 ---
 
 如果后续要继续推进代码改造，默认顺序应为：**先迁移 D1 数据，再移除仓库静态兼容，最后删除 mock 文件**。
-
-
-
-
-
-

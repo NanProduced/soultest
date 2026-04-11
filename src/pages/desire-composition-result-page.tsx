@@ -16,9 +16,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { getQuizPosterExportId } from "@/features/quizzes/engine"
-import type { CustomQuizResultPageProps } from "@/features/quizzes/custom-pages"
-import type { ScoreBreakdownItem } from "@/features/quizzes/types"
+import type { CustomResultPageProps } from "@/features/quizzes/pages/registry"
 
 // Dimension metadata
 const dimensionMeta: Record<string, { name: string; emoji: string; color: string; icon: React.ReactNode }> = {
@@ -311,7 +309,7 @@ function Section({ children, className, delay = 0 }: { children: React.ReactNode
   )
 }
 
-export function DesireCompositionResultPage({ result, runtime, submission }: CustomQuizResultPageProps) {
+export function DesireCompositionResultPage({ submission }: CustomResultPageProps) {
   const [isExporting, setIsExporting] = useState(false)
   const [showShareModal, setShowShareModal] = useState(false)
   const posterRef = useRef<HTMLDivElement>(null)

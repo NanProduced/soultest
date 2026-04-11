@@ -1,5 +1,4 @@
-﻿export const verificationModeLabels = {
-  none: "免验证码",
+export const verificationModeLabels = {
   shared_code: "通用口令",
   unique_code: "一单一码",
 } as const

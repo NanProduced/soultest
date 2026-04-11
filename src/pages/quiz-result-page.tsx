@@ -1,4 +1,4 @@
-﻿import { Download, Sparkles } from "lucide-react"
+import { Download, Sparkles } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { Link, Navigate, useParams } from "react-router"
 
@@ -218,8 +218,7 @@ export function QuizResultPage() {
   const posterExportPreset = shareCardKey ? shareCardExportPresets[shareCardKey] : undefined
   const supportsPosterExport = Boolean(posterExportId && posterExportPreset)
   const customPages = slug ? getQuizCustomPages(slug) : undefined
-  const CustomResultPage =
-    strategies.renderer === "custom" || customPages?.result ? customPages?.result : undefined
+  const CustomResultPage = customPages?.result
 
   if (CustomResultPage) {
     return (
