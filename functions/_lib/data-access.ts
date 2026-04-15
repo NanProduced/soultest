@@ -506,7 +506,7 @@ export async function insertCodeBatch(
   strategyType: string,
   codePrefix: string | null,
   codeLength: number,
-  expiresAt: string,
+  expiresAt: string | null,
   policyJson: string,
   env: CloudflareEnv,
 ) {
@@ -516,7 +516,7 @@ export async function insertCodeBatch(
 export async function insertCode(
   code: string,
   batchId: string,
-  expiresAt: string,
+  expiresAt: string | null,
   metadataJson: string,
   env: CloudflareEnv,
 ) {
