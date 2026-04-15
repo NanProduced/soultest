@@ -4,8 +4,6 @@ import type {
   AdminCodeBatch,
   AdminProduct,
   AdminQuizItem,
-  AdminQuizVerificationCode,
-  AdminQuizVerificationSummary,
   AllowedQuiz,
   CloudflareEnv,
   QuizCatalogItem,
